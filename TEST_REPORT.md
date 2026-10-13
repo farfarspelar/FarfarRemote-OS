@@ -107,7 +107,7 @@ No Android emulator or newer Android device was available. The App may run on ne
 
 ## Power Off control — development branch
 
-- Added one shared main-screen Power Off control for both App and OS flavors. Portrait places it with the primary controls; landscape places it beside Settings.
+- Added one shared main-screen Power Off control for both App and OS flavors. It now occupies the top header position previously used by Settings; the existing Settings controls remain available lower in the main view.
 - The confirmation explains that the Kodi device will shut down while the Android remote remains on. Confirming sends `System.Shutdown` using the existing background Kodi client; a denied or unsupported request is reported without crashing. The command is Kodi's documented `ControlPower` method.
 - The implementation was not exercised against the physical MeLE/Kodi host in this environment. Verify that Kodi's host OS allows power-down and that the Kodi JSON-RPC account has `ControlPower` permission before relying on it.
 - Shutting down the Android handset from a regular app is not part of this control; Android 4.4 does not expose a public app-level power-off API.

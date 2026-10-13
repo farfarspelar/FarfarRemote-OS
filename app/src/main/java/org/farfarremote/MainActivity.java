@@ -210,7 +210,6 @@ public final class MainActivity extends Activity {
         addIconControl(controls, R.drawable.action_home, "Home", 1f, () -> action(c -> c.call("Input.Home", new JSONObject())));
         addIconControl(controls, R.drawable.action_play_pause, "Play / Pause", 1.12f, this::playPause);
         addIconControl(controls, R.drawable.action_stop, "Stop", 1f, this::stop);
-        addPowerControl(controls);
         addIconControl(controls, R.drawable.action_settings, "Settings", 1f, this::showSettings);
         LinearLayout nav = row(root); nav.setGravity(Gravity.CENTER_VERTICAL);
         addDpad(nav, 1.35f);
@@ -242,7 +241,6 @@ public final class MainActivity extends Activity {
         addIconControl(transport, R.drawable.action_next, "Next", 1f, () -> goTo("next"));
         addIconControl(transport, R.drawable.action_fast_forward, "Fast forward", 1f, () -> seekStep("bigforward"));
         LinearLayout tail = row(right); tail.setGravity(Gravity.CENTER);
-        addPowerControl(tail);
         ImageView settings = new ImageView(this); settings.setImageResource(R.drawable.action_settings); settings.setScaleType(ImageView.ScaleType.FIT_CENTER); settings.setContentDescription("Settings"); settings.setOnClickListener(v -> showSettings()); tail.addView(settings, new LinearLayout.LayoutParams(dp(66), dp(58)));
         addCategories(right);
         return outer;
@@ -256,8 +254,8 @@ public final class MainActivity extends Activity {
         LinearLayout connection = new LinearLayout(this); connection.setOrientation(LinearLayout.VERTICAL); connection.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         hostLabel = text(prefs.getString("host", "Kodi"), 12, TEXT, true); status = text("CONNECTING…", 11, MUTED, true);
         connection.addView(hostLabel); connection.addView(status); header.addView(connection);
-        ImageView settings = new ImageView(this); settings.setImageResource(R.drawable.action_settings); settings.setScaleType(ImageView.ScaleType.FIT_CENTER); settings.setContentDescription("Settings"); settings.setOnClickListener(v -> showSettings());
-        LinearLayout.LayoutParams gear = new LinearLayout.LayoutParams(dp(48), dp(46)); gear.leftMargin = dp(6); header.addView(settings, gear);
+        LinearLayout.LayoutParams power = new LinearLayout.LayoutParams(dp(58), dp(46)); power.leftMargin = dp(6);
+        addPowerControl(header, power, 31);
     }
 
     private void addNowPlaying(LinearLayout root, boolean landscape) {
@@ -341,13 +339,13 @@ public final class MainActivity extends Activity {
         box.setOnLongClickListener(v -> false);
     }
 
-    private void addPowerControl(LinearLayout parent) {
+    private void addPowerControl(LinearLayout parent, LinearLayout.LayoutParams layout, int iconHeightDp) {
         LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.setFocusable(true);
         box.setContentDescription("Power off Kodi device");
         box.setOnClickListener(v -> { haptic(); confirmKodiShutdown(); });
-        box.addView(new PowerIconView(this), new LinearLayout.LayoutParams(-1, dp(isLandscape() ? 54 : 48)));
+        box.addView(new PowerIconView(this), new LinearLayout.LayoutParams(-1, dp(iconHeightDp)));
         TextView caption = text("Power Off", 9, MUTED, false); caption.setGravity(Gravity.CENTER); caption.setMaxLines(1); box.addView(caption);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f); lp.leftMargin = dp(1); lp.rightMargin = dp(1); parent.addView(box, lp);
+        parent.addView(box, layout);
     }
 
     /** Canvas-drawn API 19-compatible power glyph; no bitmap or support-library dependency. */

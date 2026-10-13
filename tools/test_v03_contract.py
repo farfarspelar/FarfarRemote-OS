@@ -84,12 +84,9 @@ protected_methods = (
 for name in protected_methods:
     check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from v0.2")
 
-def without_power_placement(source):
-    return source.replace("        addPowerControl(controls);\n", "").replace("        addPowerControl(tail);\n", "")
-
 for name in ("buildPortrait", "buildLandscape"):
-    check(without_power_placement(method_block(new_main, name)) == method_block(old_main, name),
-          f"{name} unchanged except for the Power Off control")
+    check(method_block(new_main, name) == method_block(old_main, name),
+          f"{name} unchanged from v0.2")
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
@@ -115,6 +112,7 @@ check("Kodi did not respond" in new_main and "Use and Save" in new_main, "Kodi c
 check('call("System.Shutdown", new JSONObject())' in new_main and 'Power off Kodi?' in new_main,
       "Power Off requires confirmation and calls Kodi System.Shutdown")
 check("The Android remote will stay on." in new_main, "Power Off confirmation distinguishes Kodi host from Android remote")
+check("addPowerControl(header, power, 31)" in new_main, "Power Off occupies the header control position")
 check("stopKodiDiscovery(true)" in new_main and "KODI_DISCOVERY_TIMEOUT_MS" in new_main, "discovery has timeout and lifecycle cleanup")
 check("activityStarted;" in new_main and "schedulePoll(2800)" in new_main, "Kodi polling resumes with the foreground activity")
 check("@Override protected void onStart()" in new_main and "handler.removeCallbacks(poll)" in new_main, "poll loop starts without duplicate callbacks")
