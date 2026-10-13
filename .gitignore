@@ -1,0 +1,15 @@
+# Local Android/Gradle build state
+.gradle/
+**/build/
+local.properties
+
+# Device-specific captures can contain serials, Wi-Fi names, IPs and log data.
+reports/device_audit/
+
+# Keep the source PNGs once under graphics/originals instead of duplicating them.
+FarfarRemote_Asset_Pack/assets/
+FarfarRemote_v0.2_Complete_Assets.zip
+
+# The current deliverable is versioned explicitly; ignore intermediate packages.
+dist/*
+!dist/FarfarRemote-0.2.0-api19-debug.apk

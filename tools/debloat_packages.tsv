@@ -1,0 +1,145 @@
+phase	package	function	risk	eligibility	audit_evidence	recommendation
+A	app.gpsme	GPS navigation app	LOW	YES	/data/app; installed user package; PSS 13741 kB cached; top RSS 43852 kB; requests GPS, SMS, contacts, boot and GMS	Disable for user 0; no FarfarRemote dependency; removing it also drops its GMS measurement binding.
+A	com.facebook.katana	Facebook social app	LOW	YES	/data/app; not running in captured process list; broad contacts, phone, calendar, camera and sync permissions	Disable for user 0; no appliance function.
+A	com.mobisystems.office	Office document editor	LOW	YES	/data/app; stopped and not launched at capture	Disable for user 0; not used by remote.
+A	com.navigon.navigator_select_sony_eu	NAVIGON navigation app	LOW	YES	/data/app; stopped and not launched; location, phone, SMS and Bluetooth permissions	Disable for user 0; no GPS/navigation requirement.
+A	com.scee.psxandroid	PlayStation companion app	LOW	YES	/data/app; stopped and not launched	Disable for user 0; no controller integration relies on this app.
+A	com.s.antivirus	Third-party antivirus app	LOW	YES	/data/app; stopped and not launched	Disable for user 0; Android packages are already isolated; monitor for installer prompts only.
+A	com.bambuser.sociallive	Social Live video broadcasting	LOW	YES	/data/app; standalone camera/broadcast application	Disable for user 0; camera sharing is outside appliance scope.
+B	com.google.android.apps.books	Google Play Books	LOW	YES	Google user application; no Kodi or system role	Disable after checking B regression.
+B	com.android.chrome	Google Chrome browser	MEDIUM	YES	Chrome is installed under /data/app and no process was captured; the audit does not establish which WebView provider legacy apps select	Disable only after confirming Sony/Android WebView remains active for any local web settings pages.
+B	com.google.android.apps.cloudprint	Google Cloud Print client	LOW	YES	Google user application; no local Kodi dependency	Disable; printing not part of appliance.
+B	com.google.android.apps.docs	Google Drive/Docs client	LOW	YES	Google user application; no local Kodi dependency	Disable; retain ADB/APK installer path.
+B	com.google.android.apps.genie.geniewidget	Google news/weather widget	LOW	YES	Google home-screen widget	Disable after home-widget independence check.
+B	com.google.android.apps.magazines	Google Play Newsstand	LOW	YES	Google user application	Disable; no appliance function.
+B	com.google.android.apps.maps	Google Maps	LOW	YES	Cached PSS 56182 kB; process in cached bucket; navigation app; requires GMS	Disable; cached PSS is reclaimable, so measure after warm idle and reboot.
+B	com.google.android.apps.plus	Google+ social app	LOW	YES	Cached PSS 21395 kB; process cached	Disable; no appliance function.
+B	com.google.android.gm	Gmail	LOW	YES	Google mail user application	Disable; no account or email use.
+B	com.google.android.googlequicksearchbox	Google Search/Now	LOW	YES	Search process PSS 37014 kB in B Services; not required for HOME remote	Disable and verify HOME, input and Wi-Fi setting flows.
+B	com.google.android.music	Google Play Music/media route client	MEDIUM	YES	Active DialMediaRouteProviderService observed; PSS not separately present in top 40	Disable and regression-test Bluetooth/A2DP if it is used.
+B	com.google.android.play.games	Google Play Games	LOW	YES	Google user application	Disable; no appliance function.
+B	com.google.android.street	Google Street View	LOW	YES	Google user application	Disable; no appliance function.
+B	com.google.android.talk	Google Talk/Hangouts	LOW	YES	PSS 13795 kB in A Services; account/messaging app	Disable; no account or messaging use.
+B	com.google.android.videos	Google video storefront/player	LOW	YES	Google user application	Disable; local phone video playback not required.
+B	com.google.android.youtube	YouTube client	LOW	YES	Google user application	Disable; no local Kodi remote dependency.
+B	com.android.vending	Google Play Store	MEDIUM	YES	Cached PSS 38719 kB; app-store UI only; APK installation also available via adb install and Package Installer	Disable only after confirming ADB APK installation and keeping PackageInstaller enabled.
+C	com.sonyericsson.album	Sony gallery	LOW	YES	Media gallery UI	Disable; no photo/gallery appliance use.
+C	com.sonyericsson.android.camera	Sony camera app	LOW	YES	Camera UI; keep persistent CameraCommon framework service for now	Disable camera UI only; do not disable CameraCommon or its permissions.
+C	com.sonyericsson.android.camera3d	Sony camera effect app	LOW	YES	Camera add-on UI	Disable after camera add-on regression.
+C	com.sonyericsson.androidapp.everchwallpaper	Sony live wallpaper	LOW	YES	Decorative wallpaper package	Disable; keep wallpaper/settings providers.
+C	com.sonyericsson.music	Sony Music player	MEDIUM	YES	Music service PSS 15168 kB cached plus UI PSS 7851 kB cached; not FarfarRemote audio output	Disable; test volume buttons and Bluetooth controls after reboot.
+C	com.sonyericsson.music.googlelyricsplugin	Sony Music lyrics plug-in	LOW	YES	Plug-in for Sony Music	Disable after Sony Music app.
+C	com.sonyericsson.music.wikipediaplugin	Sony Music Wikipedia plug-in	LOW	YES	Plug-in for Sony Music	Disable after Sony Music app.
+C	com.sonyericsson.music.youtubeplugin	Sony Music YouTube plug-in	LOW	YES	Plug-in for Sony Music	Disable after Sony Music app.
+C	com.sonyericsson.music.youtubekaraokeplugin	Sony Music karaoke plug-in	LOW	YES	Plug-in for Sony Music	Disable after Sony Music app.
+C	com.sonyericsson.musicvisualizer	Sony music visualizer	LOW	YES	Music visualizer effect	Disable; no appliance function.
+C	com.sonyericsson.trackid	TrackID music recognition	LOW	YES	User-installed Sony music recognition app	Disable; no appliance function.
+C	com.sonyericsson.video	Sony video player	LOW	YES	Local media player UI	Disable; Kodi playback occurs on MeLE.
+C	com.sonyericsson.advancedwidget.clock	Sony clock widget	LOW	YES	Home-screen widget; no independent input or power role	Disable after confirming FarfarRemote HOME selection.
+C	com.sonyericsson.advancedwidget.photo	Sony photo widget	LOW	YES	Home-screen photo widget	Disable.
+C	com.sonyericsson.advancedwidget.weather	Sony weather widget	LOW	YES	Home-screen weather widget	Disable.
+C	com.sonymobile.advancedwidget.entrance	Sony widget catalog	LOW	YES	Widget selector/catalog	Disable after HOME selection.
+C	com.sonymobile.advancedwidget.topcontacts	Sony top-contacts widget	LOW	YES	Contact widget	Disable; keep Contacts Provider for now.
+C	com.sonymobile.advancedwidget.worldclock	Sony world-clock widget	LOW	YES	Home-screen widget	Disable.
+C	com.sonymobile.helpapp7	Sony help application	LOW	YES	User-facing help app; no active service or process in captured audit	Disable; retain ADB/logcat as the development support path.
+C	com.sonymobile.camerawidget	Sony camera widget	LOW	YES	Camera launcher widget; cached PSS 3521 kB	Disable; camera shortcut not needed.
+C	com.sonymobile.android.addoncamera.dual	Sony camera dual add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.android.addoncamera.onlineremote	Sony camera online remote add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.android.addoncamera.selfportrait	Sony camera self-portrait add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.android.addoncamera.soundphoto	Sony sound-photo add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.android.addoncamera.timeshift	Sony Timeshift camera add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.androidapp.cameraaddon.areffect	Sony AR Effect camera add-on	LOW	YES	Cached PSS 6301 kB; camera add-on	Disable; camera features not used.
+C	com.sonymobile.androidapp.cameraaddon.arfun	Sony AR Fun camera add-on	LOW	YES	Camera add-on	Disable.
+C	com.sonymobile.camera.addon.livefromsonyxperia	Sony Live from Xperia camera add-on	LOW	YES	Camera broadcasting add-on	Disable.
+C	com.sonymobile.china.photoeditor	Sony photo editor	LOW	YES	Photo editing UI	Disable; no local image workflow.
+C	com.sonymobile.dlna	Sony DLNA media sharing	MEDIUM	YES	PSS 3382 kB in A Services; network media sharing, separate from Wi-Fi client stack	Disable; regression-test Wi-Fi/Kodi and Bluetooth, leave Android connectivity services intact.
+C	com.sonymobile.moviecreator	Sony Movie Creator	LOW	YES	Media editing application	Disable.
+C	com.sonymobile.photoanalyzer	Sony photo analyzer	LOW	YES	Photo library analysis component	Disable after Album test; may scan media on storage mount.
+C	com.sonymobile.podcast	Sony podcast client	LOW	YES	Media application	Disable.
+C	com.sonymobile.shareapplication	Sony sharing UI	LOW	YES	Share chooser/application	Disable; app-to-app share is outside appliance scope.
+C	com.sonymobile.smallbrowser	Sony small-app browser	LOW	YES	User-facing browser app installed under /data/app; no active service observed	Disable after confirming Android Settings and Kodi settings remain accessible.
+C	com.sonymobile.slideshow	Sony slideshow	LOW	YES	Photo slideshow	Disable.
+C	com.sonymobile.sketch	Sony Sketch application	LOW	YES	Standalone drawing application	Disable.
+C	com.sonymobile.smallapps.calc	Sony calculator small app	LOW	YES	Optional small-app activity	Disable; preserve small-app framework until its dependants are audited.
+C	com.sonymobile.smallapps.clipper	Sony clipper small app	LOW	YES	Optional small-app activity	Disable; preserve small-app framework.
+C	com.sonymobile.smallapps.timer	Sony timer small app	LOW	YES	Optional small-app activity	Disable; preserve small-app framework.
+C	com.sonymobile.sonyselect	Sony Select content store	LOW	YES	Cached PSS 4168 kB; standalone content portal	Disable; no appliance function.
+C	com.sonymobile.retaildemo	Sony retail demonstration mode	LOW	YES	Retail demo application; no retail/demo use on dedicated device	Disable; confirm no demo provisioning or device-owner mode is enabled.
+C	com.sonymobile.xperialounge.services	Sony Xperia Lounge services	LOW	YES	Content/marketing application service	Disable; no appliance function.
+C	com.sonymobile.tvout.wifidisplay	Sony Wi-Fi display/mirroring	MEDIUM	YES	Wireless display client; distinct from Wi-Fi networking	Disable only after confirming no screen-mirroring requirement.
+C	com.android.dreams.basic	Android basic screensaver	LOW	YES	Screensaver UI	Disable after screen timeout/wake regression.
+C	com.android.dreams.phototable	Android photo screensaver	LOW	YES	Photo screensaver	Disable.
+C	com.android.galaxy4	Android live wallpaper	LOW	YES	Decorative wallpaper	Disable.
+C	com.android.magicsmoke	Android live wallpaper	LOW	YES	Decorative wallpaper	Disable.
+C	com.android.musicvis	Android music visualizer wallpaper	LOW	YES	Decorative audio visualization	Disable.
+C	com.android.noisefield	Android live wallpaper	LOW	YES	Decorative wallpaper	Disable.
+C	com.android.phasebeam	Android live wallpaper	LOW	YES	Decorative wallpaper	Disable.
+C	com.android.wallpaper.holospiral	Android live wallpaper	LOW	YES	Decorative wallpaper	Disable.
+C	com.android.wallpaper.livepicker	Live wallpaper picker	LOW	YES	Wallpaper chooser UI	Disable only after default wallpaper and settings fallback are confirmed.
+C	com.android.soundrecorder	Android sound recorder	LOW	YES	Sound recording UI	Disable; local recording not required.
+D	com.google.android.gms	Google Play Services framework	HIGH	REVIEW	PSS 52322 kB cached + 43785 kB persistent; binds fused location, GCM, measurement, broker and Maps; used by GPSME	Do not include in initial low-risk phases. Consider only after A/B/C, then validate all network, Wi-Fi, Kodi, account-free boot and location-independent behavior.
+D	com.google.android.gsf	Google Services Framework	HIGH	REVIEW	Google account/registration framework; package is a framework dependency for legacy Google applications	Defer until Google apps disabled and clean reboot verified.
+D	com.google.android.gsf.login	Google account authenticator/login	HIGH	REVIEW	Authentication component tied to GSF/GMS account flows	Defer with GSF; keep until GMS is deliberately removed.
+D	com.android.location.fused	Android fused location provider	HIGH	REVIEW	Fused-location services actively bind into com.google.android.gms; GPS not needed after GPSME removed	Only consider after removing location consumers and checking system location dependencies.
+D	com.android.nfc	Android NFC service	HIGH	REVIEW	NFC binder service exists; no NFC control requirement or active NFC process use is known	Review only after checking USB/HID and system settings; disable only if NFC hardware paths are confirmed unused.
+D	com.android.printspooler	Android print service	LOW	REVIEW	Standalone print UI/service; no print feature in appliance scope	Review after dependencies and Settings pages are inventoried.
+D	com.google.android.syncadapters.calendar	Google Calendar sync adapter	MEDIUM	REVIEW	Account synchronization component	Review after all Google accounts/services disabled.
+D	com.google.android.syncadapters.contacts	Google Contacts sync adapter	MEDIUM	REVIEW	Account synchronization component	Review after all Google accounts/services disabled.
+D	com.google.android.backuptransport	Google backup transport	MEDIUM	REVIEW	Active BackupTransportService hosted by Android Backup Manager	Review only after backup service/Settings behavior assessed.
+D	com.sonymobile.synchub	Sony account synchronization hub	HIGH	REVIEW	System synchronization hub; component metadata/clients not fully resolved from audit	Leave enabled until providers and client bindings are identified.
+D	com.sonyericsson.socialengine	Sony social account/sync framework	HIGH	REVIEW	Social integration framework may serve Contacts/Calendar; plug-in dependencies exist	Disable plug-ins first; review framework/client bindings before disabling.
+D	com.sonyericsson.socialengine.plugins.facebook	Sony Facebook sync plug-in	MEDIUM	REVIEW	Social engine account plug-in	Review after removing social applications/accounts.
+D	com.sonyericsson.socialengine.plugins.picasa	Sony Picasa sync plug-in	MEDIUM	REVIEW	Social engine/photo sync plug-in	Review after removing social applications/accounts.
+D	com.sonymobile.socialengine.plugins.facebook_sharefrwk	Sony Facebook share framework plug-in	MEDIUM	REVIEW	Share framework integration	Review after Phase C; share UI is not core but declared clients were not fully mapped.
+D	com.sonymobile.socialengine.plugins.twitter_sharefrwk	Sony Twitter share framework plug-in	MEDIUM	REVIEW	Share framework integration	Review after Phase C; declared clients were not fully mapped.
+D	com.sonymobile.twitter.account	Sony Twitter account provider	MEDIUM	REVIEW	Account/synchronization integration	Review only after accounts and social framework removed.
+D	com.sonyericsson.conversations	Sony SMS/MMS application	HIGH	REVIEW	Messaging client connected to telephony provider/SIM features	Do not include in the first device round; phone UI removal can affect intents and SIM paths.
+D	com.sonyericsson.simcontacts	Sony SIM contacts integration	HIGH	REVIEW	SIM/contacts feature; telephony shared-UID/provider dependencies remain	Keep until telephony stack dependency audit.
+D	com.sonyericsson.simdetection	Sony SIM detection service	HIGH	REVIEW	Hardware/SIM event integration; exact boot client not resolved	Keep; do not disable in a trial debloat.
+D	com.android.calendar	AOSP calendar UI	MEDIUM	REVIEW	User-facing calendar; provider/account dependencies remain	Can be reviewed after Google/Sony sync services removed.
+D	com.android.email	AOSP email application	MEDIUM	REVIEW	User-facing email client	Can be reviewed after accounts and sync adapters removed.
+D	com.android.exchange	Exchange account adapter	MEDIUM	REVIEW	Email/account synchronization dependency	Defer until account and sync behavior is mapped.
+D	com.android.providers.calendar	Calendar content provider	HIGH	REVIEW	Content provider consumed by account/contact clients	Do not disable until clients are removed and provider queries are tested.
+D	com.android.providers.contacts	Contacts content provider	HIGH	REVIEW	Shared data provider; phone service/client dependency not proven absent	Keep through early phases.
+D	com.android.stk	SIM Toolkit application	HIGH	REVIEW	SIM/carrier integration; system near	Keep through early phases.
+D	com.sonymobile.userdatalogging	Sony usage/diagnostics logging service	MEDIUM	REVIEW	PSS 5101 kB in B Services; system-signed background package	Candidate after device-monitor/crash/client dependency review; disable only as an individual step.
+D	com.sonyericsson.devicemonitor	Sony device monitoring service	MEDIUM	REVIEW	Persistent PSS 2853 kB; service in system process category	Review actual monitored features and service bindings first.
+D	com.sonyericsson.crashmonitor	Sony crash reporting service	MEDIUM	REVIEW	PSS 2000 kB in B Services; connected to bootinfo MiscTaService	Do not disable until its bootinfo client dependency is checked.
+D	com.sonyericsson.android.crashsms	Sony crash reporting SMS service	MEDIUM	REVIEW	Active persistent CrashSMS service; runs under shared system UID	Do not disable until bootinfo/service clients are mapped.
+D	com.sonyericsson.warrantytime	Sony warranty timestamp service	LOW	REVIEW	Active WarrantyService; 847 kB PSS	Low resource impact; disable only after confirming no provisioning/boot dependency.
+D	com.sonymobile.anondata	Sony anonymous data reporting	MEDIUM	REVIEW	System telemetry component; boot receivers not exhaustively mapped	Candidate after receiver and IDD interactions are checked.
+D	com.sonyericsson.idd.agent	Sony IDD data collection agent	MEDIUM	REVIEW	Diagnostic/usage agent; boot and telemetry role	Candidate after data-logging dependencies are mapped.
+D	com.sonyericsson.updatecenter	Sony update center	MEDIUM	REVIEW	Firmware/app update UI; no updater process observed in current snapshot	Keep update recovery path until exact stock firmware restore is verified.
+D	com.sonymobile.androidapp.diagnostics	Sony diagnostics utility	LOW	REVIEW	User-installed Sony diagnostic app; not observed in process snapshot	Retain during development; consider only after ADB/logcat path is proven.
+D	com.android.phone	Android/MediaTek telephony service	CRITICAL	NEVER	Persistent process, radio UID 1001; phone/phoneEx binder services present; shared UID with TelephonyProvider	Never include in debloat groups; possible RIL/boot dependency even with no SIM use.
+D	com.android.providers.telephony	Telephony/SMS content provider	CRITICAL	NEVER	Shares android.uid.phone with com.android.phone; provider remains a system dependency	Never disable in this phase.
+D	com.android.systemui	Status, navigation, lock-screen and system UI	CRITICAL	NEVER	Persistent process; provides statusbar/window affordances and recovery/navigation path	Keep for recovery and access to Android settings.
+D	org.farfarremote	FarfarRemote 0.2 HOME launcher and Kodi control	CRITICAL	NEVER	Installed `/data/app` HOME activity; Android network permission and core user environment	Never disable; it is the appliance UI and Kodi remote.
+D	com.android.settings	Android settings UI	CRITICAL	NEVER	Required Wi-Fi setup/input fallback and manual recovery route	Keep; FarfarRemote does not replace Wi-Fi settings.
+D	com.android.providers.settings	Android settings provider	CRITICAL	NEVER	Core provider used by launcher and all device configuration clients	Never disable.
+D	com.android.packageinstaller	APK package installation UI	CRITICAL	NEVER	Required for interactive APK installs; ADB install alone does not replace all installer paths	Keep through development and APK regression tests.
+D	com.android.shell	ADB shell package	CRITICAL	NEVER	Provides adb shell; device audit and recovery pathway depend on it	Never disable.
+D	com.android.inputdevices	Android physical input discovery	CRITICAL	NEVER	Physical key/HID input integration	Never disable; required for future buttons/controllers.
+D	com.sonymobile.touchscreen.touchfilter	Sony touchscreen filter/switch service	CRITICAL	NEVER	System-UID component, process observed (1418 kB); device touch stack integration	Never disable; touch hardware is a core FarfarRemote input.
+D	com.sonyericsson.textinput.uxp	Sony on-screen keyboard/input method	CRITICAL	NEVER	PSS 34369 kB in Perceptible; needed to enter Wi-Fi and Kodi network settings	Keep until a tested alternative input method is installed.
+D	com.sonymobile.superstamina	Sony power-management service	CRITICAL	NEVER	Active XperiaPowerService; publishes xperia_power_service binder under system UID	Never disable without power/charging dependency analysis.
+D	com.android.bluetooth	Android Bluetooth stack	HIGH	NEVER	A2DP profile service is active; future Bluetooth controls are planned	Keep; Bluetooth regression required before any vendor BT pruning.
+D	com.mediatek.bluetooth	MediaTek Bluetooth service	HIGH	NEVER	Bluetooth stack vendor process active	Keep with Bluetooth hardware/firmware.
+D	com.android.externalstorage	External storage provider	HIGH	NEVER	Storage/USB media provider; useful for recovery and APK transfer	Keep during development.
+D	com.android.providers.media	Media database provider	HIGH	NEVER	MediaStore provider and common client dependency	Keep; disabling can break camera/media consumers.
+D	com.android.keychain	Android certificate/keychain UI and service	HIGH	NEVER	TLS/credential stack; Kodi integrations may use certificate APIs	Keep.
+D	com.android.defcontainer	Default container service	HIGH	NEVER	Package installation/container handling	Keep for APK installation and updates.
+D	com.android.providers.downloads	Android download provider	HIGH	NEVER	Shared downloads/provider service	Keep for recovery downloads and package flows.
+D	com.android.providers.downloads.ui	Download UI provider	HIGH	NEVER	Paired DownloadProvider UI package	Keep until installer/downloader independence is proven.
+D	com.sonymobile.cameracommon	Sony camera common framework	HIGH	NEVER	Persistent system app/process (PSS 5579 kB); camera add-ons depend on it	Disable camera clients only; leave common framework intact.
+D	com.sonymobile.autopairing	Sony Bluetooth autopair service	HIGH	NEVER	Autopairing service process observed	Keep while Bluetooth controls remain in scope.
+D	com.sonyericsson.home	Sony HOME launcher and resource provider	HIGH	NEVER	Launcher cached PSS 23647 kB; com.android.phone declares com.sonymobile.home.resourceprovider.api	Keep as crash/settings fallback until alternate recovery launcher is proven.
+D	com.sonyericsson.home.res.overlay	Sony HOME resources overlay	HIGH	NEVER	Overlay resources associated with HOME	Keep with fallback launcher.
+D	com.sonyericsson.uxp	Sony UI framework resources	HIGH	NEVER	Vendor framework resources consumed by Sony UI/system packages	Keep.
+D	com.sonymobile.runtimeskinning.core	Sony runtime skinning framework	HIGH	NEVER	Sony framework dependency for UI; cached process seen	Keep until dependent Sony UI removal is mapped.
+D	com.sonyericsson.credentialmanagerservice	Sony credential manager	HIGH	NEVER	System credential service	Keep; account/certificate client dependency not resolved.
+D	com.sonymobile.enterprise.service	Sony enterprise service	HIGH	NEVER	Service actively binds bootinfo MiscTaService	Keep until binding and provisioning functions are understood.
+D	com.sonyericsson.android.bootinfo	Sony boot/TA information service	HIGH	NEVER	Active MiscTaService clients include enterprise service and crash monitor	Keep; platform-specific TA integration.
+D	com.mediatek.providers.drm	MediaTek DRM provider	HIGH	NEVER	Vendor DRM provider/framework integration	Keep to avoid media/boot dependencies.
+D	com.sonyericsson.android.drm.services	Sony DRM services	HIGH	NEVER	Vendor DRM stack	Keep.
+D	com.sonyericsson.oemCryptoReceiver	OEM crypto receiver	CRITICAL	NEVER	Security/platform integration receiver	Never disable.
