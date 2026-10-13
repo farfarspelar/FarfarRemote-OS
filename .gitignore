@@ -17,6 +17,12 @@ dist/*
 !dist/FarfarRemote-App-v0.4.0.apk
 !dist/FarfarRemote-OS-v0.4.0.apk
 !dist/SHA256SUMS-0.4.0.txt
+!dist/FarfarRemote-App-v0.4.1-rc1.apk
+!dist/FarfarRemote-OS-v0.4.1-rc1.apk
+!dist/SHA256SUMS-0.4.1-rc1.txt
 
 # Use the extracted asset directory as the canonical source; ZIP is a duplicate.
 FarfarRemote_Settings_Assets_v0.3.zip
+
+!dist/FarfarRemote-App-v0.4.1-rc1.apk.sha256
+!dist/FarfarRemote-OS-v0.4.1-rc1.apk.sha256

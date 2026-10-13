@@ -26,3 +26,7 @@ The three sheets have equally spaced four/five-cell layouts. Their crop edges ar
 ## Settings v0.3 assets
 
 The extracted `FarfarRemote_Settings_Assets_v0.3/` directory is the canonical source for the new Settings graphics. Its ZIP twin is byte-identical and excluded from Git to avoid a second copy. Asset inspection, selected Android derivatives, memory notes and the separate asset-license status are documented in [SETTINGS_ASSETS.md](SETTINGS_ASSETS.md).
+
+## Release-candidate screenshots
+
+The public README screenshots under `docs/screenshots/` are direct captures of the FarfarRemote App variant running on the project Xperia E4g E2003. They show the app offline and contain no Kodi endpoint or account details. They are documentation captures, not packaged UI assets.

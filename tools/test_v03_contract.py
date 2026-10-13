@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free contract guard for protected v0.3 behavior and v0.4 flavors."""
+"""Dependency-free contract guard for protected remote behavior and the v0.4.1 RC flavors."""
 
 from pathlib import Path
 import re
@@ -86,7 +86,7 @@ for name in protected_methods:
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("minSdk 19" in build and "versionCode 4" in build and "versionName '0.4.0'" in build, "API 19 and v0.4 version metadata")
+check("minSdk 19" in build and "versionCode 5" in build and "versionName '0.4.1-rc1'" in build, "API 19 and v0.4.1 RC version metadata")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
 os_manifest = ET.parse(ROOT / "app/src/os/AndroidManifest.xml").getroot()
 def categories_in(overlay):
@@ -103,7 +103,10 @@ check("ClipboardManager" in new_main and "ActivityNotFoundException" in new_main
 check("NsdManager" in new_main and '"_xbmc-jsonrpc-h._tcp."' in new_main, "Find My Kodi uses Kodi HTTP JSON-RPC DNS-SD only")
 check("Kodi did not respond" in new_main and "Use and Save" in new_main, "Kodi candidates are JSON-RPC checked and require confirmation")
 check("stopKodiDiscovery(true)" in new_main and "KODI_DISCOVERY_TIMEOUT_MS" in new_main, "discovery has timeout and lifecycle cleanup")
+check("activityStarted;" in new_main and "schedulePoll(2800)" in new_main, "Kodi polling resumes with the foreground activity")
+check("@Override protected void onStart()" in new_main and "handler.removeCallbacks(poll)" in new_main, "poll loop starts without duplicate callbacks")
+check("@Override protected void onStop()" in new_main and "activityStarted = false; handler.removeCallbacks(poll)" in new_main, "polling stops when the activity is backgrounded")
 check("setShowText(" not in new_main, "no Switch API 21 setShowText call on API 19")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4 distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.1 RC distribution and regression contract checks passed.")

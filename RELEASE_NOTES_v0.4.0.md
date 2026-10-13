@@ -1,30 +1,8 @@
-# FarfarRemote 0.4.0 — draft release notes
+# FarfarRemote 0.4.0
 
-FarfarRemote 0.4.0 provides two APKs from the same source tree.
+FarfarRemote 0.4.0 introduced two APK variants built from one shared source tree.
 
-## Choose an APK
+- **FarfarRemote App** (`org.farfarremote.app`) is a normal Android app with no HOME intent.
+- **FarfarRemote OS** (`org.farfarremote`) retains HOME launcher behavior for dedicated devices. It remains an Android app, not a separate ROM.
 
-- **FarfarRemote App** (`org.farfarremote.app`) is for everyday Android phones. It appears as a normal app and does not register as an Android HOME launcher. Android 4.4/API 19 or newer; no root or system changes.
-- **FarfarRemote OS** (`org.farfarremote`) is for dedicated devices. It retains the HOME launcher behavior and package/signing update path for existing E2003 installations. Android 4.4/API 19 or newer. It is an Android launcher configuration, not a separate ROM.
-
-Both are debug-signed APKs. Install the App APK as a separate app. For an existing OS installation, update only with the OS APK signed by its existing key; do not uninstall or clear app data.
-
-## Changes
-
-- Added Find My Kodi in the existing Kodi Connection Settings. It searches Kodi's HTTP JSON-RPC DNS-SD service on tap, checks selected endpoints over JSON-RPC, and only saves after explicit confirmation.
-- Preserved manual host/port/username/password entry and current Settings design.
-- Kept the Kodi client, preference keys and protected remote controls unchanged.
-- Added normal App launcher integration while retaining OS HOME integration.
-
-## Requirements
-
-- Android 4.4 / API 19 or newer
-- Kodi HTTP control enabled for JSON-RPC; Zeroconf announcements enabled for Find My Kodi
-- App: `org.farfarremote.app`
-- OS: `org.farfarremote`
-
-Kodi can also be configured manually when discovery is unavailable. See [README](README.md) and [TEST_REPORT](TEST_REPORT.md).
-
-## Checksums
-
-See [SHA256SUMS-0.4.0.txt](dist/SHA256SUMS-0.4.0.txt).
+Both support Android 4.4 / API 19 or newer. Find My Kodi searches for Kodi's HTTP JSON-RPC DNS-SD service when requested, verifies the endpoint, and asks before saving. Manual host, port, username, and password entry remains available. See [README.md](README.md) and [TEST_REPORT.md](TEST_REPORT.md) for setup and test details.

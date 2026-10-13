@@ -1,3 +1,58 @@
+# FarfarRemote 0.4.1 RC1 — QA report
+
+**Date:** 2026-10-13  **Branch:** `release/0.4.1-rc1`  **Base commit:** `3540884` (`feature/two-track-distribution`, v0.4.0)
+
+## Baseline and scope
+
+- The repository was clean at the base commit before RC work; the v0.4.0 tag and development branch both pointed to `3540884`. Existing working changes are isolated on this release branch.
+- Before edits, `python3 tools/test_v03_contract.py` passed. `testAppDebugUnitTest` and `testOsDebugUnitTest` both reported `NO-SOURCE`; the App and OS debug assemblies passed.
+- The only application logic change is lifecycle gating for the existing Kodi status poll in `MainActivity`: polling starts in `onStart`, is stopped and callbacks removed in `onStop`, and resumes when the activity returns. This addresses measured requests continuing while the regular App sat in the background. KodiClient, discovery, controls, Settings, preference keys, orientation logic, and manifests were not rewritten.
+- Version metadata is `0.4.1-rc1` / versionCode 5; minSdk 19 and targetSdk 28 remain. IDs remain `org.farfarremote.app` and `org.farfarremote`.
+
+## Automated and build verification
+
+- **PASS:** updated `python3 tools/test_v03_contract.py` distribution and protected-code checks. These are static source/manifest contracts, not user-interaction tests.
+- **PASS:** `./gradlew testAppDebugUnitTest testOsDebugUnitTest assembleAppDebug assembleOsDebug`; both assemblies succeeded. Unit-test tasks have no test sources (`NO-SOURCE`). JDK 21 reports the existing Java 8 source/target deprecation warning.
+- **PASS:** `tools/build_distributions.sh` validates package IDs and version metadata and creates both APKs and the SHA-256 manifest.
+- **PASS:** API metadata: minSdk 19, targetSdk 28. Merged App manifest includes `MAIN`/`LAUNCHER` and has no HOME category; OS has `MAIN`/`HOME`/`DEFAULT`.
+- **PASS:** App and OS are separately installable by distinct IDs. Both debug APKs have the same local debug signer. OS RC signer certificate SHA-256 matches the 0.4.0 OS APK: `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`.
+
+## Physical E2003 checks
+
+The attached device identified as Sony E2003, Android 4.4.4/API 19. The OS flavor was already installed at 0.4.0.
+
+- **PASS:** installed App RC beside the OS package and launched `org.farfarremote.app`. Ordinary status/navigation bars are visible. Pressing Android HOME returned to `org.farfarremote/.MainActivity`, not the App flavor. This confirms App install/launch and HOME separation on API 19; a broad test across phone vendors was not possible.
+- **PASS:** installed OS RC over the existing OS package using `adb install -r`; package reported versionCode 5/versionName `0.4.1-rc1`, and Android HOME resumed FarfarRemote OS. No uninstall or data clear occurred.
+- **PASS:** the private preferences file SHA-256 before and after OS update was unchanged: `dacd95c0d0e49155b7032d899b6a0fedcada1d0a9d23f900163d8b4d7f2df862`. Values were not printed. This verifies data preservation for the existing update.
+- **PASS:** App lifecycle polling observation: a pre-fix live warning log produced polling-related log entries while backgrounded; with RC1 the live log had a gap while HOME/backgrounded and the regular interval resumed when the App returned. The test used an empty App-flavor Kodi host, so the messages were expected connection errors; no credentials or Kodi state were changed.
+- **PASS:** one App launch sample after force-stop/start reported `TotalTime: 441 ms`. One `dumpsys meminfo` sample reported total PSS of **13,456 kB**. These are single snapshots, with no equivalent controlled 0.4.0 baseline, so they are not evidence of a speed or memory improvement. CPU samples were contaminated by build/install/package-manager activity; idle CPU is not claimed.
+- Screenshots in `docs/screenshots/` show the App variant offline. No host, user name, password, or private network address is included.
+
+## Regression coverage and what was not re-run
+
+The user’s previous manual E2003 verification covers Kodi connection, HOME launcher, portrait/landscape/Auto, volume, audio stream and subtitle stream selection, and Find My Kodi. Version 0.4.0's test report records physical Find My Kodi discovery and explicit save confirmation. The RC contract test checks protected implementation and distribution declarations; no automated behavioral Android tests exist.
+
+During RC validation, no Kodi was configured in the separate App install. Therefore D-pad, media commands, volume/mute, Now Playing/artwork/seek, audio/subtitle changes, Kodi discovery including multiple/failing endpoints, Settings save/test, Buy Me a Coffee launch, and real network interruption were **not** functionally re-run on the RC APK. The protected Kodi code was not changed. Physical sensor rotation, charger/USB behavior and Bluetooth were not re-tested.
+
+No Android emulator or newer Android device was available. The App may run on newer releases, but compatibility across modern Android devices is not verified. Current target SDK is 28; when raising target SDK, review edge-to-edge/insets behavior and newer local-network permission requirements for NSD. See [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15), [Android 17 behavior changes](https://developer.android.com/about/versions/17/behavior-changes-17), and [NsdManager](https://developer.android.com/reference/android/net/nsd/NsdManager).
+
+## Release readiness and known limits
+
+- The release APKs use the local debug signing key, which is not in Git. A stable public release needs an explicit long-term signing key/backup/update policy. Do not change the signing certificate for existing `org.farfarremote` installs.
+- The Settings asset pack has an unresolved independent license/provenance statement; review `graphics/SETTINGS_ASSETS.md` before redistributing those third-party supplied assets in a stable public release.
+- Kodi HTTP JSON-RPC is unencrypted. Use only on a trusted LAN.
+- The landscape first viewport has a scrollable control area; lower controls may require scrolling on the 540×960 device.
+- No root, bootloader unlock, firmware flash, system package disable/removal, debloat, bootanimation or system partition change was performed.
+
+## RC artifacts
+
+- `dist/FarfarRemote-App-v0.4.1-rc1.apk` — regular Android app (`org.farfarremote.app`).
+- `dist/FarfarRemote-OS-v0.4.1-rc1.apk` — dedicated HOME launcher (`org.farfarremote`).
+- `dist/SHA256SUMS-0.4.1-rc1.txt` — combined checksums; each APK also has an adjacent `.sha256` sidecar.
+- APK sizes are approximately 1.21 MB each.
+
+---
+
 # FarfarRemote OS — build and test report
 
 ## 0.2.0 baseline

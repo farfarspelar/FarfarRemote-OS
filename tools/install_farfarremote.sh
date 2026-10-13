@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ADB_BIN="${ADB:-adb}"
-APK="${1:-$ROOT_DIR/dist/FarfarRemote-OS-v0.4.0.apk}"
+APK="${1:-$ROOT_DIR/dist/FarfarRemote-OS-v0.4.1-rc1.apk}"
 if [[ -n "${AAPT:-}" ]]; then AAPT_BIN="$AAPT"; elif command -v aapt >/dev/null 2>&1; then AAPT_BIN="$(command -v aapt)"; else AAPT_BIN="$(find "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/nonexistent}}/build-tools" -name aapt -type f 2>/dev/null | sort -V | tail -n 1)"; fi
 command -v "$ADB_BIN" >/dev/null 2>&1 || { echo "adb not found" >&2; exit 1; }
 [[ -f "$APK" ]] || { echo "APK missing; build first: ./gradlew assembleDebug" >&2; exit 1; }

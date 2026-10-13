@@ -75,7 +75,7 @@ public final class MainActivity extends Activity {
     private TextView settingsKodiStatus;
     private int previousSoftInputMode;
     private boolean settingsImeModeSet;
-    private boolean inSettings, busy, draggingSeek, destroyed;
+    private boolean inSettings, busy, draggingSeek, destroyed, activityStarted;
     private boolean startupShown;
     private boolean connected;
     private int activePlayerId = -1;
@@ -110,7 +110,6 @@ public final class MainActivity extends Activity {
         applyKeepAwake();
         if (getResources().getBoolean(R.bool.dedicated_os)) getWindow().getDecorView().setSystemUiVisibility(5894 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         buildScreen();
-        handler.post(poll);
     }
 
     private void applyOrientationPreference() {
@@ -752,17 +751,22 @@ public final class MainActivity extends Activity {
 
     private final Runnable poll = new Runnable() {
         @Override public void run() {
-            if (destroyed) return;
-            if (inSettings || (busy) || (!prefs.getBoolean("auto_reconnect", true) && !connected)) { handler.postDelayed(this, 3000); return; }
+            if (destroyed || !activityStarted) return;
+            if (inSettings || (busy) || (!prefs.getBoolean("auto_reconnect", true) && !connected)) { schedulePoll(3000); return; }
             busy = true;
             io.execute(() -> {
                 KodiClient.Snapshot snapshot = null; String error = null;
                 try { snapshot = client().snapshot(); } catch (Exception e) { error = e.getMessage(); android.util.Log.w("FarfarRemote", "Kodi poll failed: " + e.getMessage()); }
                 final KodiClient.Snapshot result = snapshot; final String message = error;
-                handler.post(() -> { busy = false; if (!inSettings) { if (result != null) applySnapshot(result); else { connected = false; activePlayerId = -1; setStatus("OFFLINE · " + (message == null ? "Kodi unreachable" : message)); updateHeader(); resetPlayer(); } } handler.postDelayed(this, 2800); });
+                handler.post(() -> { busy = false; if (!activityStarted) return; if (!inSettings) { if (result != null) applySnapshot(result); else { connected = false; activePlayerId = -1; setStatus("OFFLINE · " + (message == null ? "Kodi unreachable" : message)); updateHeader(); resetPlayer(); } } schedulePoll(2800); });
             });
         }
     };
+
+    private void schedulePoll(long delayMs) {
+        handler.removeCallbacks(poll);
+        if (activityStarted && !destroyed) handler.postDelayed(poll, delayMs);
+    }
 
     private void applySnapshot(KodiClient.Snapshot s) {
         connected = s.connected; hostLabel.setText(s.hostLabel == null ? prefs.getString("host", "Kodi") : s.hostLabel);
@@ -861,6 +865,7 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override protected void onStop() { stopKodiDiscovery(true); super.onStop(); }
+    @Override protected void onStart() { super.onStart(); activityStarted = true; handler.removeCallbacks(poll); handler.post(poll); }
+    @Override protected void onStop() { activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true); super.onStop(); }
     @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
 }

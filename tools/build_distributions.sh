@@ -7,10 +7,10 @@ cd "$ROOT_DIR"
 python3 tools/test_v03_contract.py
 ./gradlew testAppDebugUnitTest testOsDebugUnitTest assembleAppDebug assembleOsDebug
 mkdir -p dist
-cp app/build/outputs/apk/app/debug/app-app-debug.apk dist/FarfarRemote-App-v0.4.0.apk
-cp app/build/outputs/apk/os/debug/app-os-debug.apk dist/FarfarRemote-OS-v0.4.0.apk
-"$AAPT_BIN" dump badging dist/FarfarRemote-App-v0.4.0.apk | grep -F "package: name='org.farfarremote.app' versionCode='4' versionName='0.4.0'" >/dev/null
-"$AAPT_BIN" dump badging dist/FarfarRemote-OS-v0.4.0.apk | grep -F "package: name='org.farfarremote' versionCode='4' versionName='0.4.0'" >/dev/null
-(cd dist && sha256sum FarfarRemote-App-v0.4.0.apk FarfarRemote-OS-v0.4.0.apk > SHA256SUMS-0.4.0.txt)
-echo "Built and checked: dist/FarfarRemote-App-v0.4.0.apk and dist/FarfarRemote-OS-v0.4.0.apk"
-cat dist/SHA256SUMS-0.4.0.txt
+cp app/build/outputs/apk/app/debug/app-app-debug.apk dist/FarfarRemote-App-v0.4.1-rc1.apk
+cp app/build/outputs/apk/os/debug/app-os-debug.apk dist/FarfarRemote-OS-v0.4.1-rc1.apk
+"$AAPT_BIN" dump badging dist/FarfarRemote-App-v0.4.1-rc1.apk | grep -F "package: name='org.farfarremote.app' versionCode='5' versionName='0.4.1-rc1'" >/dev/null
+"$AAPT_BIN" dump badging dist/FarfarRemote-OS-v0.4.1-rc1.apk | grep -F "package: name='org.farfarremote' versionCode='5' versionName='0.4.1-rc1'" >/dev/null
+(cd dist && sha256sum FarfarRemote-App-v0.4.1-rc1.apk > FarfarRemote-App-v0.4.1-rc1.apk.sha256 && sha256sum FarfarRemote-OS-v0.4.1-rc1.apk > FarfarRemote-OS-v0.4.1-rc1.apk.sha256 && sha256sum FarfarRemote-App-v0.4.1-rc1.apk FarfarRemote-OS-v0.4.1-rc1.apk > SHA256SUMS-0.4.1-rc1.txt)
+echo "Built and checked: dist/FarfarRemote-App-v0.4.1-rc1.apk and dist/FarfarRemote-OS-v0.4.1-rc1.apk"
+cat dist/SHA256SUMS-0.4.1-rc1.txt
