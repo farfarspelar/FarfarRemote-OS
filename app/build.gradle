@@ -8,8 +8,20 @@ android {
         applicationId 'org.farfarremote'
         minSdk 19
         targetSdk 28
-        versionCode 3
-        versionName '0.3.0'
+        versionCode 4
+        versionName '0.4.0'
+    }
+    flavorDimensions 'distribution'
+    productFlavors {
+        app {
+            dimension 'distribution'
+            applicationId 'org.farfarremote.app'
+        }
+        os {
+            dimension 'distribution'
+            // Keep the package ID used by the existing Xperia OS installation.
+            applicationId 'org.farfarremote'
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

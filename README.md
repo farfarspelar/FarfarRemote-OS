@@ -1,17 +1,36 @@
-# FarfarRemote OS 0.3.0
+# FarfarRemote 0.4.0
 
-En dedikerad Kodi-fjärrkontroll för Xperia E4g E2003. Projektet behåller Android-paketet `org.farfarremote`, HOME-launcher-intentet och inställningsfilen från 0.1/0.2. Version 0.3 fokuserar på Settings-designen och ändrar inte Kodi-klienten eller fjärrkontrollens funktionslager. Ingen Play Services-integration eller extern applikationsberoende har lagts till.
+FarfarRemote controls Kodi over its HTTP JSON-RPC interface. It now ships in two Android variants built from the same source and sharing the Kodi client, remote controls, Settings, graphics and preferences logic.
 
-## Bygg och installera på Linux Mint
+**FarfarRemote App**
 
-Krav: JDK 17+, Android SDK Platform 34 och Build Tools 34.0.0. Gradle Wrapper använder Gradle 8.7.
+For everyday Android phones. Install the APK and use it like any other app. No root or system modification is required. It has a normal app icon, does not claim the Android HOME role, and keeps Android's ordinary navigation. Its separate package ID (`org.farfarremote.app`) allows it to coexist with FarfarRemote OS.
+
+**FarfarRemote OS**
+
+For dedicated remote-control devices. Uses FarfarRemote as the Android HOME launcher and retains the established package ID (`org.farfarremote`) for in-place updates on the Xperia E2003. Android system optimization is optional and is a separate advanced procedure; this release does not root, flash or debloat a device.
+
+Both variants require Android 4.4/API 19 or newer and include the existing Kodi controls, Audio/Subtitles selection, orientation modes, Settings and Buy Me a Coffee link. No Google Play Services or tracking SDK is used.
+
+## Build and install
+
+Build both debug APKs on Linux Mint with JDK 17+, Android SDK Platform 34 and Build Tools 34.0.0 (Gradle Wrapper 8.7):
 
 ```sh
-./gradlew assembleDebug
-./tools/install_farfarremote.sh dist/FarfarRemote-0.3.0-api19-debug.apk
+ANDROID_HOME="$HOME/Android/Sdk" ./tools/build_distributions.sh
 ```
 
-APK: [FarfarRemote-0.3.0-api19-debug.apk](dist/FarfarRemote-0.3.0-api19-debug.apk), minSdk/API 19, versionCode 3. Byggresultatet ligger även i `app/build/outputs/apk/debug/app-debug.apk`. Installationsskriptet kräver en enda auktoriserad ADB-enhet med E2003-identitet och kör `adb install -r`; det avinstallerar inte appen och rensar inte inställningar. Välj FarfarRemote som Android HOME när systemet frågar.
+The script runs available Gradle unit-test tasks, assembles both flavors, verifies package/version IDs, and writes SHA-256 checksums. Artifacts are `dist/FarfarRemote-App-v0.4.0.apk` and `dist/FarfarRemote-OS-v0.4.0.apk`. These are debug-signed builds. OS updates require the same signing key used for the installed build; the repository's current debug key matches the v0.3 APK used in development.
+
+Install the ordinary app with `./tools/install_app.sh`. To update the dedicated E2003 installation, use `ANDROID_HOME=... ./tools/install_farfarremote.sh`; this script checks that the APK is the OS package, confirms E2003 identity and uses `adb install -r` without clearing app data. Never give the App APK to the OS installer; the package check rejects it.
+
+## Kodi discovery
+
+Settings retains the manual host, port, username and password fields. **Find My Kodi** searches only when tapped, using Android Network Service Discovery for Kodi's HTTP JSON-RPC DNS-SD service (`_xbmc-jsonrpc-h._tcp.`). A discovered endpoint is tested through Kodi JSON-RPC with the credentials currently in the visible fields. Only after the user chooses **Use and Save** are its host and port written; failed tests and canceled discovery leave existing settings intact. Kodi must announce services through Zeroconf and have HTTP control enabled; manual IP entry remains available. Kodi documents service announcements in [Settings → Services → General](https://kodi.wiki/view/Settings/Services/General), HTTP JSON-RPC setup in its [remote-control guide](https://kodi.wiki/view/Smartphone/tablet_remotes), and the `_xbmc-jsonrpc-h._tcp` HTTP service in Kodi service logs/source examples. Android NSD manages discovery itself; FarfarRemote does not hold a permanent multicast lock or scan in the background.
+
+## Previous v0.3 documentation
+
+The established Settings graphics, inline settings structure and GPL-3.0 license are retained. See the later sections below for build history, Kodi setup, graphics origin, tests and the separate Debloat 0.1 plan.
 
 ## Användning
 

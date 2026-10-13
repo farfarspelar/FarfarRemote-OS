@@ -6,12 +6,6 @@
         android:allowBackup="false" android:supportsRtl="false" android:usesCleartextTraffic="true">
         <activity android:name=".MainActivity" android:configChanges="keyboardHidden|orientation|screenSize"
             android:launchMode="singleTask"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.HOME" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+            android:exported="true" />
     </application>
 </manifest>

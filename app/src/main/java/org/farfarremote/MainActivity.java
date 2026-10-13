@@ -49,13 +49,21 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import android.net.Uri;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import java.util.Locale;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Remote UI and input/action layer. Network operations are serialized off the UI thread. */
 public final class MainActivity extends Activity {
     private static final String PREFS = "farfarremote"; // Keep 0.1 preference file/key names for upgrade continuity.
+    private static final String KODI_HTTP_SERVICE = "_xbmc-jsonrpc-h._tcp.";
+    private static final long KODI_DISCOVERY_TIMEOUT_MS = 8000;
     private static final int BG = Color.rgb(7, 15, 27), PANEL = Color.rgb(14, 28, 45), TEXT = Color.rgb(235, 243, 252), MUTED = Color.rgb(154, 177, 202), CYAN = Color.rgb(35, 170, 255), GREEN = Color.rgb(52, 222, 157), RED = Color.rgb(255, 112, 116);
     private static final String COFFEE_URL = "https://buymeacoffee.com/farfarspelar";
 
@@ -73,6 +81,23 @@ public final class MainActivity extends Activity {
     private int activePlayerId = -1;
     private String currentArtwork = "";
     private Bitmap artwork;
+    private NsdManager nsdManager;
+    private NsdManager.DiscoveryListener kodiDiscovery;
+    private AlertDialog discoveryDialog;
+    private final ArrayDeque<NsdServiceInfo> pendingKodiServices = new ArrayDeque<>();
+    private final ArrayList<KodiEndpoint> resolvedKodiEndpoints = new ArrayList<>();
+    private final Set<String> seenKodiEndpoints = new HashSet<>();
+    private boolean resolvingKodiService, kodiDiscoveryTimedOut;
+    private Runnable kodiDiscoveryTimeout;
+    private EditText discoveryHostField, discoveryPortField, discoveryUsernameField, discoveryPasswordField;
+
+    private static final class KodiEndpoint {
+        final String name, host, port;
+        String state = "Checking…";
+        KodiEndpoint(String name, String host, int port) { this.name = name; this.host = host; this.port = String.valueOf(port); }
+        String key() { return host + ":" + port; }
+        String label() { return name + "\n" + host + ":" + port + " · " + state; }
+    }
 
     private TextView status, hostLabel, titleText, episodeText, elapsedText, durationText, stateText, audioValue, subsValue, connectionNote, settingsFeedback, volumeValue;
     private ImageView poster;
@@ -83,7 +108,7 @@ public final class MainActivity extends Activity {
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         applyOrientationPreference();
         applyKeepAwake();
-        getWindow().getDecorView().setSystemUiVisibility(5894 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        if (getResources().getBoolean(R.bool.dedicated_os)) getWindow().getDecorView().setSystemUiVisibility(5894 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         buildScreen();
         handler.post(poll);
     }
@@ -302,7 +327,7 @@ public final class MainActivity extends Activity {
         LinearLayout header = row(root); header.setGravity(Gravity.CENTER_VERTICAL); header.setPadding(dp(10), 0, dp(8), 0); header.setBackgroundResource(R.drawable.settings_header);
         ImageView headerIcon = settingsIcon(R.drawable.settings_ic_settings, "Settings"); header.addView(headerIcon, new LinearLayout.LayoutParams(dp(34), dp(34)));
         LinearLayout headerText = column(); headerText.setPadding(dp(8), 0, 0, 0); header.addView(headerText, new LinearLayout.LayoutParams(0, -2, 1));
-        headerText.addView(text("Settings", 21, TEXT, true)); headerText.addView(text("FarfarRemote OS", 11, MUTED, false));
+        headerText.addView(text("Settings", 21, TEXT, true)); headerText.addView(text(getResources().getBoolean(R.bool.dedicated_os) ? "FarfarRemote OS" : "Kodi Remote App", 11, MUTED, false));
         TextView close = text("×", 30, CYAN, true); close.setGravity(Gravity.CENTER); close.setContentDescription("Close settings"); close.setOnClickListener(v -> closeSettings()); header.addView(close, new LinearLayout.LayoutParams(dp(42), dp(46)));
 
         LinearLayout connection = settingsCard(root, "Kodi Connection", R.drawable.settings_ic_wifi);
@@ -327,6 +352,8 @@ public final class MainActivity extends Activity {
         LinearLayout actions = row(connection);
         actionButton(actions, R.drawable.settings_ic_test, "Test Connection", false, () -> testConnection(host, port, username, password));
         actionButton(actions, R.drawable.settings_ic_save, "Save", true, () -> saveConnection(host, port, username, password));
+        LinearLayout discoverRow = row(connection); discoverRow.setGravity(Gravity.CENTER);
+        discoverRow.addView(makeActionButton(R.drawable.settings_ic_wifi, "Find My Kodi", false, () -> findKodi(host, port, username, password)), new LinearLayout.LayoutParams(-1, dp(46)));
         LinearLayout wifiRow = row(connection); wifiRow.setGravity(Gravity.CENTER);
         wifiRow.addView(makeActionButton(R.drawable.settings_ic_wifi, "Wi-Fi Settings", false, this::openWifiSettings), new LinearLayout.LayoutParams(dp(220), dp(48)));
         settingsFeedback = text(connected ? "Kodi connected" : "Kodi offline · settings are available", 12, connected ? GREEN : MUTED, false);
@@ -420,7 +447,7 @@ public final class MainActivity extends Activity {
     }
     private void selectOrientation(LinearLayout group, String value) { for (int i = 0; i < group.getChildCount(); i++) { RadioButton rb = (RadioButton) group.getChildAt(i); rb.setChecked(value.equals(rb.getTag())); } }
 
-    private void closeSettings() { buildScreen(); }
+    private void closeSettings() { stopKodiDiscovery(true); buildScreen(); }
 
     private void openCoffeeLink() {
         Uri uri = Uri.parse(COFFEE_URL);
@@ -448,6 +475,161 @@ public final class MainActivity extends Activity {
             });
         } catch (Exception e) { settingsMessage(e.getMessage(), RED); }
     }
+
+    private void findKodi(EditText hostField, EditText portField, EditText usernameField, EditText passwordField) {
+        stopKodiDiscovery(true);
+        discoveryHostField = hostField; discoveryPortField = portField; discoveryUsernameField = usernameField; discoveryPasswordField = passwordField;
+        nsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+        if (nsdManager == null) { settingsMessage("Network service discovery is unavailable on this Android device.", RED); return; }
+        pendingKodiServices.clear(); resolvedKodiEndpoints.clear(); seenKodiEndpoints.clear(); resolvingKodiService = false; kodiDiscoveryTimedOut = false;
+        discoveryDialog = new AlertDialog.Builder(this).setTitle("Find My Kodi")
+                .setMessage("Searching the local network for Kodi HTTP JSON-RPC…")
+                .setNegativeButton("Cancel", (dialog, which) -> stopKodiDiscovery(true)).create();
+        discoveryDialog.setOnCancelListener(dialog -> stopKodiDiscovery(true));
+        discoveryDialog.show();
+        kodiDiscovery = new NsdManager.DiscoveryListener() {
+            @Override public void onDiscoveryStarted(String serviceType) { }
+            @Override public void onServiceFound(NsdServiceInfo service) {
+                if (!KODI_HTTP_SERVICE.equals(service.getServiceType())) return;
+                pendingKodiServices.add(service); resolveNextKodiService();
+            }
+            @Override public void onServiceLost(NsdServiceInfo service) { }
+            @Override public void onDiscoveryStopped(String serviceType) { }
+            @Override public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+                stopKodiDiscovery(true); showKodiDiscoveryError("Android could not start local network discovery (" + errorCode + ").");
+            }
+            @Override public void onStopDiscoveryFailed(String serviceType, int errorCode) { stopKodiDiscovery(false); }
+        };
+        try {
+            nsdManager.discoverServices(KODI_HTTP_SERVICE, NsdManager.PROTOCOL_DNS_SD, kodiDiscovery);
+            kodiDiscoveryTimeout = () -> {
+                kodiDiscoveryTimeout = null;
+                kodiDiscoveryTimedOut = true;
+                stopDiscoveryOnly();
+                resolveNextKodiService();
+                if (discoveryDialog == null) return;
+                kodiDiscoveryTimeout = () -> {
+                    kodiDiscoveryTimeout = null;
+                    pendingKodiServices.clear();
+                    resolvingKodiService = false;
+                    showKodiCandidates();
+                };
+                handler.postDelayed(kodiDiscoveryTimeout, 2000);
+            };
+            handler.postDelayed(kodiDiscoveryTimeout, KODI_DISCOVERY_TIMEOUT_MS);
+        } catch (Exception e) {
+            stopKodiDiscovery(true); showKodiDiscoveryError("Could not search for Kodi: " + safeMessage(e));
+        }
+    }
+
+    private void resolveNextKodiService() {
+        if (resolvingKodiService || pendingKodiServices.isEmpty()) {
+            if (!resolvingKodiService && pendingKodiServices.isEmpty() && kodiDiscoveryTimedOut) showKodiCandidates();
+            return;
+        }
+        resolvingKodiService = true;
+        NsdServiceInfo service = pendingKodiServices.removeFirst();
+        try {
+            nsdManager.resolveService(service, new NsdManager.ResolveListener() {
+                @Override public void onResolveFailed(NsdServiceInfo ignored, int errorCode) {
+                    resolvingKodiService = false; resolveNextKodiService();
+                }
+                @Override public void onServiceResolved(NsdServiceInfo found) {
+                    java.net.InetAddress address = found.getHost();
+                    if (address != null && found.getPort() > 0) {
+                        KodiEndpoint endpoint = new KodiEndpoint(found.getServiceName(), address.getHostAddress(), found.getPort());
+                        if (seenKodiEndpoints.add(endpoint.key())) resolvedKodiEndpoints.add(endpoint);
+                    }
+                    resolvingKodiService = false; resolveNextKodiService();
+                }
+            });
+        } catch (Exception e) { resolvingKodiService = false; resolveNextKodiService(); }
+    }
+
+    private void stopDiscoveryOnly() {
+        if (kodiDiscoveryTimeout != null) { handler.removeCallbacks(kodiDiscoveryTimeout); kodiDiscoveryTimeout = null; }
+        if (nsdManager != null && kodiDiscovery != null) {
+            try { nsdManager.stopServiceDiscovery(kodiDiscovery); } catch (Exception ignored) { }
+            kodiDiscovery = null;
+        }
+    }
+
+    private void stopKodiDiscovery(boolean dismiss) {
+        kodiDiscoveryTimedOut = false;
+        pendingKodiServices.clear();
+        stopDiscoveryOnly();
+        if (dismiss && discoveryDialog != null) { AlertDialog dialog = discoveryDialog; discoveryDialog = null; if (dialog.isShowing()) dialog.dismiss(); }
+        else discoveryDialog = null;
+    }
+
+    private void showKodiDiscoveryError(String message) {
+        if (destroyed || !inSettings) return;
+        settingsMessage(message, RED);
+    }
+
+    private void showKodiCandidates() {
+        if (destroyed || !inSettings || discoveryDialog == null) return;
+        if (kodiDiscoveryTimeout != null) { handler.removeCallbacks(kodiDiscoveryTimeout); kodiDiscoveryTimeout = null; }
+        AlertDialog searching = discoveryDialog; discoveryDialog = null;
+        if (searching.isShowing()) searching.dismiss();
+        if (resolvedKodiEndpoints.isEmpty()) {
+            new AlertDialog.Builder(this).setTitle("No Kodi found")
+                    .setMessage("Check that Kodi and this device are on the same network, Zeroconf/service announcements are enabled in Kodi, and HTTP control is enabled. You can still enter the Kodi IP address manually.")
+                    .setPositiveButton("OK", null).show();
+            settingsMessage("No Kodi HTTP JSON-RPC service found. Manual connection is still available.", MUTED);
+            return;
+        }
+        String[] labels = new String[resolvedKodiEndpoints.size()];
+        for (int i = 0; i < labels.length; i++) {
+            KodiEndpoint endpoint = resolvedKodiEndpoints.get(i);
+            labels[i] = endpoint.name + "\n" + endpoint.host + ":" + endpoint.port + " · Discovered, not yet verified";
+        }
+        new AlertDialog.Builder(this).setTitle("Kodi devices found")
+                .setItems(labels, (dialog, which) -> verifyKodiCandidate(resolvedKodiEndpoints.get(which)))
+                .setNegativeButton("Cancel", null).show();
+    }
+
+    private void verifyKodiCandidate(KodiEndpoint endpoint) {
+        final EditText hostField = discoveryHostField, portField = discoveryPortField;
+        final EditText usernameField = discoveryUsernameField, passwordField = discoveryPasswordField;
+        final String username = usernameField == null ? prefs.getString("user", "") : usernameField.getText().toString();
+        final String password = passwordField == null ? prefs.getString("pass", "") : passwordField.getText().toString();
+        settingsMessage("Checking " + endpoint.name + "…", MUTED);
+        io.execute(() -> {
+            String kodiName = endpoint.name; String failure = null;
+            try {
+                KodiClient candidate = new KodiClient(endpoint.host, endpoint.port, username, password);
+                candidate.ping();
+                JSONObject app = candidate.call("Application.GetProperties", new JSONObject().put("properties", new JSONArray().put("name")));
+                kodiName = app.optString("name", endpoint.name);
+            } catch (Exception e) { failure = safeMessage(e); }
+            final String verifiedName = kodiName, problem = failure;
+            handler.post(() -> {
+                if (destroyed || !inSettings) return;
+                if (problem != null) {
+                    settingsMessage("Could not verify " + endpoint.name + ": " + problem, RED);
+                    new AlertDialog.Builder(this).setTitle("Kodi did not respond")
+                            .setMessage(problem + "\n\nYour saved Kodi connection was not changed. Check the existing username/password fields or use manual settings.")
+                            .setPositiveButton("OK", null).show();
+                    return;
+                }
+                new AlertDialog.Builder(this).setTitle("Use this Kodi?")
+                        .setMessage(verifiedName + "\n" + endpoint.host + ":" + endpoint.port + "\n\nChoose Use and Save to replace the current connection settings.")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Use and Save", (dialog, which) -> {
+                            if (hostField != null && portField != null && usernameField != null && passwordField != null) {
+                                hostField.setText(endpoint.host); portField.setText(endpoint.port);
+                                saveConnection(hostField, portField, usernameField, passwordField);
+                            } else {
+                                prefs.edit().putString("host", endpoint.host).putString("port", endpoint.port).apply();
+                                connected = true; settingsMessage("Kodi connection saved · " + verifiedName, GREEN); checkKodiNow();
+                            }
+                        }).show();
+            });
+        });
+    }
+
+    private String safeMessage(Exception e) { return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(); }
 
     private void saveConnection(EditText host, EditText port, EditText username, EditText password) {
         String h = host.getText().toString().trim(), p = port.getText().toString().trim();
@@ -665,7 +847,7 @@ public final class MainActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_LEFT: action(c -> c.call("Input.Left", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: action(c -> c.call("Input.Right", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: action(c -> c.call("Input.Select", new JSONObject())); return true;
-            case KeyEvent.KEYCODE_BACK: if (inSettings) { closeSettings(); return true; } back(); return true;
+            case KeyEvent.KEYCODE_BACK: if (inSettings) { closeSettings(); return true; } if (!getResources().getBoolean(R.bool.dedicated_os)) return super.onKeyDown(keyCode, event); back(); return true;
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: playPause(); return true;
             case KeyEvent.KEYCODE_MEDIA_STOP: stop(); return true;
             case KeyEvent.KEYCODE_MEDIA_NEXT: goTo("next"); return true;
@@ -679,5 +861,6 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override protected void onDestroy() { destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
+    @Override protected void onStop() { stopKodiDiscovery(true); super.onStop(); }
+    @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
 }

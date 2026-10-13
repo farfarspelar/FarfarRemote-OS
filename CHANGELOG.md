@@ -16,3 +16,10 @@
 - Added a Kodi JSON-RPC client for connection/player state, metadata, seek/progress, audio/subtitle selection, playback, navigation, media windows and volume/mute.
 - Added an app-ready splash overlay. Android boot animation, system partitions, root and debloat were not changed.
 - Updated package version from 0.1.0 to 0.2.0; minSdk remains 19. No new third-party libraries or Play Services.
+# 0.4.0 — 2026-10-13
+
+- Added `app` and `os` Gradle product flavors sharing all Kodi and UI code.
+- App flavor (`org.farfarremote.app`) has a normal launcher icon and no HOME intent; OS flavor retains `org.farfarremote` and HOME launcher behavior for in-place Xperia updates.
+- Added tap-to-search Find My Kodi via Kodi HTTP JSON-RPC DNS-SD, with endpoint verification, explicit save confirmation, timeout and lifecycle cleanup.
+- Kept manual Kodi configuration, preference keys and core Kodi client unchanged.
+- Added separate App/OS build and install scripts plus versioned APK/checksum artifacts.

@@ -1,0 +1,2 @@
+a0c4d5e20a464b7bfd4fccd158eb58f9926a726935e0935058b4c9b3ba9e7380  FarfarRemote-App-v0.4.0.apk
+4868084918a6833c60562e8feb664bb315da2a043a85c9f14fbfdc248ba5ff1e  FarfarRemote-OS-v0.4.0.apk

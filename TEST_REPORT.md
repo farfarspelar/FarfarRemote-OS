@@ -80,3 +80,40 @@ KodiClient, D-pad, play/stop/navigation/volume/seek/track selection methods, lau
 An on-device Settings-screen sample reported **20,123 kB PSS**. The v0.2 report's **18,100 kB** was a separate warm-idle remote-screen sample, so they are not a valid same-state comparison and do not isolate the PNG memory cost. The supplied screen backgrounds are only 540×960/960×540; selected source icons are reduced from 128×128 to 64×64. There are no new runtime libraries, ongoing animations or network polling while Settings is open.
 
 Not re-tested: Wi-Fi loss/reconnect, Kodi-offline errors, no-browser fallback, haptic hardware behavior, a real physical sensor turn in Auto, cold boot, or the complete transport/D-pad command map. The device remained connected to Kodi during the test. No root, debloat, package disabling, bootloader or firmware operation was performed.
+# FarfarRemote 0.4.0 — two-track build and Kodi discovery
+
+**Date:** 2026-10-13
+**Branch:** `feature/two-track-distribution`
+**Baseline:** stable v0.3.0 at `d73a8b0`, after v0.2 baseline `a840155`.
+
+## Automated checks
+
+- **PASS:** v0.3 regression contract passed in a detached, clean worktree before implementation.
+- **PASS:** updated source contract confirms the protected Kodi client and remote-control methods are byte-for-byte unchanged from v0.2. It also checks API 19, both application IDs and flavor intent filters, saved preference keys, discovery type, confirmation and timeout/lifecycle cleanup.
+- **PASS:** `testAppDebugUnitTest`, `testOsDebugUnitTest`, `assembleAppDebug` and `assembleOsDebug` completed. Gradle reports no unit test sources (`NO-SOURCE`); the Python contract test provides the automated regression assertions.
+- **PASS:** `aapt dump badging` reports both APKs at versionCode 4/versionName 0.4.0/minSdk 19. App package is `org.farfarremote.app`; OS package remains `org.farfarremote`.
+- **PASS:** merged manifests show App has `MAIN` + `LAUNCHER` and no `HOME`; OS has `MAIN` + `HOME` + `DEFAULT` and no app-flavor identity.
+- **PASS:** OS v0.4 APK signer SHA-256 matches the v0.3 debug APK signer.
+
+## Physical Xperia E2003 checks
+
+- **PASS:** updated the existing OS package on the attached E2003 with `adb install -r`. It reports version 0.4.0 and continues to open as the selected HOME activity.
+- **PASS:** the `farfarremote.xml` preference file SHA-256 remained `dacd95c0d0e49155b7032d899b6a0fedcada1d0a9d23f900163d8b4d7f2df862` before and after both OS updates. No preference values were logged or changed.
+- **PASS:** OS remains connected to the existing Kodi endpoint and displays current Now Playing state after update. No playback or volume command was issued.
+- **PASS:** Find My Kodi discovered one Kodi instance through `_xbmc-jsonrpc-h._tcp.`. Selecting it passed `JSONRPC.Ping` and `Application.GetProperties`; the explicit Use and Save confirmation appeared. Canceling it left the settings hash unchanged.
+- **PASS:** installed App beside OS on the same E2003. Android installed it as a separate package and direct launch opened it. Its normal Android status/navigation bars were visible. Pressing Android HOME returned to the existing OS launcher. Removed only the temporary `org.farfarremote.app` test install afterward; `org.farfarremote` stayed installed as v0.4.0.
+- **PASS:** the App flavor's debug APK and OS flavor's debug APK share the local debug signing identity. Both use distinct package IDs and therefore cannot replace each other.
+
+## Not verified on hardware
+
+- Current E2003 runs Android 4.4.4/API 19. A newer Android version/emulator was not available, so newer-version behavior is not claimed.
+- Multiple Kodi instances, failed/auth-rejected endpoints, Zeroconf disabled/no-result behavior and discovery interrupted by a lifecycle transition were not physically simulated. The active Kodi instance proved DNS-SD discovery and authenticated JSON-RPC verification.
+- D-pad, transport, volume, audio/subtitle changes, seek, physical sensor rotation and Wi-Fi interruption were not re-issued after this build because those actions affect active Kodi playback/state. Their protected code is unchanged from v0.2; earlier physical verification is recorded above in the v0.3 report and by the user.
+- Automatic Gradle unit tests have no source files and therefore report `NO-SOURCE`. Android runtime checks were manual ADB checks on the E2003.
+- The build uses JDK 21 while targeting Java 8 source/bytecode; Gradle emits the JDK deprecation warning. Build and API 19 compilation succeed.
+
+## APK artifacts
+
+- `dist/FarfarRemote-App-v0.4.0.apk` — ordinary app, `org.farfarremote.app`.
+- `dist/FarfarRemote-OS-v0.4.0.apk` — HOME launcher, `org.farfarremote`.
+- SHA-256 values are in `dist/SHA256SUMS-0.4.0.txt`.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small dependency-free guard for the v0.3 Settings-only change set."""
+"""Dependency-free contract guard for protected v0.3 behavior and v0.4 flavors."""
 
 from pathlib import Path
 import re
@@ -84,21 +84,26 @@ protected_methods = (
 for name in protected_methods:
     check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from v0.2")
 
-manifest = ET.parse(ROOT / "app/src/main/AndroidManifest.xml").getroot()
-application = manifest.find("application")
-activity = application.find("activity")
-categories = {node.attrib.get(f"{{{ANDROID}}}name") for node in activity.findall("intent-filter/category")}
 build = (ROOT / "app/build.gradle").read_text()
-check("applicationId 'org.farfarremote'" in build, "applicationId retained")
-check("minSdk 19" in build and "versionCode 3" in build and "versionName '0.3.0'" in build, "API 19 and v0.3 version metadata")
-check("android.intent.category.HOME" in categories and "android.intent.category.DEFAULT" in categories, "HOME launcher intent retained")
+check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
+check("minSdk 19" in build and "versionCode 4" in build and "versionName '0.4.0'" in build, "API 19 and v0.4 version metadata")
+app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
+os_manifest = ET.parse(ROOT / "app/src/os/AndroidManifest.xml").getroot()
+def categories_in(overlay):
+    return {node.attrib.get(f"{{{ANDROID}}}name") for node in overlay.findall(".//intent-filter/category")}
+check("android.intent.category.LAUNCHER" in categories_in(app_manifest), "App flavor has normal launcher icon")
+check("android.intent.category.HOME" not in categories_in(app_manifest), "App flavor does not claim HOME")
+check("android.intent.category.HOME" in categories_in(os_manifest) and "android.intent.category.DEFAULT" in categories_in(os_manifest), "OS flavor retains HOME launcher intent")
 
 for key in ("host", "port", "user", "pass", "orientation", "keep_awake", "auto_reconnect", "haptics"):
     check(f'"{key}"' in new_main, f"preference key {key} retained")
 
 check('https://buymeacoffee.com/farfarspelar' in new_main and "Intent.ACTION_VIEW" in new_main, "support link uses requested external ACTION_VIEW URL")
 check("ClipboardManager" in new_main and "ActivityNotFoundException" in new_main, "no-browser clipboard fallback present")
+check("NsdManager" in new_main and '"_xbmc-jsonrpc-h._tcp."' in new_main, "Find My Kodi uses Kodi HTTP JSON-RPC DNS-SD only")
+check("Kodi did not respond" in new_main and "Use and Save" in new_main, "Kodi candidates are JSON-RPC checked and require confirmation")
+check("stopKodiDiscovery(true)" in new_main and "KODI_DISCOVERY_TIMEOUT_MS" in new_main, "discovery has timeout and lifecycle cleanup")
 check("setShowText(" not in new_main, "no Switch API 21 setShowText call on API 19")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All v0.3 Settings contract checks passed.")
+print("All FarfarRemote v0.4 distribution and regression contract checks passed.")
