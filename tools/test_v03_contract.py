@@ -76,13 +76,20 @@ new_client = (ROOT / "app/src/main/java/org/farfarremote/KodiClient.java").read_
 check(new_client == old_client, "KodiClient byte-for-byte unchanged from v0.2 baseline")
 
 protected_methods = (
-    "applyOrientationPreference", "applyKeepAwake", "buildPortrait", "buildLandscape",
+    "applyOrientationPreference", "applyKeepAwake",
     "addDpad", "showStreams", "presentTracks", "chooseStream", "back", "playPause",
     "stop", "seekStep", "goTo", "seekPercent", "activate", "adjustVolume",
     "toggleMute", "action", "client", "applySnapshot",
 )
 for name in protected_methods:
     check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from v0.2")
+
+def without_power_placement(source):
+    return source.replace("        addPowerControl(controls);\n", "").replace("        addPowerControl(tail);\n", "")
+
+for name in ("buildPortrait", "buildLandscape"):
+    check(without_power_placement(method_block(new_main, name)) == method_block(old_main, name),
+          f"{name} unchanged except for the Power Off control")
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
@@ -105,6 +112,9 @@ check('https://buymeacoffee.com/farfarspelar' in new_main and "Intent.ACTION_VIE
 check("ClipboardManager" in new_main and "ActivityNotFoundException" in new_main, "no-browser clipboard fallback present")
 check("NsdManager" in new_main and '"_xbmc-jsonrpc-h._tcp."' in new_main, "Find My Kodi uses Kodi HTTP JSON-RPC DNS-SD only")
 check("Kodi did not respond" in new_main and "Use and Save" in new_main, "Kodi candidates are JSON-RPC checked and require confirmation")
+check('call("System.Shutdown", new JSONObject())' in new_main and 'Power off Kodi?' in new_main,
+      "Power Off requires confirmation and calls Kodi System.Shutdown")
+check("The Android remote will stay on." in new_main, "Power Off confirmation distinguishes Kodi host from Android remote")
 check("stopKodiDiscovery(true)" in new_main and "KODI_DISCOVERY_TIMEOUT_MS" in new_main, "discovery has timeout and lifecycle cleanup")
 check("activityStarted;" in new_main and "schedulePoll(2800)" in new_main, "Kodi polling resumes with the foreground activity")
 check("@Override protected void onStart()" in new_main and "handler.removeCallbacks(poll)" in new_main, "poll loop starts without duplicate callbacks")

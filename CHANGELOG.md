@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added a confirmed Power Off control that asks Kodi to shut down the Kodi host; the Android remote stays on.
+
 ## 0.4.2 RC1 — Release track SDK split
 
 - Split the target SDK strategy: FarfarRemote App targets API 36; FarfarRemote OS stays at API 28 for the proven Xperia HOME setup.

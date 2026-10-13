@@ -12,7 +12,9 @@ import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -77,6 +79,7 @@ public final class MainActivity extends Activity {
     private boolean settingsImeModeSet;
     private boolean inSettings, busy, draggingSeek, destroyed, activityStarted;
     private boolean startupShown;
+    private boolean kodiShutdownRequested;
     private boolean connected;
     private int activePlayerId = -1;
     private String currentArtwork = "";
@@ -207,6 +210,7 @@ public final class MainActivity extends Activity {
         addIconControl(controls, R.drawable.action_home, "Home", 1f, () -> action(c -> c.call("Input.Home", new JSONObject())));
         addIconControl(controls, R.drawable.action_play_pause, "Play / Pause", 1.12f, this::playPause);
         addIconControl(controls, R.drawable.action_stop, "Stop", 1f, this::stop);
+        addPowerControl(controls);
         addIconControl(controls, R.drawable.action_settings, "Settings", 1f, this::showSettings);
         LinearLayout nav = row(root); nav.setGravity(Gravity.CENTER_VERTICAL);
         addDpad(nav, 1.35f);
@@ -238,6 +242,7 @@ public final class MainActivity extends Activity {
         addIconControl(transport, R.drawable.action_next, "Next", 1f, () -> goTo("next"));
         addIconControl(transport, R.drawable.action_fast_forward, "Fast forward", 1f, () -> seekStep("bigforward"));
         LinearLayout tail = row(right); tail.setGravity(Gravity.CENTER);
+        addPowerControl(tail);
         ImageView settings = new ImageView(this); settings.setImageResource(R.drawable.action_settings); settings.setScaleType(ImageView.ScaleType.FIT_CENTER); settings.setContentDescription("Settings"); settings.setOnClickListener(v -> showSettings()); tail.addView(settings, new LinearLayout.LayoutParams(dp(66), dp(58)));
         addCategories(right);
         return outer;
@@ -334,6 +339,30 @@ public final class MainActivity extends Activity {
         TextView caption = text(label, isLandscape() ? 9 : 9, MUTED, false); caption.setGravity(Gravity.CENTER); caption.setMaxLines(1); box.addView(caption);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, weight); lp.leftMargin = dp(1); lp.rightMargin = dp(1); parent.addView(box, lp);
         box.setOnLongClickListener(v -> false);
+    }
+
+    private void addPowerControl(LinearLayout parent) {
+        LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.setFocusable(true);
+        box.setContentDescription("Power off Kodi device");
+        box.setOnClickListener(v -> { haptic(); confirmKodiShutdown(); });
+        box.addView(new PowerIconView(this), new LinearLayout.LayoutParams(-1, dp(isLandscape() ? 54 : 48)));
+        TextView caption = text("Power Off", 9, MUTED, false); caption.setGravity(Gravity.CENTER); caption.setMaxLines(1); box.addView(caption);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f); lp.leftMargin = dp(1); lp.rightMargin = dp(1); parent.addView(box, lp);
+    }
+
+    /** Canvas-drawn API 19-compatible power glyph; no bitmap or support-library dependency. */
+    private final class PowerIconView extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        PowerIconView(Context context) { super(context); setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO); }
+        @Override protected void onDraw(Canvas canvas) {
+            super.onDraw(canvas);
+            float size = Math.min(getWidth(), getHeight()) * 0.62f;
+            float cx = getWidth() / 2f, cy = getHeight() / 2f, radius = size * 0.42f;
+            paint.setColor(RED); paint.setStyle(Paint.Style.STROKE); paint.setStrokeWidth(Math.max(dp(2), size * 0.09f)); paint.setStrokeCap(Paint.Cap.ROUND);
+            android.graphics.RectF ring = new android.graphics.RectF(cx - radius, cy - radius, cx + radius, cy + radius);
+            canvas.drawArc(ring, 315f, 270f, false, paint);
+            canvas.drawLine(cx, cy - size * 0.50f, cx, cy + size * 0.03f, paint);
+        }
     }
 
     private void addTransport(LinearLayout root) {
@@ -770,6 +799,35 @@ public final class MainActivity extends Activity {
     private void back() { action(c -> c.call("Input.Back", new JSONObject())); }
     private void playPause() { action(c -> { if (activePlayerId < 0) return c.call("Input.ExecuteAction", new JSONObject().put("action", "playpause")); return c.call("Player.PlayPause", new JSONObject().put("playerid", activePlayerId)); }); }
     private void stop() { action(c -> { if (activePlayerId < 0) throw new KodiClient.KodiException("Ingen aktiv Kodi-spelare."); return c.call("Player.Stop", new JSONObject().put("playerid", activePlayerId)); }); }
+    private void confirmKodiShutdown() {
+        if (kodiShutdownRequested) { toast("Kodi shutdown has already been requested."); return; }
+        new AlertDialog.Builder(this)
+                .setTitle("Power off Kodi?")
+                .setMessage("This will close Kodi and shut down the Kodi device. The Android remote will stay on.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Power Off", (dialog, which) -> powerOffKodi())
+                .show();
+    }
+
+    private void powerOffKodi() {
+        if (kodiShutdownRequested) return;
+        kodiShutdownRequested = true;
+        io.execute(() -> {
+            try {
+                client().call("System.Shutdown", new JSONObject());
+                handler.post(() -> {
+                    connected = false; activePlayerId = -1; updateHeader(); resetPlayer();
+                    setStatus("OFFLINE · Kodi is shutting down");
+                    toast("Shutdown command sent to the Kodi device.");
+                });
+            } catch (Exception e) {
+                handler.post(() -> {
+                    kodiShutdownRequested = false;
+                    toast("Could not power off Kodi: " + (e.getMessage() == null ? "Kodi did not accept the shutdown request." : e.getMessage()));
+                });
+            }
+        });
+    }
     private void seekStep(String step) { action(c -> { if (activePlayerId < 0) throw new KodiClient.KodiException("Ingen aktiv Kodi-spelare."); return c.call("Player.Seek", new JSONObject().put("playerid", activePlayerId).put("value", new JSONObject().put("step", step))); }); }
     private void goTo(String to) { action(c -> { if (activePlayerId < 0) throw new KodiClient.KodiException("Ingen aktiv Kodi-spelare."); return c.call("Player.GoTo", new JSONObject().put("playerid", activePlayerId).put("to", to)); }); }
     private void seekPercent(double value) { action(c -> { if (activePlayerId < 0) throw new KodiClient.KodiException("Ingen aktiv Kodi-spelare."); return c.call("Player.Seek", new JSONObject().put("playerid", activePlayerId).put("value", new JSONObject().put("percentage", Math.max(0, Math.min(100, value))))); }); }

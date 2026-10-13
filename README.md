@@ -46,6 +46,7 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 ## Features
 
 - D-pad and OK, Back, Kodi Home, play/pause, stop, previous/next, rewind/fast-forward, volume and mute.
+- Confirmed Power Off control for the Kodi device. It asks Kodi to close and shut down its host; it does not power off the Android remote.
 - Kodi Now Playing information, artwork, playback progress, and seek controls.
 - Audio and subtitle stream selection on the remote, including subtitle Off when Kodi provides it.
 - Portrait, landscape, and automatic orientation modes.
@@ -53,6 +54,8 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 - Find My Kodi searches for Kodi's DNS-SD/Zeroconf HTTP JSON-RPC service only when requested. It verifies a selected endpoint and asks before saving it. Discovery does not run in the background.
 - Manual host, port, username, and password entry remains available when discovery is unavailable.
 - Optional external support link: <https://buymeacoffee.com/farfarspelar>.
+
+The Power Off control sends Kodi's `System.Shutdown` JSON-RPC request after confirmation. Shutdown depends on the operating system and permissions of the device running Kodi. See the [Kodi JSON-RPC System.Shutdown method](https://kodi.wiki/view/JSON-RPC_API/v8#System.Shutdown).
 
 ## Android compatibility and security notes
 

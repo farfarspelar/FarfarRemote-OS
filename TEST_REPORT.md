@@ -105,6 +105,13 @@ No Android emulator or newer Android device was available. The App may run on ne
 
 # FarfarRemote OS — build and test report
 
+## Power Off control — development branch
+
+- Added one shared main-screen Power Off control for both App and OS flavors. Portrait places it with the primary controls; landscape places it beside Settings.
+- The confirmation explains that the Kodi device will shut down while the Android remote remains on. Confirming sends `System.Shutdown` using the existing background Kodi client; a denied or unsupported request is reported without crashing. The command is Kodi's documented `ControlPower` method.
+- The implementation was not exercised against the physical MeLE/Kodi host in this environment. Verify that Kodi's host OS allows power-down and that the Kodi JSON-RPC account has `ControlPower` permission before relying on it.
+- Shutting down the Android handset from a regular app is not part of this control; Android 4.4 does not expose a public app-level power-off API.
+
 ## 0.2.0 baseline
 
 **Target:** Sony Xperia E4g E2003, Android 4.4.4/API 19, firmware 25.0.A.2.31, 540×960 at 240 dpi. **No root, bootloader, system image or package debloat was performed.**
