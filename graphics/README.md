@@ -22,3 +22,7 @@
 Every source UI control is RGBA. Sampled corners/edges were checked for alpha zero; some artwork reaches a canvas edge, so the alpha bounding boxes vary. The UI icons are used as button faces; captions/accessibility descriptions and touch containers remain Android views. Kodi artwork is downsampled to about 256 px per side and decoded to RGB_565. Missing art uses a small neutral local placeholder.
 
 The three sheets have equally spaced four/five-cell layouts. Their crop edges are the equal cell boundaries; alpha trimming removes each neighbor's transparent gap. The source files remain untouched. The hard-coded status asset and the full-screen mockups are excluded from Android resources.
+
+## Settings v0.3 assets
+
+The extracted `FarfarRemote_Settings_Assets_v0.3/` directory is the canonical source for the new Settings graphics. Its ZIP twin is byte-identical and excluded from Git to avoid a second copy. Asset inspection, selected Android derivatives, memory notes and the separate asset-license status are documented in [SETTINGS_ASSETS.md](SETTINGS_ASSETS.md).

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Redesigned Settings in the existing activity with four themed cards, scrollable fields, focus-state input graphics and stateful orientation/remote switches.
+- Kept existing Kodi preference keys, Android application ID, HOME launcher, Kodi client, remote action methods, D-pad, Audio/Subtitles and orientation policy.
+- Added a discreet optional Buy Me a Coffee link to the owner-provided URL. It uses `ACTION_VIEW`; when no handler exists, the link is copied to the clipboard.
+- Integrated selected user-supplied Settings PNGs, retaining the extracted original pack and scaling 128 px icons to 64 px.
+- Added a Settings contract test and updated documentation. VersionCode is 3; minSdk remains 19; no new library dependencies.
+
 ## 0.2.0
 
 - Reworked the existing `org.farfarremote` app into portrait-first full-screen portrait and landscape remote layouts, with persisted Portrait/Landscape/Auto selection.
