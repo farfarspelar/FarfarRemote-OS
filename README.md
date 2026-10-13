@@ -105,7 +105,7 @@ The project owner reports that FarfarRemote's UI graphics and visual references 
 ## Known limitations
 
 - The legacy OS track is primarily verified on a Sony Xperia E4g E2003 running Android 4.4/API 19.
-- The user has reported the App running on a Samsung SM-A715F with Android 13, but the API 36 target build requires fresh device verification; this work environment has no Samsung device.
+- The user reports FarfarRemote App runs without problems on a Samsung phone with Android 13. API 33 and API 35 emulator smoke checks also passed for the App track; those checks do not replace testing across other device makers and models.
 - Kodi discovery depends on Zeroconf announcements and multicast support; manual connection is the fallback.
 - Kodi HTTP JSON-RPC is unencrypted.
 - Kodi determines which artwork and media metadata are available.
