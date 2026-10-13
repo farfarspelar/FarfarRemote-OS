@@ -2,15 +2,22 @@ package org.farfarremote;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -20,9 +27,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -30,9 +35,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +48,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import android.net.Uri;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -50,13 +56,17 @@ import java.util.concurrent.Executors;
 /** Remote UI and input/action layer. Network operations are serialized off the UI thread. */
 public final class MainActivity extends Activity {
     private static final String PREFS = "farfarremote"; // Keep 0.1 preference file/key names for upgrade continuity.
-    private static final String VERSION = "0.2.0";
     private static final int BG = Color.rgb(7, 15, 27), PANEL = Color.rgb(14, 28, 45), TEXT = Color.rgb(235, 243, 252), MUTED = Color.rgb(154, 177, 202), CYAN = Color.rgb(35, 170, 255), GREEN = Color.rgb(52, 222, 157), RED = Color.rgb(255, 112, 116);
+    private static final String COFFEE_URL = "https://buymeacoffee.com/farfarspelar";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private SharedPreferences prefs;
     private FrameLayout screen;
+    private ScrollView settingsScroll;
+    private TextView settingsKodiStatus;
+    private int previousSoftInputMode;
+    private boolean settingsImeModeSet;
     private boolean inSettings, busy, draggingSeek, destroyed;
     private boolean startupShown;
     private boolean connected;
@@ -92,6 +102,8 @@ public final class MainActivity extends Activity {
 
     private void buildScreen() {
         inSettings = false;
+        if (settingsImeModeSet) { getWindow().setSoftInputMode(previousSoftInputMode); settingsImeModeSet = false; }
+        settingsScroll = null; settingsKodiStatus = null;
         screen = new FrameLayout(this);
         screen.setBackgroundColor(BG);
         setContentView(screen);
@@ -281,51 +293,149 @@ public final class MainActivity extends Activity {
 
     private void showSettings() {
         inSettings = true;
-        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
-        LinearLayout root = column(); root.setPadding(dp(16), dp(12), dp(16), dp(18)); scroll.addView(root);
-        LinearLayout top = row(root); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView back = text("‹", 34, CYAN, true); back.setGravity(Gravity.CENTER); back.setOnClickListener(v -> buildScreen()); top.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        TextView heading = text("Settings", 24, TEXT, true); top.addView(heading);
-        section(root, "KODI CONNECTION");
-        EditText host = edit(prefs.getString("host", ""), "Hostname / IP", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        root.addView(host, fullField());
-        LinearLayout portRow = row(root);
-        EditText port = edit(prefs.getString("port", "8080"), "Port", InputType.TYPE_CLASS_NUMBER); portRow.addView(port, new LinearLayout.LayoutParams(dp(108), dp(53)));
-        EditText username = edit(prefs.getString("user", ""), "Username", InputType.TYPE_CLASS_TEXT); portRow.addView(username, new LinearLayout.LayoutParams(0, dp(53), 1));
-        EditText password = edit(prefs.getString("pass", ""), "Password", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD); root.addView(password, fullField());
-        CheckBox showPassword = check("Show password", false); root.addView(showPassword); showPassword.setOnCheckedChangeListener((button, checked) -> {
+        if (!settingsImeModeSet) { previousSoftInputMode = getWindow().getAttributes().softInputMode; settingsImeModeSet = true; }
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        ScrollView scroll = new ScrollView(this); settingsScroll = scroll; scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        scroll.setClipToPadding(false); scroll.setBackgroundResource(isLandscape() ? R.drawable.settings_bg_landscape : R.drawable.settings_bg_portrait);
+        LinearLayout root = column(); root.setPadding(dp(12), dp(10), dp(12), dp(20)); scroll.addView(root);
+
+        LinearLayout header = row(root); header.setGravity(Gravity.CENTER_VERTICAL); header.setPadding(dp(10), 0, dp(8), 0); header.setBackgroundResource(R.drawable.settings_header);
+        ImageView headerIcon = settingsIcon(R.drawable.settings_ic_settings, "Settings"); header.addView(headerIcon, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        LinearLayout headerText = column(); headerText.setPadding(dp(8), 0, 0, 0); header.addView(headerText, new LinearLayout.LayoutParams(0, -2, 1));
+        headerText.addView(text("Settings", 21, TEXT, true)); headerText.addView(text("FarfarRemote OS", 11, MUTED, false));
+        TextView close = text("×", 30, CYAN, true); close.setGravity(Gravity.CENTER); close.setContentDescription("Close settings"); close.setOnClickListener(v -> closeSettings()); header.addView(close, new LinearLayout.LayoutParams(dp(42), dp(46)));
+
+        LinearLayout connection = settingsCard(root, "Kodi Connection", R.drawable.settings_ic_wifi);
+        addFieldLabel(connection, "Host / IP Address");
+        EditText host = edit(prefs.getString("host", ""), "Hostname or IP address", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        connection.addView(host, fullField());
+        LinearLayout account = row(connection);
+        LinearLayout portBox = column(); account.addView(portBox, new LinearLayout.LayoutParams(dp(92), -2)); addFieldLabel(portBox, "Port");
+        EditText port = edit(prefs.getString("port", "8080"), "8080", InputType.TYPE_CLASS_NUMBER); portBox.addView(port, fullField());
+        LinearLayout userBox = column(); LinearLayout.LayoutParams userBoxLp = new LinearLayout.LayoutParams(0, -2, 1); userBoxLp.leftMargin = dp(8); account.addView(userBox, userBoxLp); addFieldLabel(userBox, "Username");
+        EditText username = edit(prefs.getString("user", ""), "Kodi username", InputType.TYPE_CLASS_TEXT); userBox.addView(username, fullField());
+        addFieldLabel(connection, "Password");
+        EditText password = edit(prefs.getString("pass", ""), "Kodi password", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD); connection.addView(password, fullField());
+        Switch showPassword = settingsSwitch(connection, "Show password", false, null, null);
+        LinearLayout passwordLine = (LinearLayout) showPassword.getParent();
+        LinearLayout passwordLabels = (LinearLayout) passwordLine.getChildAt(0);
+        TextView passwordLabel = (TextView) passwordLabels.getChildAt(0);
+        showPassword.setOnCheckedChangeListener((button, checked) -> {
+            passwordLabel.setText(checked ? "Hide password" : "Show password");
             int pos = password.getSelectionStart(); password.setInputType(checked ? InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD); password.setSelection(Math.max(0, pos));
         });
-        LinearLayout actions = row(root);
-        actionButton(actions, "Test connection", () -> testConnection(host, port, username, password));
-        actionButton(actions, "Save", () -> saveConnection(host, port, username, password));
-        actionButton(actions, "Wi-Fi Settings", this::openWifiSettings);
-        settingsFeedback = text(connected ? "Kodi ansluten" : "Kodi offline · inställningar går att ändra offline", 12, connected ? GREEN : MUTED, false); root.addView(settingsFeedback);
+        LinearLayout actions = row(connection);
+        actionButton(actions, R.drawable.settings_ic_test, "Test Connection", false, () -> testConnection(host, port, username, password));
+        actionButton(actions, R.drawable.settings_ic_save, "Save", true, () -> saveConnection(host, port, username, password));
+        LinearLayout wifiRow = row(connection); wifiRow.setGravity(Gravity.CENTER);
+        wifiRow.addView(makeActionButton(R.drawable.settings_ic_wifi, "Wi-Fi Settings", false, this::openWifiSettings), new LinearLayout.LayoutParams(dp(220), dp(48)));
+        settingsFeedback = text(connected ? "Kodi connected" : "Kodi offline · settings are available", 12, connected ? GREEN : MUTED, false);
+        settingsFeedback.setPadding(dp(4), dp(6), dp(4), dp(2)); connection.addView(settingsFeedback);
 
-        section(root, "DISPLAY");
-        RadioGroup orientation = new RadioGroup(this); orientation.setOrientation(RadioGroup.HORIZONTAL);
-        addOrientation(orientation, "Portrait", "portrait"); addOrientation(orientation, "Landscape", "landscape"); addOrientation(orientation, "Auto", "auto"); root.addView(orientation);
+        LinearLayout display = settingsCard(root, "Display", R.drawable.settings_ic_display);
+        LinearLayout orientation = new LinearLayout(this); orientation.setOrientation(LinearLayout.HORIZONTAL); orientation.setGravity(Gravity.CENTER);
+        addOrientation(orientation, "Portrait", "portrait", R.drawable.settings_ic_portrait);
+        addOrientation(orientation, "Landscape", "landscape", R.drawable.settings_ic_landscape);
+        addOrientation(orientation, "Auto", "auto", R.drawable.settings_ic_auto);
+        display.addView(orientation, new LinearLayout.LayoutParams(-1, dp(70)));
         selectOrientation(orientation, prefs.getString("orientation", "portrait"));
-        orientation.setOnCheckedChangeListener((group, checkedId) -> {
-            RadioButton selected = findViewById(checkedId); if (selected == null) return;
-            String val = String.valueOf(selected.getTag()); prefs.edit().putString("orientation", val).apply(); applyOrientationPreference();
-        });
-        CheckBox awake = check("Keep screen awake", prefs.getBoolean("keep_awake", true)); root.addView(awake); awake.setOnCheckedChangeListener((b, checked) -> { prefs.edit().putBoolean("keep_awake", checked).apply(); applyKeepAwake(); });
+        for (int i = 0; i < orientation.getChildCount(); i++) {
+            RadioButton option = (RadioButton) orientation.getChildAt(i);
+            option.setOnCheckedChangeListener((button, checked) -> {
+                if (!checked) return;
+                for (int n = 0; n < orientation.getChildCount(); n++) { RadioButton other = (RadioButton) orientation.getChildAt(n); if (other != button) other.setChecked(false); }
+                prefs.edit().putString("orientation", String.valueOf(button.getTag())).apply(); applyOrientationPreference();
+            });
+        }
+        settingsSwitch(display, "Keep Screen Awake", prefs.getBoolean("keep_awake", true), "Prevent the display from sleeping", (button, checked) -> { prefs.edit().putBoolean("keep_awake", checked).apply(); applyKeepAwake(); });
 
-        section(root, "REMOTE");
-        CheckBox reconnect = check("Auto reconnect", prefs.getBoolean("auto_reconnect", true)); root.addView(reconnect); reconnect.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("auto_reconnect", checked).apply());
-        CheckBox haptics = check("Haptic feedback", prefs.getBoolean("haptics", false)); root.addView(haptics); haptics.setOnCheckedChangeListener((b, checked) -> prefs.edit().putBoolean("haptics", checked).apply());
-        TextView hardware = text("Physical / Bluetooth controls: Android key events remain enabled. External HID mapping can be added without changing the Kodi action layer.", 12, MUTED, false); root.addView(hardware);
+        LinearLayout remote = settingsCard(root, "Remote", R.drawable.settings_ic_remote);
+        settingsSwitch(remote, "Auto Reconnect", prefs.getBoolean("auto_reconnect", true), "Reconnect to Kodi when it becomes available", (button, checked) -> prefs.edit().putBoolean("auto_reconnect", checked).apply());
+        boolean hapticSupported = hasVibrator();
+        settingsSwitch(remote, "Haptic Feedback", prefs.getBoolean("haptics", false), hapticSupported ? "Vibration on supported controls" : "Not supported on this device", (button, checked) -> prefs.edit().putBoolean("haptics", checked).apply()).setEnabled(hapticSupported);
 
-        section(root, "SYSTEM INFORMATION");
+        LinearLayout system = settingsCard(root, "System Information", R.drawable.settings_ic_info);
         String model = android.os.Build.MODEL, androidVersion = android.os.Build.VERSION.RELEASE + " (API " + android.os.Build.VERSION.SDK_INT + ")";
-        String appVersion = VERSION; try { PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0); appVersion = info.versionName; } catch (Exception ignored) { }
-        root.addView(text("FarfarRemote " + appVersion + "\nAndroid " + androidVersion + "\n" + model + "\nKodi: " + (connected ? "Connected" : "Offline"), 13, TEXT, false));
+        String appVersion = "Unknown"; try { PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0); appVersion = info.versionName; } catch (Exception ignored) { }
+        system.addView(infoRow("FarfarRemote", appVersion)); system.addView(infoRow("Android", androidVersion)); system.addView(infoRow("Device", model));
+        LinearLayout kodiInfo = infoRow("Kodi", connected ? "Connected" : "Offline"); settingsKodiStatus = (TextView) kodiInfo.getChildAt(1); settingsKodiStatus.setTextColor(connected ? GREEN : RED); system.addView(kodiInfo);
+
+        LinearLayout coffee = new LinearLayout(this); coffee.setGravity(Gravity.CENTER); coffee.setPadding(0, dp(8), 0, dp(6)); root.addView(coffee, new LinearLayout.LayoutParams(-1, -2));
+        LinearLayout coffeeButton = new LinearLayout(this); coffeeButton.setGravity(Gravity.CENTER); coffeeButton.setOrientation(LinearLayout.HORIZONTAL); coffeeButton.setPadding(dp(13), 0, dp(13), 0); coffeeButton.setBackgroundResource(R.drawable.settings_button_coffee); coffeeButton.setContentDescription("Buy Me a Coffee — opens external website");
+        coffeeButton.addView(settingsIcon(R.drawable.settings_ic_coffee, ""), new LinearLayout.LayoutParams(dp(22), dp(22)));
+        TextView coffeeText = text("Buy Me a Coffee", 13, Color.rgb(246, 215, 174), true); coffeeText.setGravity(Gravity.CENTER); LinearLayout.LayoutParams coffeeTextLp = new LinearLayout.LayoutParams(0, -1, 1); coffeeTextLp.leftMargin = dp(7); coffeeButton.addView(coffeeText, coffeeTextLp);
+        coffeeButton.addView(settingsIcon(R.drawable.settings_ic_arrow, "Opens website"), new LinearLayout.LayoutParams(dp(18), dp(18)));
+        coffeeButton.setOnClickListener(v -> openCoffeeLink()); coffee.addView(coffeeButton, new LinearLayout.LayoutParams(dp(260), dp(50)));
         screen.removeAllViews(); screen.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
     }
 
-    private void addOrientation(RadioGroup group, String label, String tag) { RadioButton rb = new RadioButton(this); rb.setId(View.generateViewId()); rb.setText(label); rb.setTextColor(TEXT); rb.setTag(tag); group.addView(rb); }
-    private void selectOrientation(RadioGroup group, String value) { for (int i = 0; i < group.getChildCount(); i++) { RadioButton rb = (RadioButton) group.getChildAt(i); if (value.equals(rb.getTag())) { rb.setChecked(true); return; } } }
+    private LinearLayout settingsCard(LinearLayout root, String title, int icon) {
+        LinearLayout card = column(); card.setBackground(panel()); card.setPadding(dp(10), dp(8), dp(10), dp(9));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2); cardLp.topMargin = dp(7); cardLp.bottomMargin = dp(4); root.addView(card, cardLp);
+        LinearLayout heading = row(card); heading.setBackgroundResource(R.drawable.settings_section); heading.setPadding(dp(9), 0, dp(8), 0);
+        heading.addView(settingsIcon(icon, title), new LinearLayout.LayoutParams(dp(26), dp(26)));
+        TextView label = text(title, 15, TEXT, true); LinearLayout.LayoutParams labelLp = new LinearLayout.LayoutParams(-1, dp(48)); labelLp.leftMargin = dp(8); heading.addView(label, labelLp);
+        return card;
+    }
+
+    private ImageView settingsIcon(int resource, String description) {
+        ImageView icon = new ImageView(this); icon.setImageResource(resource); icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        if (description != null && !description.isEmpty()) icon.setContentDescription(description); return icon;
+    }
+
+    private void addFieldLabel(LinearLayout parent, String value) {
+        TextView label = text(value, 12, MUTED, true); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.topMargin = dp(7); lp.leftMargin = dp(3); parent.addView(label, lp);
+    }
+
+    private LinearLayout infoRow(String label, String value) {
+        LinearLayout line = new LinearLayout(this); line.setOrientation(LinearLayout.HORIZONTAL); line.setGravity(Gravity.CENTER_VERTICAL);
+        line.setLayoutParams(new LinearLayout.LayoutParams(-1, -2));
+        TextView key = text(label, 12, MUTED, false); line.addView(key, new LinearLayout.LayoutParams(0, dp(34), .42f));
+        TextView val = text(value, 13, TEXT, true); line.addView(val, new LinearLayout.LayoutParams(0, dp(34), .58f));
+        line.setPadding(dp(5), 0, dp(5), 0); return line;
+    }
+
+    private Switch settingsSwitch(LinearLayout parent, String title, boolean checked, String summary, CompoundButton.OnCheckedChangeListener listener) {
+        LinearLayout line = row(parent); line.setPadding(dp(5), dp(4), dp(3), dp(4));
+        LinearLayout labels = column(); line.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+        labels.addView(text(title, 13, TEXT, true)); if (summary != null) { TextView detail = text(summary, 10, MUTED, false); labels.addView(detail); }
+        Switch toggle = new Switch(this); toggle.setTextOn(""); toggle.setTextOff(""); toggle.setChecked(checked); toggle.setSwitchMinWidth(dp(64)); toggle.setThumbDrawable(toggleThumbs()); toggle.setTrackDrawable(getResources().getDrawable(R.drawable.settings_toggle_track));
+        line.addView(toggle, new LinearLayout.LayoutParams(dp(72), dp(46)));
+        if (listener != null) toggle.setOnCheckedChangeListener(listener);
+        return toggle;
+    }
+
+    private StateListDrawable toggleThumbs() {
+        StateListDrawable states = new StateListDrawable();
+        states.addState(new int[]{android.R.attr.state_checked}, getResources().getDrawable(R.drawable.settings_toggle_on));
+        states.addState(new int[]{}, getResources().getDrawable(R.drawable.settings_toggle_off)); return states;
+    }
+
+    private boolean hasVibrator() { try { android.os.Vibrator vibrator = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE); return vibrator != null && vibrator.hasVibrator(); } catch (Exception ignored) { return false; } }
+
+    private void addOrientation(LinearLayout group, String label, String tag, int iconResource) {
+        RadioButton rb = new RadioButton(this); rb.setId(View.generateViewId()); rb.setText(label); rb.setTextColor(TEXT); rb.setTextSize(11); rb.setTag(tag); rb.setGravity(Gravity.CENTER); rb.setButtonDrawable(android.R.color.transparent); rb.setBackgroundResource(R.drawable.settings_orientation_background); rb.setPadding(dp(2), dp(4), dp(2), dp(4)); rb.setCompoundDrawablePadding(dp(2));
+        Drawable icon = getResources().getDrawable(iconResource); icon.setBounds(0, 0, dp(22), dp(22)); rb.setCompoundDrawables(null, icon, null, null);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(64), 1); lp.setMargins(dp(3), dp(3), dp(3), dp(3)); group.addView(rb, lp);
+    }
+    private void selectOrientation(LinearLayout group, String value) { for (int i = 0; i < group.getChildCount(); i++) { RadioButton rb = (RadioButton) group.getChildAt(i); rb.setChecked(value.equals(rb.getTag())); } }
+
+    private void closeSettings() { buildScreen(); }
+
+    private void openCoffeeLink() {
+        Uri uri = Uri.parse(COFFEE_URL);
+        try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
+        catch (ActivityNotFoundException e) {
+            try {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard == null) throw new IllegalStateException("Clipboard is unavailable");
+                clipboard.setPrimaryClip(ClipData.newPlainText("Buy Me a Coffee", COFFEE_URL));
+                toast("No browser is installed. The support URL was copied to the clipboard.");
+            } catch (Exception clipboardError) {
+                new AlertDialog.Builder(this).setMessage("No browser is available. You can copy this address later:\n" + COFFEE_URL).setPositiveButton("Close", null).show();
+            }
+        }
+    }
 
     private void testConnection(EditText host, EditText port, EditText username, EditText password) {
         try {
@@ -356,11 +466,28 @@ public final class MainActivity extends Activity {
 
     private void settingsMessage(String value, int color) { if (settingsFeedback != null) { settingsFeedback.setText(value == null ? "Connection failed" : value); settingsFeedback.setTextColor(color); } else Toast.makeText(this, value, Toast.LENGTH_SHORT).show(); }
 
-    private void section(LinearLayout root, String title) { TextView t = text(title, 11, CYAN, true); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2); lp.topMargin = dp(18); lp.bottomMargin = dp(4); root.addView(t, lp); }
-    private EditText edit(String value, String hint, int inputType) { EditText e = new EditText(this); e.setSingleLine(true); e.setText(value); e.setHint(hint); e.setTextColor(TEXT); e.setHintTextColor(MUTED); e.setTextSize(14); e.setInputType(inputType); e.setPadding(dp(10), 0, dp(10), 0); e.setBackground(round(Color.rgb(17, 33, 51), dp(8))); return e; }
-    private CheckBox check(String label, boolean checked) { CheckBox b = new CheckBox(this); b.setText(label); b.setTextColor(TEXT); b.setChecked(checked); b.setMinHeight(dp(44)); return b; }
-    private LinearLayout.LayoutParams fullField() { LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(53)); lp.topMargin = dp(2); lp.bottomMargin = dp(3); return lp; }
-    private void actionButton(LinearLayout parent, String label, Runnable action) { TextView b = text(label, 13, TEXT, true); b.setGravity(Gravity.CENTER); b.setBackground(round(Color.rgb(18, 49, 75), dp(10))); b.setOnClickListener(v -> action.run()); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(48), 1); lp.setMargins(dp(3), dp(5), dp(3), dp(5)); parent.addView(b, lp); }
+    private EditText edit(String value, String hint, int inputType) {
+        EditText e = new EditText(this); e.setSingleLine(true); e.setText(value); e.setHint(hint); e.setTextColor(TEXT); e.setHintTextColor(MUTED); e.setTextSize(14); e.setInputType(inputType); e.setPadding(dp(10), 0, dp(10), 0); e.setBackgroundResource(R.drawable.settings_input_background); e.setSelectAllOnFocus(false);
+        e.setOnFocusChangeListener((view, focused) -> {
+            if (focused && settingsScroll != null) e.postDelayed(() -> {
+                Rect rect = new Rect(0, 0, e.getWidth(), e.getHeight()); settingsScroll.requestChildRectangleOnScreen(e, rect, true);
+            }, 250);
+        });
+        return e;
+    }
+    private LinearLayout.LayoutParams fullField() { LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(50)); lp.topMargin = dp(1); lp.bottomMargin = dp(2); return lp; }
+    private void actionButton(LinearLayout parent, int iconRes, String label, boolean primary, Runnable action) {
+        View button = makeActionButton(iconRes, label, primary, action);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(48), 1); lp.setMargins(dp(3), dp(4), dp(3), dp(4)); parent.addView(button, lp);
+    }
+
+    private LinearLayout makeActionButton(int iconRes, String label, boolean primary, Runnable action) {
+        LinearLayout button = new LinearLayout(this); button.setOrientation(LinearLayout.HORIZONTAL); button.setGravity(Gravity.CENTER); button.setPadding(dp(8), 0, dp(8), 0);
+        button.setBackgroundResource(primary ? R.drawable.settings_button_primary : R.drawable.settings_button_secondary); button.setContentDescription(label);
+        ImageView icon = settingsIcon(iconRes, null); button.addView(icon, new LinearLayout.LayoutParams(dp(18), dp(18)));
+        TextView caption = text(label, 12, TEXT, true); caption.setGravity(Gravity.CENTER); LinearLayout.LayoutParams captionLp = new LinearLayout.LayoutParams(-2, -1); captionLp.leftMargin = dp(5); button.addView(caption, captionLp);
+        button.setOnClickListener(v -> action.run()); return button;
+    }
 
     private void showStreams(boolean audio) {
         if (activePlayerId < 0) { toast("Starta uppspelning i Kodi för att välja spår."); return; }
@@ -508,6 +635,7 @@ public final class MainActivity extends Activity {
     private void updateHeader() {
         if (status != null && connected) { status.setText("CONNECTED"); status.setTextColor(GREEN); }
         else if (status != null) { status.setText("OFFLINE · Settings"); status.setTextColor(RED); }
+        if (settingsKodiStatus != null) { settingsKodiStatus.setText(connected ? "Connected" : "Offline"); settingsKodiStatus.setTextColor(connected ? GREEN : RED); }
     }
 
     private void setStatus(String value) {
@@ -524,7 +652,11 @@ public final class MainActivity extends Activity {
     private GradientDrawable round(int color, int radius) { GradientDrawable d = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[]{Color.rgb(18, 35, 54), color}); d.setCornerRadius(radius); d.setStroke(dp(1), Color.rgb(33, 67, 97)); return d; }
     private int dp(int value) { return (int) (value * getResources().getDisplayMetrics().density + .5f); }
 
-    @Override public void onConfigurationChanged(Configuration newConfig) { super.onConfigurationChanged(newConfig); if (!inSettings) buildScreen(); else showSettings(); }
+    @Override public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (!inSettings) buildScreen();
+        else if (settingsScroll != null) { settingsScroll.setBackgroundResource(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? R.drawable.settings_bg_landscape : R.drawable.settings_bg_portrait); settingsScroll.requestLayout(); }
+    }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
         switch (keyCode) {
@@ -533,7 +665,7 @@ public final class MainActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_LEFT: action(c -> c.call("Input.Left", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: action(c -> c.call("Input.Right", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: action(c -> c.call("Input.Select", new JSONObject())); return true;
-            case KeyEvent.KEYCODE_BACK: if (inSettings) { buildScreen(); return true; } back(); return true;
+            case KeyEvent.KEYCODE_BACK: if (inSettings) { closeSettings(); return true; } back(); return true;
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: playPause(); return true;
             case KeyEvent.KEYCODE_MEDIA_STOP: stop(); return true;
             case KeyEvent.KEYCODE_MEDIA_NEXT: goTo("next"); return true;

@@ -13,3 +13,7 @@ FarfarRemote_v0.2_Complete_Assets.zip
 # The current deliverable is versioned explicitly; ignore intermediate packages.
 dist/*
 !dist/FarfarRemote-0.2.0-api19-debug.apk
+!dist/FarfarRemote-0.3.0-api19-debug.apk
+
+# Use the extracted asset directory as the canonical source; ZIP is a duplicate.
+FarfarRemote_Settings_Assets_v0.3.zip
