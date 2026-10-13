@@ -5,6 +5,7 @@ local.properties
 
 # Device-specific captures can contain serials, Wi-Fi names, IPs and log data.
 reports/device_audit/
+reports/debloat/*/
 
 # Keep the source PNGs once under graphics/originals instead of duplicating them.
 FarfarRemote_Asset_Pack/assets/

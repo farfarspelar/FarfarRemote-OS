@@ -6,6 +6,14 @@
 
 The audit shows 280 packages, Android reporting 918,424 kB RAM, 521,212 kB free and 354,867 kB used at that instant. `dumpsys meminfo` splits PSS into 112,640 kB persistent, 12,733 foreground, 45,968 visible, 35,963 perceptible, 20,705 A Services, 77,701 B Services, 279,728 cached and 16,237 native. Cached PSS can be reclaimed already; it is not a promise that disabling apps will increase free memory by the same amount.
 
+## OS-track checkpoint after v0.4.2-rc1
+
+A read-only ADB check during the 2026-10-13 UTC / 2026-10-14 local checkpoint reconfirmed the exact E2003 / Android 4.4.4 / API 19 / firmware 25.0.A.2.31 target. `org.farfarremote` v0.4.2-rc1 (versionCode 6, target API 28) was installed and its `MainActivity` was foreground; Wi-Fi was connected and the device was USB-powered. No package was disabled and no system setting was changed.
+
+A local provisional measurement was collected to exercise the Phase A metrics path. It reported 918,424 kB total RAM, 462,403 kB free, 363,759 kB used, 330,515 kB active PSS, 160,979 kB cached PSS, and 15.95% CPU busy across a 20-second sample. It was taken immediately after ADB inspection, without the prescribed five-minute settling period, and the App flavor was also installed/running in the captured process list. Treat it as a tooling/diagnostic snapshot, not an OS-only before measurement. No cold-boot time has been recorded. Per-device metrics and raw logs remain local and are excluded from Git.
+
+The live `pm list packages` check confirmed all seven Phase A candidates are installed and enabled, including the proposed first batch: `app.gpsme`, `com.facebook.katana`, `com.mobisystems.office`, `com.navigon.navigator_select_sony_eu`, and `com.scee.psxandroid`. Android 4.4 advertises both `pm disable-user` and `pm enable --user`, confirming the reversible package-manager commands exist; this does not prove each package can be disabled without functional side effects. Phase A remains a dry-run proposal. Before any trial, capture a standardized OS-only baseline with the same screen, charger, Wi-Fi, Kodi and settling conditions intended for the after measurement. No disable action is authorized by this report.
+
 Large observed process groups:
 
 | Process/package | PSS and state | Meaning |

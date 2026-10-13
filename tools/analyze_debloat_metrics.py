@@ -16,7 +16,8 @@ def oom(path):
                 current=head.group(2).strip(); out[current]=int(head.group(1).replace(",",""))
     ram=(path/"memory.txt").read_text(errors="replace")
     def value(label):
-        m=re.search(rf"^{label}:\s*([\d,]+) kB",ram,re.M)
+        # Android 4.4 dumpsys meminfo indents Free/Used RAM, unlike Total RAM.
+        m=re.search(rf"^\s*{re.escape(label)}:\s*([\d,]+) kB",ram,re.M)
         return int(m.group(1).replace(",","")) if m else None
     return {"total_ram":value("Total RAM"),"free_ram":value("Free RAM"),"used_ram":value("Used RAM"),"pss":out}
 
