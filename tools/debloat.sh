@@ -142,9 +142,18 @@ for pkg in "${packages[@]}"; do
   dr_log_event DISABLE "$PHASE" "$pkg" PENDING "enabled before this tool issued pm disable-user; verify/restore if ADB drops"
   cmd_output="$(dr_shell pm disable-user --user 0 "$pkg" 2>&1)" || {
     dr_log_event DISABLE "$PHASE" "$pkg" ERROR "$cmd_output"
+    if grep -Eq 'SecurityException|Permission Denial|Error: unknown command|not allowed' <<< "$cmd_output"; then
+      dr_log_phase "$PHASE" PARTIAL "Package Manager rejected the shell request; no further packages attempted"
+      dr_die "firmware rejected pm disable-user for $pkg: $cmd_output"
+    fi
     dr_log_phase "$PHASE" PARTIAL "disable command failed; inspect and run restore.sh after ADB is stable"
     dr_die "disable failed at $pkg; stop here and use tools/restore.sh --group $PHASE --apply"
   }
+  if grep -Eq 'SecurityException|Permission Denial|Error: unknown command|not allowed' <<< "$cmd_output"; then
+    dr_log_event DISABLE "$PHASE" "$pkg" ERROR "$cmd_output"
+    dr_log_phase "$PHASE" PARTIAL "Package Manager rejected the shell request; no further packages attempted"
+    dr_die "firmware rejected pm disable-user for $pkg: $cmd_output"
+  fi
   dr_device_check
   if ! dr_package_disabled "$pkg"; then
     dr_log_event DISABLE "$PHASE" "$pkg" ERROR "command returned but package not in disabled list: $cmd_output"

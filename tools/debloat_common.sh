@@ -47,7 +47,9 @@ dr_device_check() {
   [[ "$display" == "$DR_DISPLAY_ID" && "$release" == "$DR_ANDROID_RELEASE" && "$api" == "$DR_ANDROID_API" ]] || dr_die "firmware changed since audit: current '$display' Android $release/API $api; expected '$DR_DISPLAY_ID' Android $DR_ANDROID_RELEASE/API $DR_ANDROID_API"
   printf 'ADB identity OK: %s — %s / %s / %s — %s Android %s/API %s\n' "$DR_SERIAL" "$model" "$device" "$product" "$display" "$release" "$api"
 }
-dr_shell() { "$DR_ADB" -s "$DR_SERIAL" shell "$@"; }
+# Package selection loops read the candidate TSV from stdin. Keep remote shell
+# commands from inheriting that stream, or an ADB invocation can consume later rows.
+dr_shell() { "$DR_ADB" -s "$DR_SERIAL" shell "$@" </dev/null; }
 dr_log_event() {
   printf '%s\t%s\t%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2" "$3" "${4:-}" >> "$DR_STATE/actions.tsv"
 }
@@ -120,10 +122,12 @@ EOF
 }
 
 dr_package_installed() {
-  dr_shell pm list packages | tr -d '\r' | grep -Fxq "package:$1"
+  # Consume the complete ADB stream: grep -q can close the pipe early and make
+  # adb/tr return SIGPIPE under set -o pipefail, falsely reporting a package missing.
+  dr_shell pm list packages | tr -d '\r' | grep -Fx "package:$1" >/dev/null
 }
 dr_package_disabled() {
-  dr_shell pm list packages -d | tr -d '\r' | grep -Fxq "package:$1"
+  dr_shell pm list packages -d | tr -d '\r' | grep -Fx "package:$1" >/dev/null
 }
 dr_protected_package() {
   case "$1" in
