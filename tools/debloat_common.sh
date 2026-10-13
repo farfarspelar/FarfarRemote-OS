@@ -62,6 +62,13 @@ dr_latest_package_status() {
 }
 dr_metric_snapshot() {
   local label="$1" stamp out i
+  local app_processes
+  # Measurements belong to the dedicated OS track. A running regular-App flavor
+  # adds its own process load and makes OS before/after comparisons misleading.
+  app_processes="$(dr_shell ps 2>/dev/null | awk 'NR > 1 && $NF ~ /^org\.farfarremote\.app(:|$)/ { print $NF }' | sort -u)"
+  if [[ -n "$app_processes" ]]; then
+    dr_die "OS metrics require FarfarRemote App to be closed; active App process(es): ${app_processes//$'\n'/, }. Close the App flavor without changing the OS installation, then retry."
+  fi
   stamp="$(date -u +%Y%m%dT%H%M%SZ)"
   out="$DR_STATE/metrics/${stamp}_${label}"
   mkdir -m 700 "$out"
@@ -105,6 +112,8 @@ UTC: $stamp
 Device: $DR_SERIAL (E2003 verified immediately before collection)
 Read-only commands only. CPU is sampled five times at five-second intervals.
 PSS active and cached OOM groups are recorded separately in memory.txt.
+The regular FarfarRemote App process must be closed for OS-track metrics; this is checked before capture.
+The five-minute idle period and matching screen/network/charger conditions must be prepared manually.
 Cold-boot duration must be recorded manually with --record-boot-seconds.
 EOF
   printf '%s\n' "$out"

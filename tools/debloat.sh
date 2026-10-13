@@ -84,7 +84,8 @@ print_plan() {
 
 if [[ "$APPLY" == 0 ]]; then
   print_plan "$PHASE"
-  printf '\nRecommended flow: ./tools/debloat.sh --measure baseline ; record stopwatch cold boot; dry-run Phase A; then apply A only after review.\n'
+  printf '\nFor valid OS metrics, close the regular App flavor and let the device settle idle for five minutes with the intended screen, Wi-Fi, Kodi and charger conditions.\n'
+  printf 'Recommended flow: ./tools/debloat.sh --measure baseline ; record stopwatch cold boot; dry-run Phase A; then apply A only after review.\n'
   exit 0
 fi
 
