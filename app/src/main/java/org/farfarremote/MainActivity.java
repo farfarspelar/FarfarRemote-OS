@@ -90,6 +90,7 @@ public final class MainActivity extends Activity {
     private boolean resolvingKodiService, kodiDiscoveryTimedOut;
     private Runnable kodiDiscoveryTimeout;
     private EditText discoveryHostField, discoveryPortField, discoveryUsernameField, discoveryPasswordField;
+    private Object settingsBackCallback;
 
     private static final class KodiEndpoint {
         final String name, host, port;
@@ -97,6 +98,38 @@ public final class MainActivity extends Activity {
         KodiEndpoint(String name, String host, int port) { this.name = name; this.host = host; this.port = String.valueOf(port); }
         String key() { return host + ":" + port; }
         String label() { return name + "\n" + host + ":" + port + " · " + state; }
+    }
+
+    /** API 33 back callback isolated so API 19 can still load the Activity. */
+    private static final class Api33BackHandler {
+        static Object register(Activity activity, Runnable action) {
+            android.window.OnBackInvokedCallback callback = action::run;
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+            return callback;
+        }
+        static void unregister(Activity activity, Object callback) {
+            if (callback instanceof android.window.OnBackInvokedCallback) {
+                activity.getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                        (android.window.OnBackInvokedCallback) callback);
+            }
+        }
+    }
+
+    /** API 35 edge-to-edge APIs are isolated from the API 19 Activity verifier. */
+    private static final class Api35WindowInsets {
+        static void install(FrameLayout target) {
+            target.setOnApplyWindowInsetsListener((view, windowInsets) -> {
+                int types = android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout();
+                android.graphics.Insets safe = windowInsets.getInsets(types);
+                int bottom = safe.bottom;
+                if (windowInsets.isVisible(android.view.WindowInsets.Type.ime())) {
+                    bottom = Math.max(bottom, windowInsets.getInsets(android.view.WindowInsets.Type.ime()).bottom);
+                }
+                view.setPadding(safe.left, safe.top, safe.right, bottom);
+                return windowInsets;
+            });
+        }
     }
 
     private TextView status, hostLabel, titleText, episodeText, elapsedText, durationText, stateText, audioValue, subsValue, connectionNote, settingsFeedback, volumeValue;
@@ -126,15 +159,24 @@ public final class MainActivity extends Activity {
 
     private void buildScreen() {
         inSettings = false;
+        updateSettingsBackCallback();
         if (settingsImeModeSet) { getWindow().setSoftInputMode(previousSoftInputMode); settingsImeModeSet = false; }
         settingsScroll = null; settingsKodiStatus = null;
         screen = new FrameLayout(this);
         screen.setBackgroundColor(BG);
+        configureAppWindowInsets(screen);
         setContentView(screen);
+        if (!getResources().getBoolean(R.bool.dedicated_os) && android.os.Build.VERSION.SDK_INT >= 35) screen.requestApplyInsets();
         View content = isLandscape() ? buildLandscape() : buildPortrait();
         screen.addView(content, new FrameLayout.LayoutParams(-1, -1));
         if (!startupShown) { startupShown = true; showStartupOverlay(); }
         setStatus(connected ? "CONNECTED" : "Kodi offline · Settings to configure");
+    }
+
+    /** Target 35+ apps draw behind system bars; keep app content inside safe insets. */
+    private void configureAppWindowInsets(FrameLayout target) {
+        if (getResources().getBoolean(R.bool.dedicated_os) || android.os.Build.VERSION.SDK_INT < 35) return;
+        Api35WindowInsets.install(target);
     }
 
     private void showStartupOverlay() {
@@ -317,6 +359,7 @@ public final class MainActivity extends Activity {
 
     private void showSettings() {
         inSettings = true;
+        updateSettingsBackCallback();
         if (!settingsImeModeSet) { previousSoftInputMode = getWindow().getAttributes().softInputMode; settingsImeModeSet = true; }
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         ScrollView scroll = new ScrollView(this); settingsScroll = scroll; scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
@@ -447,6 +490,16 @@ public final class MainActivity extends Activity {
     private void selectOrientation(LinearLayout group, String value) { for (int i = 0; i < group.getChildCount(); i++) { RadioButton rb = (RadioButton) group.getChildAt(i); rb.setChecked(value.equals(rb.getTag())); } }
 
     private void closeSettings() { stopKodiDiscovery(true); buildScreen(); }
+
+    private void updateSettingsBackCallback() {
+        if (android.os.Build.VERSION.SDK_INT < 33 || getResources().getBoolean(R.bool.dedicated_os)) return;
+        if (inSettings && settingsBackCallback == null) {
+            settingsBackCallback = Api33BackHandler.register(this, this::closeSettings);
+        } else if (!inSettings && settingsBackCallback != null) {
+            Api33BackHandler.unregister(this, settingsBackCallback);
+            settingsBackCallback = null;
+        }
+    }
 
     private void openCoffeeLink() {
         Uri uri = Uri.parse(COFFEE_URL);
@@ -865,7 +918,7 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override protected void onStart() { super.onStart(); activityStarted = true; handler.removeCallbacks(poll); handler.post(poll); }
-    @Override protected void onStop() { activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true); super.onStop(); }
+    @Override protected void onStart() { super.onStart(); activityStarted = true; updateSettingsBackCallback(); handler.removeCallbacks(poll); handler.post(poll); }
+    @Override protected void onStop() { activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true); if (settingsBackCallback != null) { Api33BackHandler.unregister(this, settingsBackCallback); settingsBackCallback = null; } super.onStop(); }
     @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
 }

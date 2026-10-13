@@ -4,24 +4,32 @@ A lightweight Kodi remote for Android, available as a regular app or a dedicated
 
 ## Choose your edition
 
-### FarfarRemote App
+### FarfarRemote App — modern mobile track
 
-For everyday Android phones. Install the APK and use it like any other app. It requires no root or system modification, does not register as the HOME launcher, and is the recommended edition for most users. Android's normal launcher and Home button remain in control.
+For everyday Android phones. It installs as a regular app, appears in the app drawer, and never registers as Android HOME. It is the recommended choice for phones used day to day.
 
-### FarfarRemote OS
+- Minimum Android version: Android 4.4 / API 19.
+- Target Android version: Android 16 / API 36.
+- Newer Android APIs are guarded at runtime so the package can retain its broad install range.
 
-For old or dedicated Android devices. This edition can be selected as the Android HOME launcher and opens directly into FarfarRemote's dedicated remote interface. It still runs on Android; it is not a separate ROM. Optional Android debloating or system optimization is a separate advanced procedure and is not required.
+### FarfarRemote OS — legacy dedicated-device track
 
-Both editions share the same Kodi controls, discovery, Settings, and graphics. They have different application IDs and can be installed side by side:
+For old or dedicated Android devices, especially repurposed hardware such as the Sony Xperia E4g E2003. It can be selected as the Android HOME launcher and retains the compatibility settings used by the tested Xperia installation.
 
-| Edition | Application ID | Intended use |
+- Minimum Android version: Android 4.4 / API 19.
+- Target Android version: Android 9 / API 28, intentionally conservative for the legacy HOME-device setup.
+- FarfarRemote OS is still an Android application and launcher configuration, not a separate Android ROM. Root, firmware modification, and debloating are not required.
+
+Both editions share the Kodi client, controls, Settings, graphics, and Find My Kodi. They have different application IDs and can be installed side by side:
+
+| Edition | Application ID | Android SDK strategy |
 | --- | --- | --- |
-| FarfarRemote App | `org.farfarremote.app` | Normal Android app |
-| FarfarRemote OS | `org.farfarremote` | Dedicated HOME launcher |
+| FarfarRemote App | `org.farfarremote.app` | min API 19, target API 36 |
+| FarfarRemote OS | `org.farfarremote` | min API 19, target API 28 |
 
 ## Screenshots
 
-These screenshots show the App edition running on a Sony Xperia E4g E2003 (Android 4.4/API 19). The app was offline during capture; no Kodi connection or media is shown.
+The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API 19), offline. No Kodi connection or media is shown.
 
 **Portrait remote**
 
@@ -37,34 +45,41 @@ These screenshots show the App edition running on a Sony Xperia E4g E2003 (Andro
 
 ## Features
 
-- D-pad with OK, Back, Home, playback and transport controls, volume and mute.
-- Kodi Now Playing details, artwork, playback progress and seek controls.
-- Audio and subtitle stream selection on the remote, including subtitle Off where Kodi provides it.
-- Portrait, landscape and automatic orientation modes.
-- Saved Kodi connection settings and optional screen-awake, reconnect and haptic settings.
-- Find My Kodi searches for Kodi's DNS-SD/Zeroconf HTTP JSON-RPC service when requested. It verifies a selected endpoint and asks before saving it. Discovery is not a background scan.
-- Manual host, port, username and password entry remains available when discovery is unavailable.
-- Optional Buy Me a Coffee link: <https://buymeacoffee.com/farfarspelar>.
+- D-pad and OK, Back, Kodi Home, play/pause, stop, previous/next, rewind/fast-forward, volume and mute.
+- Kodi Now Playing information, artwork, playback progress, and seek controls.
+- Audio and subtitle stream selection on the remote, including subtitle Off when Kodi provides it.
+- Portrait, landscape, and automatic orientation modes.
+- Saved Kodi connection settings, optional keep-awake, reconnect, and haptic settings.
+- Find My Kodi searches for Kodi's DNS-SD/Zeroconf HTTP JSON-RPC service only when requested. It verifies a selected endpoint and asks before saving it. Discovery does not run in the background.
+- Manual host, port, username, and password entry remains available when discovery is unavailable.
+- Optional external support link: <https://buymeacoffee.com/farfarspelar>.
 
-## Requirements and Kodi setup
+## Android compatibility and security notes
 
-- Android 4.4 / API 19 or newer. The project currently targets Android 9 / API 28.
-- Kodi must be reachable over the local network. Enable Kodi's web server / HTTP control and configure its port and credentials in FarfarRemote Settings.
-- Find My Kodi additionally requires Kodi Zeroconf announcements and multicast discovery to be available on the local network. Network isolation, guest Wi-Fi, access point multicast filtering, or firewalls can prevent discovery; enter the address manually in that case.
-- FarfarRemote uses Kodi's HTTP JSON-RPC endpoint. Use it on a trusted local network; HTTP does not encrypt credentials or control traffic.
+The App track targets API 36 to adopt modern Android behavior and meet the current Google Play target API requirement. Android 15 and later enforce edge-to-edge for apps targeting API 35+, so the App applies system bar, display cutout, and keyboard insets. On Android 13+, App Settings uses the platform Back callback. The OS track remains target API 28 to protect the established Xperia behavior. See Android's [target API requirements](https://developer.android.com/google/play/requirements/target-sdk), [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15), and [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16).
+
+Android 17 / API 37 requires local network permission or a system-mediated picker for apps that access LAN devices. This project currently targets API 36, so it does not request that permission yet. Before a target 37 update, Find My Kodi and direct Kodi connections must be migrated and tested under the new policy. See [local network permission guidance](https://developer.android.com/privacy-and-security/local-network-permission).
+
+Kodi's built-in JSON-RPC connection uses HTTP. FarfarRemote must allow cleartext traffic for Kodi communication and currently uses it for configured connections; HTTP does not encrypt Kodi credentials or commands. Use a trusted local network. The target SDK improves platform behavior but cannot make Kodi's HTTP protocol encrypted.
+
+## Kodi setup and connection
+
+Enable Kodi's web server / HTTP control, then enter the Kodi hostname or IP, port, and any credentials in FarfarRemote Settings. The default port shown by Kodi is commonly 8080, but use the port configured in your Kodi installation.
+
+Find My Kodi additionally needs Kodi Zeroconf service announcements and multicast discovery on the local network. Guest Wi-Fi, client isolation, multicast filtering, and firewalls may prevent discovery. If no device is found, use the visible manual connection fields. A discovered endpoint is tested with JSON-RPC and is not saved until you confirm it.
 
 ## Download and install
 
-Download APKs from the [GitHub Releases page](https://github.com/farfarspelar/FarfarRemote-OS/releases). Choose the edition that matches your use:
+Download APKs from the [GitHub Releases page](https://github.com/farfarspelar/FarfarRemote-OS/releases). Choose the APK for the intended use:
 
-- **App:** install `FarfarRemote-App-<version>.apk`, then open FarfarRemote from the normal app list. It does not take over HOME.
-- **OS:** install `FarfarRemote-OS-<version>.apk` on a dedicated device. To make it the default launcher, press Android Home and select FarfarRemote. For an existing OS installation, install an update with the OS APK only; do not uninstall the app or clear its data. Keep using APKs signed with the same key as the installed OS version.
+- **FarfarRemote App:** install `FarfarRemote-App-<version>.apk` as a regular app and open it from the app drawer. Android's Home button continues to open the phone's existing launcher.
+- **FarfarRemote OS:** install `FarfarRemote-OS-<version>.apk` on a dedicated device. Press Android Home and select FarfarRemote to make it the launcher. For an existing OS installation, update with the OS APK only; do not uninstall the app or clear its data. Updates must use the same signing certificate as the installed build.
 
-Android may require the user to allow installation from the chosen file manager or browser. The release APKs are currently debug-signed development builds; see [Signing and updates](#signing-and-updates).
+Android may ask you to allow APK installation from the browser or file manager. The current RC artifacts are debug-signed. Read [Signing and updates](#signing-and-updates) before distributing updates to an established installation.
 
 ## Build from source
 
-Requirements: JDK, Android SDK Platform 34 and Build Tools 34.0.0, Python 3, and the included Gradle wrapper. Set `ANDROID_HOME` or `ANDROID_SDK_ROOT` to the SDK path. Then run:
+Requirements: JDK 17 or newer, Android SDK Platform 36, Android SDK Build Tools 35.0.0, Python 3, and the included Gradle wrapper. Set `ANDROID_HOME` or `ANDROID_SDK_ROOT` to the SDK path.
 
 ```sh
 python3 tools/test_v03_contract.py
@@ -72,22 +87,27 @@ python3 tools/test_v03_contract.py
 ./tools/build_distributions.sh
 ```
 
-The distribution script writes the App APK, OS APK and SHA-256 manifest under `dist/`. The flavors are named `app` and `os`; the App flavor has a normal launcher entry point, while only the OS flavor declares the HOME intent. Both use minSdk 19 and share the same application code.
+Gradle flavors are named `app` and `os`. Both APKs compile against API 36; the App flavor targets API 36 and the OS flavor targets API 28. Build outputs and checksums are written under `dist/`.
 
 ## Signing and updates
 
-The checked-in build configuration creates debug builds. Debug APKs are suitable for testing and the current local update path, but they are not a production signing strategy. Android only accepts an in-place update when the APK has the same application ID and signing certificate as the installed app. Protect and back up the key used for any long-lived installation before distributing updates. Do not uninstall an existing OS installation to work around a signature mismatch, because uninstalling removes its app data.
+Debug APKs are for testing and the current development update path, not a production signing strategy. Android allows an in-place update only when both the application ID and signing certificate match. Keep a secure backup of the signing key for long-lived installations. Do not change the certificate for existing `org.farfarremote` installs or uninstall them to work around a signature mismatch.
+
+## Graphics provenance
+
+The project owner reports that FarfarRemote's UI graphics and visual references were generated with ChatGPT from prompts written by the owner, who directed the visual design. The generated images were integrated as FarfarRemote UI assets and references. App code and Android XML drawables are project-authored source code under GPL-3.0. No official Kodi or Buy Me a Coffee logo is included; the coffee cup is a generic generated project graphic. See [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) for the inventory and notes.
 
 ## Known limitations
 
-- Hardware verification has primarily used the Xperia E4g E2003 on Android 4.4/API 19. Newer Android releases and a wide range of screen sizes still need device testing.
-- Kodi discovery depends on network multicast and Kodi service announcements. Manual connection is the fallback.
-- HTTP JSON-RPC is not encrypted.
-- Artwork and controls depend on the metadata and capabilities reported by Kodi and the active player.
-- The OS edition is an Android launcher app, not a custom ROM, and it does not root, unlock, flash, or debloat a device.
+- The legacy OS track is primarily verified on a Sony Xperia E4g E2003 running Android 4.4/API 19.
+- The user has reported the App running on a Samsung SM-A715F with Android 13, but the API 36 target build requires fresh device verification; this work environment has no Samsung device.
+- Kodi discovery depends on Zeroconf announcements and multicast support; manual connection is the fallback.
+- Kodi HTTP JSON-RPC is unencrypted.
+- Kodi determines which artwork and media metadata are available.
+- The OS edition is not a ROM and performs no root, firmware, bootloader, or system-package modification.
 
 ## License and support
 
-FarfarRemote source code is licensed under [GPL-3.0](LICENSE). Graphic asset provenance and license notes are in [graphics/README.md](graphics/README.md) and [graphics/SETTINGS_ASSETS.md](graphics/SETTINGS_ASSETS.md).
+FarfarRemote application code is licensed under [GPL-3.0](LICENSE). Generated graphics are documented separately in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md) and [graphics/README.md](graphics/README.md).
 
 Optional support: <https://buymeacoffee.com/farfarspelar>.

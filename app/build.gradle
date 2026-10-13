@@ -2,25 +2,31 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'org.farfarremote'
-    compileSdk 34
+    compileSdk 36
+    buildToolsVersion '35.0.0'
 
     defaultConfig {
         applicationId 'org.farfarremote'
         minSdk 19
         targetSdk 28
-        versionCode 5
-        versionName '0.4.1-rc1'
+        versionCode 6
+        versionName '0.4.2-rc1'
     }
     flavorDimensions 'distribution'
     productFlavors {
         app {
             dimension 'distribution'
             applicationId 'org.farfarremote.app'
+            // Mobile track uses current Android behavior while retaining API 19
+            // installation compatibility; newer platform APIs are runtime-guarded.
+            targetSdk 36
         }
         os {
             dimension 'distribution'
             // Keep the package ID used by the existing Xperia OS installation.
             applicationId 'org.farfarremote'
+            // Conservative target is intentional for the proven legacy HOME device.
+            targetSdk 28
         }
     }
     compileOptions {

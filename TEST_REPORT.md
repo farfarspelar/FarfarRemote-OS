@@ -1,3 +1,50 @@
+# FarfarRemote 0.4.2 RC1 — release track split QA
+
+**Branch:** `feature/release-track-split`  **Base:** `9232787` (FarfarRemote 0.4.1 RC1)
+
+## SDK strategy
+
+- Both variants compile against API 36 and retain `minSdk 19`. This retains the established OS device range, and the modern App APK was also installed and launched on the API 19 Xperia to verify the low-minimum package can load there. New framework APIs are isolated in API-specific helper classes and guarded by runtime version checks.
+- App (`org.farfarremote.app`) targets API 36. This adopts current Android behavior and meets the current Google Play target requirement for new apps and updates; the repository distributes GitHub APKs and does not depend on Play. Android 15+ edge-to-edge insets and Android 13+ Settings Back handling are App-only.
+- OS (`org.farfarremote`) stays target API 28, min API 19, and retains HOME intent and application ID for the Xperia reference installation. The conservative target is deliberate compatibility policy.
+- Both variants continue allowing cleartext HTTP because Kodi's configured JSON-RPC endpoint uses HTTP. This is a known transport limitation: credentials and commands are not encrypted.
+- Android 17/API 37 is not targeted. Apps targeting API 37 need the local-network permission or a system-mediated discovery path; future work must update and test direct connections plus DNS-SD discovery before changing target.
+
+## Automated/build checks
+
+- **PASS:** `python3 tools/test_v03_contract.py`. It checks protected Kodi/control methods against the v0.2 reference, flavors, manifest intent categories, IDs, API split, guards, and existing preference keys. This is a source/manifest contract check, not a behavioral test.
+- **PASS:** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew testAppDebugUnitTest testOsDebugUnitTest assembleAppDebug assembleOsDebug` with Gradle 8.13, AGP 8.13.2, Platform 36, Build Tools 35.0.0. App and OS compilation/assembly passed. Unit-test tasks report `NO-SOURCE`; this repo has no Android unit-test sources. Java 8 source/target on the JDK 21 build runtime emits the existing deprecation warning.
+- **PASS:** `tools/build_distributions.sh` validates application IDs, versions, and target SDK metadata, then emits both APKs and SHA-256 sidecars/manifest.
+- **PASS:** Android manifest inspection confirms App `MAIN`/`LAUNCHER` and no HOME intent; OS retains `MAIN`/`HOME`/`DEFAULT`. App opts into platform predictive-back callbacks.
+
+## Physical E2003 checks
+
+The attached Sony Xperia E4g E2003 runs Android 4.4.4/API 19.
+
+- **PASS:** OS APK updated in place from v0.4.1 RC1 to v0.4.2 RC1 (`org.farfarremote`, versionCode 6, targetSdk 28). `adb install -r` succeeded and HOME resumed the existing FarfarRemote OS activity.
+- **PASS:** the OS preferences-file SHA-256 before and after update remained `dacd95c0d0e49155b7032d899b6a0fedcada1d0a9d23f900163d8b4d7f2df862`. No preference values were printed.
+- **PASS:** OS RC APK signing certificate matches v0.4.1 RC1 and the installed update path. No uninstall, data clear, firmware action, or system-package change occurred.
+- **PASS:** App target API 36 installed beside the OS as `org.farfarremote.app` on API 19 and launched successfully. This checks APK installation, manifest parsing, app-class loading, and the guarded modern API code on the legacy OS. Settings and the manual host field opened; Android Back closed Settings and kept the App activity in the foreground. Android Home then returned to the pre-existing OS HOME launcher. The App did not take HOME.
+- The OS UI displayed its Kodi-connected indicator after update. Kodi credentials were not copied from the OS install into App for testing. Kodi controls, discovery, manual connection tests, and media/audio/subtitle commands were not reissued during this run. Their shared implementations and Settings preference keys are unchanged. The user has previously verified the Kodi and discovery features on the Xperia; do not treat that as a fresh v0.4.2 functional test.
+
+## Modern Android test status
+
+- The user previously reported FarfarRemote App running on Samsung SM-A715F / Android 13 with the earlier API 28 target. The new API 36 APK was not available on that Samsung during this run.
+- Android 15/16 edge-to-edge UI, keyboard insets, predictive Back gestures, NSD discovery, Kodi HTTP connection, and large-screen behavior are **not yet verified** on a modern device. An API 36 emulator image was attempted but could not finish extracting because the development volume ran out of space; the partial emulator install was removed. No emulator was booted.
+- API 36 remains below the API 37 local-network permission enforcement. NSD uses the existing user-triggered Kodi DNS-SD service type and the existing explicit confirmation before saving.
+
+## Asset provenance
+
+The owner reports that FarfarRemote UI artwork and visual references were generated with ChatGPT from owner-written prompts and visual direction. This statement is recorded in [ASSET_PROVENANCE.md](ASSET_PROVENANCE.md), the English README, and the graphics documentation. The resources were checked for official Kodi or Buy Me a Coffee logos; none were identified. The coffee cup is generic generated FarfarRemote artwork.
+
+## Current RC artifacts
+
+- `dist/FarfarRemote-App-v0.4.2-rc1.apk` — target API 36, min API 19.
+- `dist/FarfarRemote-OS-v0.4.2-rc1.apk` — target API 28, min API 19.
+- SHA-256 sidecars and combined manifest are alongside the APKs in `dist/`.
+
+---
+
 # FarfarRemote 0.4.1 RC1 — QA report
 
 **Date:** 2026-10-13  **Branch:** `release/0.4.1-rc1`  **Base commit:** `3540884` (`feature/two-track-distribution`, v0.4.0)

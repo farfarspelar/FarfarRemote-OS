@@ -86,7 +86,9 @@ for name in protected_methods:
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("minSdk 19" in build and "versionCode 5" in build and "versionName '0.4.1-rc1'" in build, "API 19 and v0.4.1 RC version metadata")
+check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 6" in build and "versionName '0.4.2-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.2 RC metadata")
+check(re.search(r"app \{(?:(?!\n\s*\}).)*targetSdk 36", build, re.S) is not None, "App flavor targets API 36")
+check(re.search(r"os \{(?:(?!\n\s*\}).)*targetSdk 28", build, re.S) is not None, "OS flavor retains conservative API 28 target")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
 os_manifest = ET.parse(ROOT / "app/src/os/AndroidManifest.xml").getroot()
 def categories_in(overlay):
@@ -94,6 +96,7 @@ def categories_in(overlay):
 check("android.intent.category.LAUNCHER" in categories_in(app_manifest), "App flavor has normal launcher icon")
 check("android.intent.category.HOME" not in categories_in(app_manifest), "App flavor does not claim HOME")
 check("android.intent.category.HOME" in categories_in(os_manifest) and "android.intent.category.DEFAULT" in categories_in(os_manifest), "OS flavor retains HOME launcher intent")
+check(app_manifest.find("application").attrib.get(f"{{{ANDROID}}}enableOnBackInvokedCallback") == "true", "App flavor opts into modern predictive back handling")
 
 for key in ("host", "port", "user", "pass", "orientation", "keep_awake", "auto_reconnect", "haptics"):
     check(f'"{key}"' in new_main, f"preference key {key} retained")
@@ -107,6 +110,9 @@ check("activityStarted;" in new_main and "schedulePoll(2800)" in new_main, "Kodi
 check("@Override protected void onStart()" in new_main and "handler.removeCallbacks(poll)" in new_main, "poll loop starts without duplicate callbacks")
 check("@Override protected void onStop()" in new_main and "activityStarted = false; handler.removeCallbacks(poll)" in new_main, "polling stops when the activity is backgrounded")
 check("setShowText(" not in new_main, "no Switch API 21 setShowText call on API 19")
+check("Build.VERSION.SDK_INT < 35" in new_main and "Api35WindowInsets.install(target)" in new_main, "App insets are API-gated; API 19 remains supported")
+check("Api33BackHandler.register(this, this::closeSettings)" in new_main, "App Settings use modern platform Back callback")
+check('android:usesCleartextTraffic="true"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(), "Kodi HTTP connectivity remains enabled")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4.1 RC distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.2 RC distribution and regression contract checks passed.")

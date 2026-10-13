@@ -1,32 +1,38 @@
-# Graphic asset review and Android derivatives
+# Graphic assets and Android derivatives
 
-`originals/` is a byte-for-byte copy of every PNG supplied under `FarfarRemote_Asset_Pack/assets/`. The original pack and its mockups are also left in place. App resources are trimmed to their alpha bounds (with a small edge pad), resized with Lanczos and saved losslessly as RGBA PNGs under `app/src/main/res/drawable-nodpi/`; nodpi prevents density-based resampling on the 240 dpi E2003. This directory is not packaged in the APK.
+FarfarRemote UI artwork and visual reference images were generated with ChatGPT from prompts written by the project owner, who directed the visual design. The generated images were integrated into the project as controls, logos, backgrounds, and references. See [ASSET_PROVENANCE.md](../ASSET_PROVENANCE.md) for the public provenance and third-party mark review.
 
-## Source image checks
+## Remote controls
 
-| File | Source dimensions / mode | Alpha and handling |
+`originals/` retains byte-for-byte copies of the supplied source PNGs. The app uses trimmed, proportion-preserving, lossless RGBA derivatives under `app/src/main/res/drawable-nodpi/`; nodpi avoids density-based resampling on the 240 dpi E2003.
+
+| File | Source dimensions / mode | Alpha and use |
 |---|---|---|
-| `button_dpad_ok.png` | 1254×1254 RGBA | Transparent outside the control; one D-pad, mapped to five non-overlapping polar touch zones (center OK plus four directional sectors). |
-| `button_volume_rocker.png` | 1024×1536 RGBA | Transparent outside rocker; separate top/bottom hit zones and central mute zone. |
-| `buttons_core_actions_sheet.png` | 2172×724 RGBA | Five equal-width controls split into Back, Home, Play/Pause, Stop, Settings. |
-| `buttons_transport_sheet.png` | 2172×724 RGBA | Four equal-width controls split into Rewind, Previous, Next, Fast Forward. |
-| `buttons_media_categories_sheet.png` | 2172×724 RGBA | Four equal-width controls split into Movies, TV Shows, Music and Add-ons. |
-| `button_audio_selector.png` | 2172×724 RGBA | Transparent Audio selector; its fixed label is generic. Current track is a separate Kodi-driven TextView. |
-| `button_subs_selector.png` | 2172×724 RGBA | Transparent Subtitles selector; its fixed label is generic. Current track/Off is dynamic text. |
-| `button_side_nav.png` | 1024×1536 RGBA | Transparent side rocker retained as an original; not used in this layout because D-pad and separate actions already cover navigation. |
-| `button_menu.png` | 1254×1254 RGBA | Transparent menu/control artwork retained as an original; not needed by the current action map. |
-| `button_connection_status.png` | 2172×724 RGBA | Transparent, but includes baked-in “Kodi · MeLE / Connected”; deliberately not used for live status. Host and connection state are dynamic text. |
-| `farfarremote_os_boot_logo.png` | 1254×1254 RGBA | Transparent logo; used on the app startup overlay only. |
-| Portrait / landscape references | 941×1672 and 1672×941 RGB | Opaque mockups containing a phone and sample content; design references only, never screen backgrounds. |
+| `button_dpad_ok.png` | 1254×1254 RGBA | One transparent D-pad; UI maps separate non-overlapping direction and OK touch zones. |
+| `button_volume_rocker.png` | 1024×1536 RGBA | Transparent rocker; top, bottom, and mute zones are handled separately. |
+| `buttons_core_actions_sheet.png` | 2172×724 RGBA | Five controls cropped individually: Back, Home, Play/Pause, Stop, Settings. |
+| `buttons_transport_sheet.png` | 2172×724 RGBA | Four controls cropped individually: Rewind, Previous, Next, Fast Forward. |
+| `buttons_media_categories_sheet.png` | 2172×724 RGBA | Four controls cropped individually: Movies, TV Shows, Music, Add-ons. |
+| `button_audio_selector.png` | 2172×724 RGBA | Generic Audio selector; current track is dynamic Kodi text. |
+| `button_subs_selector.png` | 2172×724 RGBA | Generic Subtitles selector; current track and Off state are dynamic. |
+| `button_side_nav.png` | 1024×1536 RGBA | Transparent side control retained as source; not used by the current action map. |
+| `button_menu.png` | 1254×1254 RGBA | Transparent menu artwork retained as source; not required in the action map. |
+| `button_connection_status.png` | 2172×724 RGBA | Contains baked-in sample host/status and is excluded from live status UI. |
+| `farfarremote_os_boot_logo.png` | 1254×1254 RGBA | Transparent FarfarRemote project logo used for the brief app startup overlay. |
+| Portrait / landscape references | 941×1672 and 1672×941 RGB | Opaque design mockups only; never used as full-screen app backgrounds. |
 
-Every source UI control is RGBA. Sampled corners/edges were checked for alpha zero; some artwork reaches a canvas edge, so the alpha bounding boxes vary. The UI icons are used as button faces; captions/accessibility descriptions and touch containers remain Android views. Kodi artwork is downsampled to about 256 px per side and decoded to RGB_565. Missing art uses a small neutral local placeholder.
+UI images use alpha channels. Button sheets are cropped into individual assets at equal cell boundaries and then trimmed to visible bounds. Android views provide touch regions, captions, accessibility labels, and changing status text. Kodi artwork is downsampled before display; the missing-art placeholder is a small local graphic.
 
-The three sheets have equally spaced four/five-cell layouts. Their crop edges are the equal cell boundaries; alpha trimming removes each neighbor's transparent gap. The source files remain untouched. The hard-coded status asset and the full-screen mockups are excluded from Android resources.
+## Settings graphics
 
-## Settings v0.3 assets
+The unpacked `FarfarRemote_Settings_Assets_v0.3/` directory is the canonical original source; the ZIP duplicate is excluded from Git. Its PNGs and generated references were inspected for dimensions, alpha, and use. Separate button and icon files remain individual images; there is no combined button sheet. The reference mockup is not packaged into the APK. Selected small icons are reduced to 64 px for app resources.
 
-The extracted `FarfarRemote_Settings_Assets_v0.3/` directory is the canonical source for the new Settings graphics. Its ZIP twin is byte-identical and excluded from Git to avoid a second copy. Asset inspection, selected Android derivatives, memory notes and the separate asset-license status are documented in [SETTINGS_ASSETS.md](SETTINGS_ASSETS.md).
+The Settings panel backgrounds and buttons are generated project artwork. Dynamic labels, password fields, selection states, and status indicators are Android views/XML selectors rather than baked text. The coffee-cup icon is generic project artwork; no official Buy Me a Coffee branding is used.
 
-## Release-candidate screenshots
+## Screenshots
 
-The public README screenshots under `docs/screenshots/` are direct captures of the FarfarRemote App variant running on the project Xperia E4g E2003. They show the app offline and contain no Kodi endpoint or account details. They are documentation captures, not packaged UI assets.
+The public README screenshots under `docs/screenshots/` are direct captures of the App variant on the project's Xperia E4g E2003. They show an offline preview and contain no configured Kodi host or credentials. They are documentation captures, not packaged app artwork.
+
+## License and trademarks
+
+Project source code is GPL-3.0. The graphics are documented as ChatGPT-generated project assets from owner-written prompts. No third-party stock graphics or official Kodi/Buy Me a Coffee logos have been identified in the app resources. Product names “Kodi” and “Buy Me a Coffee” are used only to describe interoperability and an external link; their respective marks remain owned by their owners. See [ASSET_PROVENANCE.md](../ASSET_PROVENANCE.md).

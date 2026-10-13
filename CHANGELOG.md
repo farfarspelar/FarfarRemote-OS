@@ -1,26 +1,31 @@
 # Changelog
 
+## 0.4.2 RC1 — Release track SDK split
+
+- Split the target SDK strategy: FarfarRemote App targets API 36; FarfarRemote OS stays at API 28 for the proven Xperia HOME setup.
+- Both tracks retain minSdk API 19, shared Kodi/features, and their established distinct application IDs.
+- Added App-only edge-to-edge insets for status/navigation bars, cutouts, and the keyboard, plus the platform Back callback for Settings on Android 13+.
+- Documented the owner-reported ChatGPT graphics provenance and the distinction between project art and third-party names.
+- Modern Android runtime behavior still needs device verification; see `TEST_REPORT.md`.
+
 ## 0.4.1 RC1 — 2026-10-13
 
-- Added lifecycle handling so Kodi status polling runs only while the remote activity is in the foreground, then resumes when the user returns.
-- Prepared separate App and OS release-candidate APKs with versionCode 5 while preserving their application IDs and shared codebase.
-- Updated public documentation and release verification records.
-- No Kodi command, discovery, Settings, audio/subtitle, orientation, or launcher behavior was intentionally redesigned.
+- Limited the existing Kodi state polling to the foreground Activity lifecycle to avoid polling while the normal App was in the background.
+- Preserved the App and OS application IDs, HOME intent in OS only, and all Kodi, discovery, Settings, audio/subtitle, and orientation implementations.
 
 ## 0.4.0 — 2026-10-13
 
-- Added `app` and `os` Gradle product flavors sharing Kodi and UI code.
+- Added `app` and `os` Gradle flavors sharing Kodi and UI code.
 - App (`org.farfarremote.app`) has a normal launcher icon and no HOME intent; OS retains `org.farfarremote` and HOME behavior for in-place dedicated-device updates.
 - Added on-demand Find My Kodi discovery using Kodi HTTP JSON-RPC DNS-SD, endpoint verification, explicit save confirmation, timeout, and lifecycle cleanup.
 - Preserved manual Kodi configuration, existing preference keys, and core Kodi client behavior.
-- Added separate App/OS build and install scripts.
 
 ## 0.3.0
 
 - Redesigned Settings using themed cards, scrollable fields, input focus graphics, and stateful orientation and remote controls.
 - Preserved existing Kodi preference keys, application identity, HOME launcher, Kodi client, remote actions, D-pad, Audio/Subtitles, and orientation policy.
 - Added the optional Buy Me a Coffee external link with clipboard fallback when no browser is available.
-- Integrated selected user-provided Settings assets and documented their provenance and licensing status.
+- Integrated generated Settings assets and documented their provenance.
 
 ## 0.2.0
 
