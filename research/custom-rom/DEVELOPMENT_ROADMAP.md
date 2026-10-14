@@ -59,4 +59,17 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 6. Unplugged controlled battery baseline and comparable post-change measurements.
 7. Sufficient persistent build host/source storage for any full ROM branch.
 
+## Probability checkpoint — 2026-10-14
+
+To avoid conflating “can build an image” with “can safely run it on the handset,” estimates are separated by outcome. These are engineering judgments from current evidence, not statistical guarantees:
+
+| Outcome | Current estimate | Evidence / gate |
+|---|---:|---|
+| Produce and inspect an offline stock-derived API 19 system-image POC from available E2003-family material | ~80% | A 2 GB ext4 system image reconstructs; 42/42 sampled essential R7A/R10A files match; toolchain can process it. Not all files are compared, and the candidate's CDA differs. |
+| First boot of a modified image on this actual R7A handset | ~45–60% | Shared sampled userspace and same model/build family are favorable; actual boot/FOTA bytes, exact image match, bootloader behavior and a verified recovery path remain unknown. |
+| Recover safely if that first boot fails using evidence already in hand | <30% | No exact restore package or audited recovery artifact; Sony Companion has not been shown to serve this device/build. |
+| Build a newer AOSP/LineageOS ROM for E2003 | <20% | Exact kernel source/config and device tree are still absent; no reproducible port was found. |
+
+The requested ≥70% confidence has been reached only for the limited **offline stock-derived image-analysis/assembly** milestone. It has **not** been reached for a modified image successfully booting, being fully usable, or being recoverable on the phone. Raising those claims without the missing evidence would be misleading. The highest-value next step is to establish an exact restore route and audit the historical E2003 recovery source/artifact, then compare boot/FOTA payloads if the owner deliberately places the phone into an appropriate read-only diagnostic mode. No fastboot transition or device write has been performed.
+
 **Root research note:** a 2016 community report describes KingRoot on E2003/Android 4.4.4/build `25.0.A.2.31`, but the handset had previously been rooted and commenters questioned whether residual files explain the result. Treat it as weak evidence only; APK/version/provenance, CDA and reproducibility are missing. It is not an approved procedure. See [ROOT_METHODS.md](ROOT_METHODS.md).

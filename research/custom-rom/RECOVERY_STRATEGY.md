@@ -34,6 +34,12 @@ The `boot.sin` and `fotakernel.sin` payloads were decoded offline and checked ag
 - The [XDA TWRP thread](https://xdaforums.com/t/twrp-recovey-sony-xperia-e4g-t3425174) is corroborated by [E4g owner-forum reports](https://4pda.to/forum/index.php?showtopic=668811&st=480) saying users installed TWRP on E2003; the thread itself and binary are not currently retrievable for audit. This raises recovery feasibility, but does not verify an image for this exact firmware/CDA or prove a safe temporary-boot route.
 - The [E4g /e/OS device request](https://community.e.foundation/t/sony-xperia-e4g-e2003/40466) reports no official or unofficial LineageOS build in 2022. A separate [2018 blog post claiming an E4g LineageOS 15.0 Oreo beta](https://dianariyanto.com/install-custom-rom-sony-xperia-e4g-lineage-os-15-oreo/) exists. It says the port is based on a Samsung Galaxy Note 8 Oreo custom ROM and links ROM/GApps through third-party file hosts; it gives no source repository, exact E2003/E2006/E2053 compatibility, hash, build log or independently reproduced result. This establishes a **reported ROM claim**, not a verified E2003 ROM. We did not download or run it.
 
+### Current device-side read-only status — 2026-10-14
+
+ADB still sees one authorized device with USB product/model/device `E2003`. Android properties confirm build `25.0.A.2.31`, customization `1293-7358 R7A`. The read-only by-name map exposes `boot` (`mmcblk0p10`) and `fotakernel` (`mmcblk0p9`) but no separate partition named `recovery`; this is consistent with the candidate's Sony boot/FOTA arrangement, but does not prove how this bootloader selects recovery. The ADB shell cannot read raw partition contents. `ro.boot.flash.locked` and `ro.boot.verifiedbootstate` are empty in normal Android mode; the owner's unlocked report remains **REPORTED**, not independently verified. We did not reboot to Fastboot or issue any partition command.
+
+The 42/42 sampled R7A/R10A system-file matches improve confidence in the candidate's *userspace relevance*, not the recovery path. The exact restore/recovery gate remains **BLOCKED**. A historical E4g TWRP mention is not enough to authorize or safely try an image.
+
 ## Protected areas and constraints
 
 Do not write `ta`, `nvram`, `proinfo`, `protect1`, `protect2`, `seccfg`, `secro`, `tee1` or `tee2`. Never use a generic MTK scatter/preloader package. Never flash E2033/E2043 dual-SIM or other Xperia/MT6732/MT6752 images.

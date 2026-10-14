@@ -79,6 +79,12 @@ The public Sony [`kernel-copyleft`](https://github.com/sonyxperiadev/kernel-copy
 
 **Conclusion:** We now have a useful E2003/build-labelled *offline analysis candidate*, not an authenticated exact restore base. Exact installed customization remains unmatched. The next safe work is to compare relevant image/ramdisk properties and obtain the exact 1293-7358 R7A package or an independently verified official Sony repair path.
 
+### Direct R7A/R10A system-file comparison — 2026-10-14
+
+The active ADB device again reported `E2003`, build fingerprint `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`, CDA `1293-7358`, revision `R7A`. In addition to the previously recorded 33 matching core files, nine further files were pulled individually from the read-only live `/system` and compared to the local R10A ext4 image. All nine SHA-256 pairs match: `/system/bin/netd`, `servicemanager`, `surfaceflinger`, `vold`, `wpa_supplicant`; `/system/lib/libnetutils.so`, `libwpa_client.so`; `/system/etc/firmware/WIFI_RAM_CODE_6752`; and `/system/etc/wifi/p2p_supplicant_overlay.conf`. Total sampled match: **42/42**.
+
+The host comparison output is temporary in `/tmp/farfar-e2003-extended-compare` and is not committed. Android 4.4's shell lacks several common utilities, so only explicit file reads were used. A full `/system` pull was cancelled at ~354 MB; no bulk copy is available and no device partitions were read. This is sampled evidence only; it must not be described as a complete R7A/R10A image diff.
+
 ## Extraction workflow (offline only)
 
 1. Record where the FTF came from, exact URL/account/date, file size, archive listing and SHA-256. Do not place firmware/vendor binaries in public Git.
