@@ -28,6 +28,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Vibrator;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -218,7 +220,7 @@ public final class MainActivity extends Activity {
         View content = isLandscape() ? buildLandscape() : buildPortrait();
         screen.addView(content, new FrameLayout.LayoutParams(-1, -1));
         if (!startupShown) { startupShown = true; showStartupOverlay(); }
-        setStatus(connected ? "CONNECTED" : "Kodi offline · Settings to configure");
+        updateHeader();
     }
 
     /** Target 35+ apps draw behind system bars; keep app content inside safe insets. */
@@ -293,11 +295,15 @@ public final class MainActivity extends Activity {
 
     private void addHeader(LinearLayout root) {
         LinearLayout header = row(root); header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView logo = text("Farfar", 23, TEXT, true); TextView accent = text("Remote", 23, CYAN, true);
-        LinearLayout brand = new LinearLayout(this); brand.setGravity(Gravity.CENTER_VERTICAL); brand.addView(logo); brand.addView(accent);
+        SpannableString title = new SpannableString("FarfarRemote");
+        title.setSpan(new ForegroundColorSpan(CYAN), 6, title.length(), SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        TextView brand = text("FarfarRemote", 23, TEXT, true); brand.setText(title);
+        brand.setSingleLine(true); brand.setEllipsize(android.text.TextUtils.TruncateAt.END);
         header.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         LinearLayout connection = new LinearLayout(this); connection.setOrientation(LinearLayout.VERTICAL); connection.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
         hostLabel = text(prefs.getString("host", "Kodi"), 12, TEXT, true); status = text("CONNECTING…", 11, MUTED, true);
+        hostLabel.setSingleLine(true); hostLabel.setEllipsize(android.text.TextUtils.TruncateAt.END); hostLabel.setMaxWidth(dp(120));
+        status.setSingleLine(true); status.setEllipsize(android.text.TextUtils.TruncateAt.END); status.setMaxWidth(dp(120));
         connection.addView(hostLabel); connection.addView(status); header.addView(connection);
         LinearLayout.LayoutParams power = new LinearLayout.LayoutParams(dp(58), dp(46)); power.leftMargin = dp(6);
         addPowerControl(header, power, 31);

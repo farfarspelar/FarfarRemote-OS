@@ -1,3 +1,11 @@
+# UI follow-up — FarfarRemote wordmark wrapping
+
+- **CHANGE:** Prevented the header wordmark from wrapping when the longer startup/offline status competes for width. The wordmark is one styled, single-line `TextView`; the status and host labels are single-line and capped, and startup uses the compact offline status. No orientation policy or Kodi code changed.
+- **PASS:** Both App and OS variants rebuilt; source-contract regressions for the wordmark, Kodi behavior, favorites, and OS battery behavior passed. `git diff --check` passed.
+- **PASS:** The OS APK was installed over the Xperia E2003 installation with `adb install -r`. The old and new APK signing certificate SHA-256 fingerprints match; package ID, versionCode, and saved preferences are retained.
+- **APK SHA-256:** App `2933f16881595f50bfa9222fb0a7845189ad171b2fe3b1a6e94a3d42338c5462`; OS `0fdb56c9ed60bdcb877ad0e21c29d53a6b15907e1d8ab0360a128e4bad3169df`.
+- **NOT VERIFIED:** The rotation symptom still needs visual confirmation on the Xperia. The app was opened after installation, but the full Settings-to-remote and landscape-to-portrait sequence was not observed by the test operator.
+
 # FarfarRemote OS 0.4.5 RC1 — Battery Optimization Phase 1
 
 - **PASS:** `./tools/build_distributions.sh` built App and OS debug APKs. Metadata checks passed: App `org.farfarremote.app`, target API 36; OS `org.farfarremote`, target API 28; both min API 19, versionCode 9 / versionName `0.4.5-rc1`.
@@ -5,7 +13,7 @@
 - **PASS:** The new OS APK was installed over the existing Xperia OS APK with `adb install -r`, without uninstalling or clearing app data. The installed package reports version 0.4.5-rc1. The installed APK's signer matched the new APK before installation (`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`).
 - **PASS:** Device is Android 4.4.4/API 19; installed manifest retains the existing `org.farfarremote` identity and OS HOME activity. Screen timeout remains 30,000 ms. A read-only snapshot later showed Wi-Fi connected while the display was asleep.
 - **PASS:** `tools/battery_measure.py` refused to start a measurement because ADB was USB-connected and the phone reported USB power. No USB-powered battery data was treated as endurance data.
-- **APK SHA-256:** App `e243a39c86bba2a94d94dbaae0ae6e3d88e6448b7132e31a2ab4ad6190742015`; OS `ed008c762d5e45fac8ae4525e5f377d7464c4fc265a54d552ea80f312fea1747`.
+- **APK SHA-256 at battery-phase build:** App `e243a39c86bba2a94d94dbaae0ae6e3d88e6448b7132e31a2ab4ad6190742015`; OS `ed008c762d5e45fac8ae4525e5f377d7464c4fc265a54d552ea80f312fea1747`. See the follow-up section above for the rebuilt APK hashes.
 - **NOT VERIFIED:** No unplugged baseline or optimized session was captured. No battery improvement, current draw, battery capacity, or 24-hour runtime is claimed.
 - **NOT VERIFIED:** The screen remained at Android Keyguard during the attempted wake check, so the new Activity's screen-on/off receiver logs and Battery Mode UI were not runtime-verified on the physical screen. Kodi was not available for command-latency, Audio/Subtitles, Find My Kodi, or post-sleep reconnect checks. Wi-Fi's single connected snapshot is not a reconnection test.
 - **LIMITATION:** The Gradle build succeeds with the existing JDK 21 / Java 8 source-target deprecation warnings. There are no new Android permissions, root requirements, system setting writes, package changes, or firmware changes.

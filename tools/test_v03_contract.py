@@ -74,6 +74,13 @@ except subprocess.CalledProcessError:
 new_main = (ROOT / MAIN).read_text()
 new_client = (ROOT / "app/src/main/java/org/farfarremote/KodiClient.java").read_text()
 check(new_client == old_client, "KodiClient byte-for-byte unchanged from v0.2 baseline")
+header = method_block(new_main, "addHeader")
+check('new SpannableString("FarfarRemote")' in header and "new ForegroundColorSpan(CYAN)" in header,
+      "FarfarRemote wordmark uses one text view with cyan accent span")
+check("brand.setSingleLine(true)" in header and 'hostLabel.setMaxWidth(dp(120))' in header and 'status.setMaxWidth(dp(120))' in header,
+      "wordmark and connection labels are constrained to a single compact header row")
+check('setStatus(connected ? "CONNECTED" : "Kodi offline · Settings to configure")' not in new_main,
+      "startup uses the compact offline header state")
 
 protected_methods = (
     "applyOrientationPreference",
