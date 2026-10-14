@@ -7,6 +7,7 @@ Target: Sony Xperia E4g E2003, Android 4.4.4/API 19, firmware 25.0.A.2.31, custo
 ## Current state
 
 - **VERIFIED:** Live ADB shell is UID 2000 (`shell`), SELinux `u:r:shell:s0`; `/system` is read-only; `su` was not found on the standard shell PATH in the prior readiness check; reading the boot block is denied.
+- **VERIFIED, read-only recheck 2026-10-14:** exact E2003 / `25.0.A.2.31` identity still matches; UID remains 2000 and `su` is absent from PATH. No Fastboot device was attached, so bootloader status was not retested. Package manager reports two disabled entries; their provenance is unknown and no package state was modified.
 - **REPORTED:** Owner states bootloader is unlocked.
 - **UNKNOWN:** Fastboot's `getvar unlocked` returned no value and `oem device-info` was unsupported. `ro.bootloader=s1` does not establish lock state.
 - **VERIFIED:** Owner's application/OS feature report says Wi-Fi reconnects after reboot and FarfarRemote works as HOME; these are the required rollback acceptance checks if a future root experiment is explicitly authorized.

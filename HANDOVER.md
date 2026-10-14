@@ -5,39 +5,39 @@ Last updated: 2026-10-14
 ## Current verified FarfarRemote baseline
 
 - The Xperia currently has the OS `0.4.6-rc5` build installed in place (`org.farfarremote`). Stable v0.4.7 App and OS APKs have since been built with the same signing certificate, but were not installed during release packaging. Both flavors share the same project; App is `org.farfarremote.app`.
-- The owner reports that Kodi controls, Find My Kodi, favorites, Kodi-host Power Off, Wi-Fi reconnection after reboot, HOME launcher, and the Android screen timeout have been physically verified.
+- The owner now reports that all current features have been tested and work on both App and OS editions. Earlier checks separately recorded the App on Samsung Android 13 and the OS on Xperia E2003/API 19.
 - The active-stream folder browser was additionally checked on the Xperia while Kodi played an episode: it opened the episode's parent folder and restored that folder after returning to the remote. Gestures were injected through ADB for this check.
 - Battery life around 12 hours is an informal owner estimate only. No unplugged, controlled endurance measurement has been completed; the current battery tooling correctly rejects USB-powered sessions.
 - Root is not verified. The owner reports the bootloader unlocked, but the current standard ADB shell is UID 2000 and the Fastboot unlock query did not provide a result.
 
-## Next session: Xperia root-readiness and Kodi checks
+## Next phase: exact firmware source and offline ROM analysis
 
-The owner plans to continue when home with both the Xperia and Kodi host available. This is preparation and investigation; no root app has been installed and no root, firmware, package, partition, or bootloader change has been made in this work.
+This phase is focused on obtaining a traceable E2003 stock firmware package and analyzing it offline. No root app has been installed and no root, firmware, package, partition, or bootloader change has been made.
 
 ### What we found
 
 - The phone is the single-SIM **Sony Xperia E4g E2003**, Android 4.4.4/API 19, firmware `25.0.A.2.31`, customization `1293-7358 R7A`.
 - There are historical user reports claiming **KingRoot** worked on an E2003 with firmware `25.0.A.2.31`. One report says root was obtained and then KingRoot was replaced with SuperSU. These are anecdotal reports from 2016, not a repeatable, security-reviewed method. Other E2003 users reported that KingRoot failed. KingRoot and KingoRoot are different tools. See [the exact firmware report](https://4pda.to/forum/index.php?showtopic=668811&st=320) and [the E4g root discussion](https://forum.android.com.pl/topic/234990-xperia-e4g-e2003-e2006-e2053-w%C4%85tek-zbiorowy/223).
 - No trustworthy KingRoot APK, exact APK version/hash, or verified sequence for this exact customization has been established. Do not install an APK from a random mirror or run a PC rooting utility.
-- Firmware search found two leads, neither verified as the correct restore base for this phone: an E2003 `25.0.A.2.31 Customized UK` FTF listing and an E2003 `25.0.A.2.31 Customized DE` FTF listing. Neither has a verified SHA-256 or a confirmed match to `1293-7358 R7A`. They are not cleared for flashing. Details are in [`docs/ROOT_READINESS.md`](docs/ROOT_READINESS.md).
+- Firmware research lists an E2003 `25.0.A.2.31 R10A Customized UK` FTF and an R3A Germany/MEA package. Neither has a verified hash, inspected package metadata, or confirmed match to `1293-7358 R7A`; neither is cleared for restoration or flashing. A similarly named R7A Nextel-PE package is listed under **E2006** and is excluded. Details are in [`research/custom-rom/FIRMWARE_SOURCES.md`](research/custom-rom/FIRMWARE_SOURCES.md).
 - Owner says the bootloader is unlocked, but available read-only Fastboot queries did not independently confirm that. Android ADB currently has shell UID, not root.
 
-### Suggested order when the phone and Kodi are available
+### Suggested order for the ROM track
 
-1. Confirm the phone is booted normally, FarfarRemote OS opens, Wi-Fi reconnects, and Kodi is reachable. Check a harmless control/status request first; do not test Kodi Power Off unless the owner intends to shut down the host.
-2. Capture fresh read-only ADB properties and current FarfarRemote/Kodi behavior. Record the exact customization and firmware values again; do not publish device serials or private network details.
-3. Review the original KingRoot report and locate the exact historical package/version it refers to, if the forum attachment or original source is still available. Before considering installation, establish the file's provenance, hash, package signature and offline scan results. If these cannot be established, stop rather than substituting another APK.
-4. In parallel, obtain an exact-model stock FTF candidate and inspect it offline. Verify the archive structure, Sony build metadata, model, customization, all file hashes, and whether its contents include protected partitions. Compare the manifest with the live E2003 values. A filename alone is not verification.
-5. Decide explicitly whether to attempt the reported root method only after there is a credible restore path. A root attempt is a separate device change and should be confirmed at that point. Do not unlock, flash, wipe, repartition, disable packages, or write `TA`, `NVRAM`, `proinfo`, `protect*`, `secro`, `tee*`, or `seccfg` as part of initial checks.
-6. If root is ever obtained, verify it read-only first (`id` through the intended root manager), then stop and reassess before modifying `/system` or removing packages. Keep FarfarRemote and its settings untouched during the first root validation.
+1. Obtain a traceable exact E2003 stock package, or at minimum the E2003 R10A UK candidate, and verify its source, archive integrity and contents offline. Do not use it as a restore/flash image unless its model, build and CDA are reconciled. Exclude the R7A Nextel-PE E2006 package.
+2. Extract only to a local ignored workspace; inventory `kernel.sin`, `fotakernel.sin`, system and metadata. Record hashes, image sizes, kernel config clues and boot format. Keep proprietary files out of Git.
+3. Find the exact 3.10.48 kernel source and defconfig. Compare source revision/configuration with the extracted stock kernel before attempting any build.
+4. Establish a recovery route using Sony Companion or an exact stock FTF and document its limitations. The owner reports the bootloader unlocked, but Fastboot has not confirmed this.
+5. If those artifacts become trustworthy, run the offline boot-image parser against copies and assess the historical Magisk candidate. This is still research; any on-device root/boot operation needs separate approval and a recovery rehearsal.
+6. Keep the working FarfarRemote OS as the control baseline. Do not root, flash, wipe, repartition, disable packages, or write TA/NVRAM/proinfo/protect/secro/tee/seccfg during source research.
 
 ### Working-tree state
 
-The active branch is `feature/swipe-browser-language-memory`. Root-readiness notes and the read-only `tools/root_readiness.sh` are tracked project research; the more complete feasibility study is under `research/custom-rom/`. The script can be run from normal Linux Mint ADB mode and does not reboot or write to the phone.
+The active branch is `feature/os-rom-source-hunt`, based on stable release commit `660c634` / tag `v0.4.7`. The stable commit is on `main`; this research work is isolated in the development branch. Root-readiness notes and the read-only `tools/root_readiness.sh` are tracked project research; the full feasibility study is under `research/custom-rom/`. The script does not reboot or write to the phone.
 
 ## Current development: Kodi folder browser and per-folder track preferences
 
-The active branch is `feature/swipe-browser-language-memory`. Kodi app work and root/custom-ROM research are maintained as separate commits on this development branch. No merge to `main` has been made.
+This is historical app-development context from the `feature/swipe-browser-language-memory` branch; that branch was consolidated into stable release `v0.4.7` on `main`. Current root/custom-ROM research is in `feature/os-rom-source-hunt`.
 
 ### Kodi browser status
 
@@ -56,10 +56,10 @@ Both App and OS debug APKs build. The OS v0.4.6-rc5 APK was installed in place o
 ### Repository checkpoints
 
 - Repository: `farfarspelar/FarfarRemote-OS`
-- Current branch: `feature/swipe-browser-language-memory`
+- App implementation branch: `feature/swipe-browser-language-memory`
 - Base commit before the pending changes: `29b8814` — `Fix wordmark wrapping in offline header`
-- `main` remains at its existing release history; no merge or force-push has been performed.
-- APK version in the pending source: `0.4.6-rc5`, versionCode 14. Both APKs were built in this workspace; the OS APK is installed on the Xperia.
+- Stable `v0.4.7` is now on `main`; it was pushed by fast-forward, with no history rewrite.
+- The previously installed Xperia OS APK was `0.4.6-rc5`, versionCode 14. Stable 0.4.7 APKs were built and published with the same signing certificate; no install was performed as part of the release packaging.
 
 Root-readiness work is documentation and a read-only shell script only. No rooting, bootloader, firmware, partition, or Android package changes were made. The root research is intentionally in a separate commit from app development.
 

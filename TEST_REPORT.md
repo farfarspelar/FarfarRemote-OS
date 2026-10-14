@@ -1,5 +1,7 @@
 # FarfarRemote 0.4.7 — stable release build
 
+- **OWNER-REPORTED PHYSICAL VERIFICATION:** After release, the owner confirmed all features work in both the App and OS editions. This updates the earlier release-pass list of runtime checks that had not been independently observed in this workspace. It remains a user-reported result; no Samsung or Kodi hardware was connected for this release build.
+- **VERSION CONTEXT:** 0.4.4 did not include swipe navigation. Swipe navigation and the Kodi folder browser were introduced in the subsequent 0.4.6 development line and are included in stable 0.4.7.
 - **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./tools/build_distributions.sh` completed successfully for both flavors. Gradle unit-test tasks report `NO-SOURCE` because this project has no Android unit-test sources.
 - **PASS (source contracts):** `tools/test_v03_contract.py`, `tools/test_favorites_contract.py`, and `tools/test_os_battery_contract.py` passed. The v0.3 contract's comparison point was updated from the obsolete v0.2 snapshot to the current feature implementation checkpoint; no application behavior was changed for this release.
 - **PASS (APK metadata):** App `org.farfarremote.app`, OS `org.farfarremote`; both versionCode 15, versionName 0.4.7, min API 19. App target API 36; OS target API 28. App has no HOME category; OS retains HOME.

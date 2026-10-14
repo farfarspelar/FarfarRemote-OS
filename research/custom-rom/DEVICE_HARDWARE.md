@@ -23,7 +23,7 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Flash | Sony says up to 8 GB; live `mmcblk0` reports 7,634,944 1-KiB blocks (nominal 8-GB class storage). `/data` mounted capacity reported 4.8 GB. | **VERIFIED** as visible capacity; exact eMMC vendor/model and wear are **UNKNOWN** |
 | Display | 4.7-inch TFT, 540×960, capacitive multi-touch | **VERIFIED**, Sony white paper |
 | Kernel | Linux 3.10.48+, GCC 4.8, Sony build dated 2015-09-08 | **VERIFIED**, live `/proc/version` |
-| Bootloader | `ro.bootloader=s1`; owner reports unlocked; live ADB shell is UID 2000. Fastboot `getvar unlocked`/`oem device-info` have not confirmed unlock. | Property **VERIFIED**; unlocked state **REPORTED**, independent confirmation **UNKNOWN** |
+| Bootloader | `ro.bootloader=s1`; owner reports unlocked; live ADB shell is UID 2000. On 2026-10-14 the phone was in normal ADB mode, so this read-only check did not query Fastboot. Earlier Fastboot `getvar unlocked`/`oem device-info` did not confirm unlock. | Property **VERIFIED**; unlocked state **REPORTED**, independent confirmation **UNKNOWN** |
 | Recovery | Partition table has `fotakernel` but no partition labelled `recovery`; both `boot` and `fotakernel` are 32,768 1-KiB blocks. | **VERIFIED** names/sizes; which recovery path firmware uses and whether an image can be booted temporarily are **UNKNOWN** |
 
 Primary Sony references: [E4g white paper](https://www-support-downloads.sonymobile.com/e2003/whitepaper_EN_e2003_e2006_e2053_xperia_E4g.pdf) and [E2003/E2006/E2053 user guide](https://www-support-downloads.sonymobile.com/e2003/userguide_EN_E2003-E2006-E2053_2_Android4.4.4.pdf).
@@ -43,6 +43,10 @@ Sony's white paper documents the E2003, E2006 and E2053 as distinct network SKUs
 ## Display, Wi-Fi and platform drivers
 
 The running firmware exposes Mali EGL/GLES, MediaTek gralloc and hardware-composer modules; Wi-Fi works on stock and reconnects after reboot per owner test. Exact driver source revisions, firmware blobs, calibration data, power profiles and kernel configuration have not been collected. These are **BLOCKED** for a reproducible ROM until matching stock firmware/source is available.
+
+## Read-only package/root snapshot — 2026-10-14
+
+The readiness script matched E2003/build `25.0.A.2.31`; ADB shell is UID 2000, no `su` command was found on its PATH, and no Fastboot device was connected. `pm list packages -d` reported `com.sonyericsson.startupflagservice` and `com.sonymobile.usm`. Follow-up `dumpsys package` showed user state `enabled=2` for the first and `enabled=0` (default) for the second. Their origin/status history is **UNKNOWN**; this inspection changed neither package. Do not treat this list as permission to disable or restore anything.
 
 ## Current conclusion
 

@@ -60,7 +60,7 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 
 The Power Off control sends Kodi's `System.Shutdown` JSON-RPC request after confirmation. Shutdown depends on the operating system and permissions of the device running Kodi. See the [Kodi JSON-RPC System.Shutdown method](https://kodi.wiki/view/JSON-RPC_API/v8#System.Shutdown).
 
-The owner has manually verified the core remote, Find My Kodi, Favorites, Kodi-host Power Off, HOME launcher, Wi-Fi reconnection after reboot, and Android screen timeout on the Xperia E2003. The v0.4.6-rc5 development build additionally passed an active-stream-folder browsing check on that device. This is owner/device testing, not a claim that every feature has automated coverage.
+The owner reports that all current features have been tested and work in both the App and OS editions. The OS edition and active-stream folder browser have been physically checked on the Xperia E2003; the owner has also reported FarfarRemote App running on a Samsung Android 13 phone. These are owner-reported device checks, separate from automated source-contract checks.
 
 ## Android compatibility and security notes
 

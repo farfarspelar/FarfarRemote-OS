@@ -4,7 +4,7 @@
 
 ## Immediate decision
 
-Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarRemote OS today as a dedicated Android configuration, not a ROM. **REPORTED** by owner: Kodi controls, Find My Kodi, favorites, Kodi-host Power Off, Wi-Fi reconnect after reboot, HOME launcher and Android timeout work on-device. **VERIFIED** in a separate physical E2003 check: the active stream folder browser opened and restored the episode directory. Keep this working software as the control baseline.
+Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarRemote OS today as a dedicated Android configuration, not a ROM. **REPORTED by owner, 2026-10-14:** all current FarfarRemote features have now been tested and work on both App and OS editions. **VERIFIED** in a separate physical E2003 check: the active stream folder browser opened and restored the episode directory. Keep this working software as the control baseline.
 
 ## Prioritized gates
 
@@ -12,7 +12,7 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 
 - Keep the current OS APK and source commit, app preferences and a private device audit.
 - Confirm model/build/customization and reported bootloader state without rebooting or modifying.
-- Find official Sony/traceable E2003 25.0.A.2.31 firmware and exact matching kernel source. Record SHA-256 and licensing/provenance; keep proprietary binaries out of public Git.
+- Find official Sony/traceable E2003 25.0.A.2.31 firmware and exact matching kernel source. A community index lists an E2003 R10A UK package; its exact CDA, contents and integrity are unverified. The similarly named R7A Nextel-PE package is listed for E2006 and is excluded. Record SHA-256 and licensing/provenance; keep proprietary binaries out of public Git.
 - **Exit:** exact firmware bundle and source/recovery provenance reviewed; restoration path documented.
 
 ### Gate 2 — offline stock image analysis
@@ -51,7 +51,7 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 
 ## Exact blockers now
 
-1. Matching stock FTF or boot/FOTA image with reliable provenance/hash.
+1. Matching stock FTF or boot/FOTA image with reliable provenance/hash. The E2003 R10A UK listing is a research lead only, not a verified restore base.
 2. Kernel source/defconfig/toolchain for this exact firmware and board.
 3. E2003-specific device tree and complete compatible vendor blobs.
 4. Verified recovery/restore procedure and bootloader state.
