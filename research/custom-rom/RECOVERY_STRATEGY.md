@@ -103,6 +103,23 @@ The upstream [bkerler/mtkclient](https://github.com/bkerler/mtkclient) repositor
 
 Any future physical investigation needs a separately authorized session, pinned source/version and an audited read-only operation plan limited to partition-map metadata plus `boot`/`fotakernel` reads. Do not use write, erase, format, unlock, `reset`, NVRAM/TA or security-area commands; keep device-specific images private and hash them. The read command may still execute a temporary BootROM/DA payload in RAM and power-cycle the handset, so this has not been treated as ordinary ADB inspection. Exact live boot dumps would improve image fidelity, but would not prove a rollback path unless a matching Sony flashing route is also validated.
 
+### Bounded MTKClient boot/FOTA read helper — prepared, not yet run on device
+
+MTKClient commit `7cb40e727727dfe3faa065eefb29b16ed29bbdf1` was cloned and inspected offline. Its code includes MT6752 configuration and Sony BootROM VID/PID entries (`0fce:f200`, plus other Sony families); the live Android connection enumerates as `0fce:51cb`, which is not on that allowlist. The `r` CLI path routes to `readflash`; separate commands handle writes/erase. This is source-level review, not a guarantee against tool defects or Sony-specific behavior.
+
+[`tools/read_e2003_boot_partitions_mtkclient.sh`](tools/read_e2003_boot_partitions_mtkclient.sh) is a tightly bounded wrapper. It pins that exact source commit, requires no authorized ADB device online, requires exactly one `0fce:f200` Sony BootROM USB device (generic MTK IDs and other Sony product IDs are rejected), and hardcodes reads of only `boot` and `fotakernel`. It refuses outputs inside the repository, requires each captured file to be 32 MiB, and hashes the pair. It has no command/argument passthrough for MTKClient write, erase, format, unlock, or reset commands. A smoke check confirmed that it aborts with the ordinary Android ADB session still connected (exit 3) before opening an MTKClient session. Syntax validation passed. **It has not been run in BootROM mode.** The read path may upload a temporary loader/payload to RAM, invoke an SoC security-bypass routine, and reset/power-cycle the device. Soft-brick recovery would still depend on a separate Sony repair route; no guarantee is made. This readback could obtain exact live boot/FOTA inputs, but it is not itself a restore path.
+
+The reviewed source and isolated Python environment are local, outside Git. Once the phone is physically in BootROM mode, a candidate invocation is:
+
+```sh
+mkdir -p /path/private/e2003-mtk-read
+research/custom-rom/tools/read_e2003_boot_partitions_mtkclient.sh \
+  /path/to/pinned/mtkclient /path/to/venv/bin/python \
+  /path/private/e2003-mtk-read
+```
+
+Use a private location with at least 64 MiB free. Do not upload or commit the resulting firmware binaries. A clean readback is only the next evidence gate; boot/recovery still requires a separately reviewed and authorized write/restore experiment.
+
 ### Follow-up source and permission check — 2026-10-14
 
 A targeted public search for the historical recovery filename, its `N_S218` header, and its XDA author (`n_s218`) found no source repository, device tree, signed checksum, or reproducible build recipe. The image remains a binary-only, unaudited recovery lead. Newly indexed firmware results still identify other customizations (including E2003 R10A and E2006 R7A); none matches this handset's E2003 / CDA `1293-7358 R7A`. A filename mentioning `R7A` is not sufficient to treat the E2006 package as compatible.
