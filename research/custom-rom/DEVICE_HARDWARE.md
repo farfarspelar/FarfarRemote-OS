@@ -32,6 +32,10 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Bluetooth/audio hardware modules | `/system/lib/hw` contains `bluetooth.default.so` and audio HAL modules | **VERIFIED** file presence only. This does not by itself prove Bluetooth operation or all audio paths in a new ROM. |
 | Input devices | `/proc/bus/input/devices` reports `mtk-tpd` (touch, handlers `mouse0`/`event7`) and `mtk-kpd` (keys, `event0`); Android density property is `240` dpi | **VERIFIED**, read-only ADB. Calibration, key layout and external controller behavior remain **UNKNOWN** for a new image. |
 
+### Fresh connectivity dependency inspection — 2026-10-14
+
+A repeat read-only ADB capture confirmed `wlan0` is attached to platform driver `mt-wifi` at `/sys/bus/platform/devices/180f0000.WIFI`. `/proc/modules` is empty, `/system/lib/modules` has no entries, `/system/vendor/lib/modules` and `/vendor/lib/modules` do not exist, and the platform device has no `driver/module` sysfs link. `/sys/module` includes `cfg80211` but no module named `mt-wifi`. This pattern is **consistent with** the vendor Wi-Fi driver being built into the kernel, but does not prove it: vendor registration details could be absent from standard module metadata. The stock system's `/system/etc/firmware` contains `WIFI_RAM_CODE_6752`, other MediaTek Wi-Fi firmware variants, and `WMT_SOC.cfg`; its `mt6627/` subdirectory is present. Any stock-derived ROM must retain the observed Wi-Fi firmware/configuration and validate the correct firmware selected at runtime. Do not copy every radio file blindly; exact chipset/revision matching remains unresolved. This capture did not query network credentials, read raw partitions, or save device identifiers.
+
 Primary Sony references: [E4g white paper](https://www-support-downloads.sonymobile.com/e2003/whitepaper_EN_e2003_e2006_e2053_xperia_E4g.pdf) and [E2003/E2006/E2053 user guide](https://www-support-downloads.sonymobile.com/e2003/userguide_EN_E2003-E2006-E2053_2_Android4.4.4.pdf).
 
 ## Partition and boot architecture clues
