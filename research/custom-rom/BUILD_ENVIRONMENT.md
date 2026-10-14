@@ -23,5 +23,6 @@ References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob
 - The root-readiness script also prints the live Sony customization fields, software-base fields, kernel string, named partition map and `/proc/partitions` sizes. It intentionally never reads raw partition contents or prints the ADB serial.
 - `research/custom-rom/tools/inspect_ftf.sh`: hashes/checks/lists an FTF ZIP without extraction or flashing.
 - `research/custom-rom/tools/inspect_boot_image.sh`: copies an already obtained boot image into a new output directory and invokes a user-supplied trusted host `unpack_bootimg.py`; it never writes to a device or modifies the input image.
+- `research/custom-rom/tools/extract_e2003_system_image.py`: verifies SIN v3 integrity and extracts only a mapped `/system` image from an E2003/25.0.A.2.31 FTF into a new path outside Git. It uses Python standard library; `file`, `dumpe2fs`, `debugfs` and `e2fsck -fn` can inspect the resulting local image read-only. It does not extract `/data` or interact with a device.
 
 Do not treat checksums from an untrusted mirror as proof of authenticity. Record provenance and a cryptographic SHA-256 from an independent trusted source when possible. Never commit firmware images, proprietary blobs, private device audits or generated device dumps.

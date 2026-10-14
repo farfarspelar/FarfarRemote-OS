@@ -44,6 +44,7 @@ The AZROM-listed Google Drive object was downloaded only to `/tmp` for archive i
 | ZIP integrity | `unzip -t` completed without compressed-data errors |
 | Internal manifest | `device: E2003`; `version: 25.0.A.2.31_R10A`; `branding: CustomizedUK`; `cda:` and `revision:` are blank |
 | Match to installed phone | **Not established**: live device is CDA/customization `1293-7358 R7A`; candidate has no CDA/revision in its manifest |
+| System payload | `system.sin` is present and has been decoded offline with the new bounded reader below; its own build properties identify customization `1293-7276 R10A`, confirming a mismatch with the live phone |
 | Contents | Includes `boot.sin`, `fotakernel.sin`, `system.sin`, `preloader_s1sbl.sin`, `secro.sin`, `tee1.sin`, `tee2.sin`, TA files and other firmware partitions |
 
 The FTF's `default.fsc` contains operations for critical boot/security partitions and TA data. Do not use the FTF as a bundle or feed it to a flashing workflow. Its archive integrity proves only that the downloaded ZIP data is internally consistent; it does **not** authenticate the mirror, establish a correct CDA match, or demonstrate that it can restore this handset.
@@ -55,6 +56,22 @@ Only `boot.sin` and `fotakernel.sin` were extracted into `/tmp/farfar-e2003-sin-
 The boot ramdisk's read-only cpio listing includes Android `init`, `init.mt6752.rc`, `fstab`, `adbd`, and Sony/MediaTek startup scripts. Its fstab mounts `/system` read-only and `/data`, `/cache`, `/protect1`, `/protect2`; the project init script creates MediaTek WMT/Wi-Fi/Bluetooth device nodes and starts connectivity services. Its `default.prop` says `ro.semc.version.sw=1292-0502`, `ro.semc.version.sw_variant=GENERICSS`, `ro.secure=1`, and `ro.debuggable=0`; this is not the live phone's `1293-7358 R7A` identity. This is evidence of the image's intended stack, not proof that this R10A image is interchangeable with the installed R7A image. The `fotakernel` ramdisk is a FOTA-oriented environment and is not validated as a usable recovery.
 
 The SIN parser reference was the read-only v3 implementation in [Androxyde/Flashtool](https://github.com/Androxyde/Flashtool/tree/master/Flashtool/src/main/java/org/flashtool/parsers/sin/v3), checked out at commit `7529dce9a1ffb81e365ba1d7e15f6773463ffd7a`. The repository now includes `tools/extract_e2003_boot_payloads.py`, a bounded standard-library reader for only the two named SIN entries. It refuses non-E2003 manifests, requires a new output directory, verifies SHA-256 payload records and emits only 32-bit ARM ELF images. The general `j4nn/sinunpack` executable was not used because its main program scans all SINs and includes USB/flashing code. Extracted firmware and payloads remain outside the repository. Example: `python3 research/custom-rom/tools/extract_e2003_boot_payloads.py /absolute/path/to/E2003.ftf /tmp/e2003-boot-analysis`.
+
+### System image extraction — read-only/offline, 2026-10-14
+
+`research/custom-rom/tools/extract_e2003_system_image.py` was added and run against that local candidate. It accepts only an E2003/25.0.A.2.31 FTF, caps the archive/SIN/output sizes, validates the SIN v3 block-hash table and every mapped ADDR SHA-256 range, writes only a new image outside the repository, and has no ADB/Fastboot code. It reconstructs the observed 2,097,152,000-byte `/system` extent with zero-filled unmapped ranges. The tool's checks passed for the local candidate.
+
+| Offline check | Result |
+|---|---|
+| Reconstructed image | 2,097,152,000 bytes (matches live `system` partition size from read-only ADB metadata) |
+| Image SHA-256 | `931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949` |
+| SIN post-header SHA-256 | `1ee0cc509db65bd50afc9564a72491e6c06a5e2f3a86338ada205175ff06b33a` |
+| Filesystem | ext4, 4 KiB blocks, 512,000 blocks, clean state flag |
+| Build identity in `/build.prop` | `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`; API 19; MediaTek platform `MT6752` |
+| Actual candidate customization in `/build.prop` | `1293-7276 R10A`, not the phone's `1293-7358 R7A` |
+| Read-only `e2fsck -fn` | Scanned all five passes and found one `Padding at end of inode bitmap is not set` warning (exit 4). No repair was attempted; treat this filesystem check as **WARN**, not a clean pass. |
+
+This confirms that an E2003/KitKat system image from the exact firmware-version family can be inspected and that it contains the device's proprietary userspace/HAL material. It improves the stock-derived image analysis, but does not authenticate the mirror, match the installed CDA, provide kernel source/device tree, or establish a safe restore/boot path. The proprietary image remains under `/tmp` and must not be committed, redistributed, or flashed.
 
 ### Kernel source search
 
