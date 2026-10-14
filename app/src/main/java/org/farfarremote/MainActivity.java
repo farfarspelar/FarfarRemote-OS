@@ -2,11 +2,13 @@ package org.farfarremote;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
@@ -38,6 +40,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -72,6 +75,7 @@ public final class MainActivity extends Activity {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService commands = Executors.newSingleThreadExecutor();
     private SharedPreferences prefs;
     private FrameLayout screen;
     private ScrollView settingsScroll;
@@ -80,9 +84,13 @@ public final class MainActivity extends Activity {
     private boolean settingsImeModeSet;
     private boolean inSettings, busy, draggingSeek, destroyed, activityStarted;
     private boolean startupShown;
+    private boolean screenIsOn = true;
+    private boolean screenReceiverRegistered;
+    private int consecutivePollFailures;
+    private long lastBatteryInteractionMs;
     private boolean kodiShutdownRequested;
     private boolean connected;
-    private int activePlayerId = -1;
+    private volatile int activePlayerId = -1;
     private String currentArtwork = "";
     private Bitmap artwork;
     private NsdManager nsdManager;
@@ -95,6 +103,22 @@ public final class MainActivity extends Activity {
     private Runnable kodiDiscoveryTimeout;
     private EditText discoveryHostField, discoveryPortField, discoveryUsernameField, discoveryPasswordField;
     private Object settingsBackCallback;
+
+    private final BroadcastReceiver screenStateReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (intent == null || intent.getAction() == null) return;
+            if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                screenIsOn = false;
+                handler.removeCallbacks(poll);
+                android.util.Log.d("FarfarRemoteBattery", "screen_off polling_suspended=true");
+            } else if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                screenIsOn = true;
+                lastBatteryInteractionMs = android.os.SystemClock.elapsedRealtime();
+                android.util.Log.d("FarfarRemoteBattery", "screen_on polling_resumed=true");
+                schedulePoll(0);
+            }
+        }
+    };
 
     private static final class KodiEndpoint {
         final String name, host, port;
@@ -145,6 +169,7 @@ public final class MainActivity extends Activity {
         prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
         applyOrientationPreference();
         applyKeepAwake();
+        applyReducedBrightness();
         if (getResources().getBoolean(R.bool.dedicated_os)) getWindow().getDecorView().setSystemUiVisibility(5894 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         buildScreen();
     }
@@ -159,6 +184,25 @@ public final class MainActivity extends Activity {
     private void applyKeepAwake() {
         if (prefs.getBoolean("keep_awake", false)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private boolean isDedicatedOs() { return getResources().getBoolean(R.bool.dedicated_os); }
+
+    private ExecutorService userRequestExecutor() { return isDedicatedOs() ? commands : io; }
+
+    private void applyReducedBrightness() {
+        WindowManager.LayoutParams attributes = getWindow().getAttributes();
+        attributes.screenBrightness = isDedicatedOs() && prefs.getBoolean("os_battery_dim", false) ? 0.25f : WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+        getWindow().setAttributes(attributes);
+    }
+
+    private void noteBatteryInteraction() {
+        if (isDedicatedOs()) lastBatteryInteractionMs = android.os.SystemClock.elapsedRealtime();
+    }
+
+    @Override public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event != null && event.getAction() == MotionEvent.ACTION_DOWN) noteBatteryInteraction();
+        return super.dispatchTouchEvent(event);
     }
 
     private void buildScreen() {
@@ -452,7 +496,7 @@ public final class MainActivity extends Activity {
 
     private void saveCurrentFolder() {
         toast("Reading the current Kodi folder…");
-        io.execute(() -> {
+        userRequestExecutor().execute(() -> {
             String path = null, name = null, window = "videos", error = null;
             try {
                 JSONObject labels = client().call("XBMC.GetInfoLabels", new JSONObject().put("labels",
@@ -583,6 +627,7 @@ public final class MainActivity extends Activity {
             });
         }
         settingsSwitch(display, "Keep Screen Awake", prefs.getBoolean("keep_awake", false), "Override Android's configured screen timeout", (button, checked) -> { prefs.edit().putBoolean("keep_awake", checked).apply(); applyKeepAwake(); });
+        if (isDedicatedOs()) addBatteryModeSettings(root);
 
         LinearLayout remote = settingsCard(root, "Remote", R.drawable.settings_ic_remote);
         settingsSwitch(remote, "Auto Reconnect", prefs.getBoolean("auto_reconnect", true), "Reconnect to Kodi when it becomes available", (button, checked) -> prefs.edit().putBoolean("auto_reconnect", checked).apply());
@@ -602,6 +647,49 @@ public final class MainActivity extends Activity {
         coffeeButton.addView(settingsIcon(R.drawable.settings_ic_arrow, "Opens website"), new LinearLayout.LayoutParams(dp(18), dp(18)));
         coffeeButton.setOnClickListener(v -> openCoffeeLink()); coffee.addView(coffeeButton, new LinearLayout.LayoutParams(dp(260), dp(50)));
         screen.removeAllViews(); screen.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void addBatteryModeSettings(LinearLayout root) {
+        LinearLayout battery = settingsCard(root, "Battery Mode", R.drawable.settings_ic_display);
+        TextView profileHint = text("Reduce background Kodi checks while keeping direct controls responsive.", 10, MUTED, false);
+        profileHint.setPadding(dp(5), dp(2), dp(5), dp(5)); battery.addView(profileHint);
+        RadioGroup modes = batteryChoices(battery, new String[]{"Normal", "Balanced", "Max Saving"},
+                new String[]{"normal", "balanced", "maximum"}, "os_battery_mode", "normal");
+        modes.setContentDescription("Battery mode profile");
+        TextView modeHint = text("Normal: current refresh rate. Balanced: playback every 5 seconds. Maximum: playback every 10 seconds. Recent input always refreshes promptly.", 10, MUTED, false);
+        modeHint.setPadding(dp(5), dp(4), dp(5), dp(5)); battery.addView(modeHint);
+        battery.addView(text("Kodi idle refresh (Balanced / Maximum)", 11, TEXT, true));
+        RadioGroup idle = batteryChoices(battery, new String[]{"2 sec", "5 sec", "10 sec"},
+                new String[]{"2", "5", "10"}, "os_battery_idle_seconds", "5");
+        idle.setContentDescription("Kodi idle refresh interval");
+        settingsSwitch(battery, "Reduced Brightness", prefs.getBoolean("os_battery_dim", false),
+                "Use 25% window brightness while FarfarRemote OS is visible", (button, checked) -> {
+                    prefs.edit().putBoolean("os_battery_dim", checked).apply(); applyReducedBrightness();
+                });
+        TextView screenHint = text("Screen off suspends Kodi polling. Android's normal screen timeout is used unless Keep Screen Awake is enabled above.", 10, MUTED, false);
+        screenHint.setPadding(dp(5), dp(2), dp(5), dp(2)); battery.addView(screenHint);
+    }
+
+    private RadioGroup batteryChoices(LinearLayout parent, String[] labels, String[] values, String key, String fallback) {
+        RadioGroup group = new RadioGroup(this); group.setOrientation(LinearLayout.HORIZONTAL);
+        String selected = prefs.getString(key, fallback);
+        for (int i = 0; i < labels.length; i++) {
+            RadioButton option = new RadioButton(this); option.setId(View.generateViewId()); option.setText(labels[i]);
+            option.setTextColor(TEXT); option.setTextSize(10); option.setTag(values[i]); option.setGravity(Gravity.CENTER);
+            option.setButtonDrawable(android.R.color.transparent); option.setBackgroundResource(R.drawable.settings_orientation_background);
+            option.setPadding(dp(2), dp(2), dp(2), dp(2));
+            RadioGroup.LayoutParams lp = new RadioGroup.LayoutParams(0, dp(42), 1f);
+            lp.setMargins(dp(2), dp(4), dp(2), dp(4)); group.addView(option, lp);
+            if (values[i].equals(selected)) group.check(option.getId());
+        }
+        group.setOnCheckedChangeListener((parentGroup, checkedId) -> {
+            RadioButton choice = parentGroup.findViewById(checkedId);
+            if (choice == null) return;
+            prefs.edit().putString(key, String.valueOf(choice.getTag())).apply();
+            if (activityStarted) schedulePoll(0);
+        });
+        parent.addView(group, new LinearLayout.LayoutParams(-1, dp(50)));
+        return group;
     }
 
     private LinearLayout settingsCard(LinearLayout root, String title, int icon) {
@@ -655,7 +743,7 @@ public final class MainActivity extends Activity {
     }
     private void selectOrientation(LinearLayout group, String value) { for (int i = 0; i < group.getChildCount(); i++) { RadioButton rb = (RadioButton) group.getChildAt(i); rb.setChecked(value.equals(rb.getTag())); } }
 
-    private void closeSettings() { stopKodiDiscovery(true); buildScreen(); }
+    private void closeSettings() { stopKodiDiscovery(true); buildScreen(); if (isDedicatedOs()) schedulePoll(0); }
 
     private void updateSettingsBackCallback() {
         if (android.os.Build.VERSION.SDK_INT < 33 || getResources().getBoolean(R.bool.dedicated_os)) return;
@@ -686,7 +774,7 @@ public final class MainActivity extends Activity {
         try {
             KodiClient client = new KodiClient(host.getText().toString(), port.getText().toString(), username.getText().toString(), password.getText().toString());
             settingsMessage("Testing connection…", MUTED);
-            io.execute(() -> { String message; boolean ok;
+            userRequestExecutor().execute(() -> { String message; boolean ok;
                 try { client.ping(); JSONObject app = client.call("Application.GetProperties", new JSONObject().put("properties", new JSONArray().put("name"))); String n = app.optString("name", "Kodi"); message = "Connected · " + n; ok = true; }
                 catch (Exception e) { message = e.getMessage() == null ? "Kodi anslöt inte." : e.getMessage(); ok = false; }
                 final String msg = message; final boolean success = ok; handler.post(() -> { connected = success; settingsMessage(msg, success ? GREEN : RED); updateHeader(); });
@@ -813,7 +901,7 @@ public final class MainActivity extends Activity {
         final String username = usernameField == null ? prefs.getString("user", "") : usernameField.getText().toString();
         final String password = passwordField == null ? prefs.getString("pass", "") : passwordField.getText().toString();
         settingsMessage("Checking " + endpoint.name + "…", MUTED);
-        io.execute(() -> {
+        userRequestExecutor().execute(() -> {
             String kodiName = endpoint.name; String failure = null;
             try {
                 KodiClient candidate = new KodiClient(endpoint.host, endpoint.port, username, password);
@@ -891,7 +979,7 @@ public final class MainActivity extends Activity {
 
     private void showStreams(boolean audio) {
         if (activePlayerId < 0) { toast("Starta uppspelning i Kodi för att välja spår."); return; }
-        io.execute(() -> {
+        userRequestExecutor().execute(() -> {
             try {
                 KodiClient c = client();
                 JSONObject props = c.call("Player.GetProperties", new JSONObject().put("playerid", activePlayerId).put("properties", new JSONArray().put(audio ? "audiostreams" : "subtitles").put(audio ? "currentaudiostream" : "currentsubtitle").put("subtitleenabled")));
@@ -949,7 +1037,7 @@ public final class MainActivity extends Activity {
     private void powerOffKodi() {
         if (kodiShutdownRequested) return;
         kodiShutdownRequested = true;
-        io.execute(() -> {
+        userRequestExecutor().execute(() -> {
             try {
                 client().call("System.Shutdown", new JSONObject());
                 handler.post(() -> {
@@ -984,8 +1072,8 @@ public final class MainActivity extends Activity {
     private interface KodiAction { JSONObject run(KodiClient client) throws Exception; }
     private void action(KodiAction request) {
         haptic();
-        io.execute(() -> { try { KodiClient client = client(); request.run(client); handler.post(() -> { connected = true; updateHeader(); }); }
-            catch (Exception e) { handler.post(() -> { connected = false; updateHeader(); toast(e.getMessage() == null ? "Kodi-åtgärden misslyckades." : e.getMessage()); }); } });
+        userRequestExecutor().execute(() -> { try { KodiClient client = client(); request.run(client); handler.post(() -> { connected = true; updateHeader(); if (isDedicatedOs()) { consecutivePollFailures = 0; schedulePoll(0); } }); }
+            catch (Exception e) { handler.post(() -> { connected = false; updateHeader(); toast(e.getMessage() == null ? "Kodi-åtgärden misslyckades." : e.getMessage()); if (isDedicatedOs() && prefs.getBoolean("auto_reconnect", true)) { consecutivePollFailures++; schedulePoll(reconnectDelayMs()); } }); } });
     }
 
     private KodiClient client() throws KodiClient.KodiException {
@@ -993,27 +1081,63 @@ public final class MainActivity extends Activity {
     }
 
     private void checkKodiNow() {
-        io.execute(() -> { try { KodiClient c = client(); JSONObject result = c.call("Application.GetProperties", new JSONObject().put("properties", new JSONArray().put("name"))); handler.post(() -> { connected = true; if (hostLabel != null) hostLabel.setText(result.optString("name", prefs.getString("host", "Kodi"))); updateHeader(); }); }
+        userRequestExecutor().execute(() -> { try { KodiClient c = client(); JSONObject result = c.call("Application.GetProperties", new JSONObject().put("properties", new JSONArray().put("name"))); handler.post(() -> { connected = true; consecutivePollFailures = 0; if (hostLabel != null) hostLabel.setText(result.optString("name", prefs.getString("host", "Kodi"))); updateHeader(); if (isDedicatedOs()) schedulePoll(0); }); }
             catch (Exception e) { handler.post(() -> { connected = false; updateHeader(); }); } });
     }
 
     private final Runnable poll = new Runnable() {
         @Override public void run() {
             if (destroyed || !activityStarted) return;
-            if (inSettings || (busy) || (!prefs.getBoolean("auto_reconnect", true) && !connected)) { schedulePoll(3000); return; }
+            if (isDedicatedOs() && (!screenIsOn || inSettings)) return;
+            if (busy) { if (!isDedicatedOs()) schedulePoll(3000); return; }
+            if (!isDedicatedOs() && (inSettings || (!prefs.getBoolean("auto_reconnect", true) && !connected))) { schedulePoll(3000); return; }
+            if (isDedicatedOs() && !prefs.getBoolean("auto_reconnect", true) && !connected) return;
             busy = true;
+            final long startedAt = android.os.SystemClock.elapsedRealtime();
+            if (isDedicatedOs()) android.util.Log.d("FarfarRemoteBattery", "poll_start mode=" + prefs.getString("os_battery_mode", "normal"));
             io.execute(() -> {
                 KodiClient.Snapshot snapshot = null; String error = null;
                 try { snapshot = client().snapshot(); } catch (Exception e) { error = e.getMessage(); android.util.Log.w("FarfarRemote", "Kodi poll failed: " + e.getMessage()); }
                 final KodiClient.Snapshot result = snapshot; final String message = error;
-                handler.post(() -> { busy = false; if (!activityStarted) return; if (!inSettings) { if (result != null) applySnapshot(result); else { connected = false; activePlayerId = -1; setStatus("OFFLINE · " + (message == null ? "Kodi unreachable" : message)); updateHeader(); resetPlayer(); } } schedulePoll(2800); });
+                if (isDedicatedOs()) android.util.Log.d("FarfarRemoteBattery", "poll_end duration_ms=" + (android.os.SystemClock.elapsedRealtime() - startedAt) + " connected=" + (result != null) + " player=" + (result != null && result.player != null));
+                handler.post(() -> {
+                    busy = false;
+                    if (!activityStarted || (isDedicatedOs() && !screenIsOn)) return;
+                    if (!inSettings) {
+                        if (result != null) { consecutivePollFailures = 0; applySnapshot(result); }
+                        else {
+                            consecutivePollFailures++;
+                            connected = false; activePlayerId = -1; setStatus("OFFLINE · " + (message == null ? "Kodi unreachable" : message)); updateHeader(); resetPlayer();
+                        }
+                    }
+                    long next = isDedicatedOs() ? osPollDelayMs(result) : 2800;
+                    if (next >= 0) schedulePoll(next);
+                });
             });
         }
     };
 
+    private long reconnectDelayMs() {
+        int exponent = Math.max(0, Math.min(4, consecutivePollFailures - 1));
+        return Math.min(30000L, 2000L << exponent);
+    }
+
+    private long osPollDelayMs(KodiClient.Snapshot result) {
+        if (!connected) return prefs.getBoolean("auto_reconnect", true) ? reconnectDelayMs() : -1;
+        String profile = prefs.getString("os_battery_mode", "normal");
+        if ("normal".equals(profile)) return 2800;
+        if (android.os.SystemClock.elapsedRealtime() - lastBatteryInteractionMs < 12000) return 2800;
+        boolean playing = result != null ? result.player != null : activePlayerId >= 0;
+        if (playing) return "maximum".equals(profile) ? 10000 : 5000;
+        String seconds = prefs.getString("os_battery_idle_seconds", "5");
+        if ("2".equals(seconds)) return 2000;
+        if ("10".equals(seconds)) return 10000;
+        return 5000;
+    }
+
     private void schedulePoll(long delayMs) {
         handler.removeCallbacks(poll);
-        if (activityStarted && !destroyed) handler.postDelayed(poll, delayMs);
+        if (activityStarted && !destroyed && (!isDedicatedOs() || (screenIsOn && !inSettings))) handler.postDelayed(poll, Math.max(0, delayMs));
     }
 
     private void applySnapshot(KodiClient.Snapshot s) {
@@ -1093,6 +1217,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+        noteBatteryInteraction();
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_UP: action(c -> c.call("Input.Up", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_DOWN: action(c -> c.call("Input.Down", new JSONObject())); return true;
@@ -1113,7 +1238,22 @@ public final class MainActivity extends Activity {
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override protected void onStart() { super.onStart(); activityStarted = true; updateSettingsBackCallback(); handler.removeCallbacks(poll); handler.post(poll); }
-    @Override protected void onStop() { activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true); if (settingsBackCallback != null) { Api33BackHandler.unregister(this, settingsBackCallback); settingsBackCallback = null; } super.onStop(); }
-    @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
+    @Override protected void onStart() {
+        super.onStart(); activityStarted = true; updateSettingsBackCallback();
+        if (isDedicatedOs()) {
+            android.os.PowerManager power = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+            screenIsOn = power == null || power.isScreenOn();
+            try { IntentFilter filter = new IntentFilter(); filter.addAction(Intent.ACTION_SCREEN_ON); filter.addAction(Intent.ACTION_SCREEN_OFF); registerReceiver(screenStateReceiver, filter); screenReceiverRegistered = true; }
+            catch (Exception e) { android.util.Log.w("FarfarRemoteBattery", "Could not register screen-state receiver", e); }
+        }
+        handler.removeCallbacks(poll);
+        if (!isDedicatedOs() || (screenIsOn && !inSettings)) handler.post(poll);
+    }
+    @Override protected void onStop() {
+        activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true);
+        if (screenReceiverRegistered) { try { unregisterReceiver(screenStateReceiver); } catch (Exception ignored) { } screenReceiverRegistered = false; }
+        if (settingsBackCallback != null) { Api33BackHandler.unregister(this, settingsBackCallback); settingsBackCallback = null; }
+        super.onStop();
+    }
+    @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); commands.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
 }

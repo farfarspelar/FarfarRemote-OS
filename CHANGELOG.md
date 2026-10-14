@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.5 RC1 — OS battery optimization phase 1
+
+- Added OS-only Normal, Balanced, and Maximum Battery Saving profiles with 2/5/10-second idle polling choices.
+- Suspends OS status polling on screen-off and while Settings is open; resumes immediately on screen-on or when Settings closes.
+- Adds bounded 2/4/8/16/30-second Kodi reconnect backoff and an optional 25% window-brightness override.
+- Separates OS user-issued Kodi requests from background status polling so a poll cannot queue remote commands; the normal App executor remains unchanged.
+- Added read-only, unplugged E2003 battery session and comparison tools. No endurance improvement is claimed without matched measurements.
+- App flavor battery UI and polling policy remain unchanged. Existing Kodi settings and Keep Screen Awake preference are preserved.
+
 ## 0.4.4 RC1
 
 - Added a Favorites button below the content shortcuts. Users can save the currently open Kodi folder locally, reopen it later, and remove saved paths.

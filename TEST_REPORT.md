@@ -1,3 +1,15 @@
+# FarfarRemote OS 0.4.5 RC1 — Battery Optimization Phase 1
+
+- **PASS:** `./tools/build_distributions.sh` built App and OS debug APKs. Metadata checks passed: App `org.farfarremote.app`, target API 36; OS `org.farfarremote`, target API 28; both min API 19, versionCode 9 / versionName `0.4.5-rc1`.
+- **PASS:** `tools/test_v03_contract.py`, `tools/test_favorites_contract.py`, and `tools/test_os_battery_contract.py` passed. Gradle `testAppDebugUnitTest` and `testOsDebugUnitTest` are `NO-SOURCE`; the project has no Android unit-test sources.
+- **PASS:** The new OS APK was installed over the existing Xperia OS APK with `adb install -r`, without uninstalling or clearing app data. The installed package reports version 0.4.5-rc1. The installed APK's signer matched the new APK before installation (`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`).
+- **PASS:** Device is Android 4.4.4/API 19; installed manifest retains the existing `org.farfarremote` identity and OS HOME activity. Screen timeout remains 30,000 ms. A read-only snapshot later showed Wi-Fi connected while the display was asleep.
+- **PASS:** `tools/battery_measure.py` refused to start a measurement because ADB was USB-connected and the phone reported USB power. No USB-powered battery data was treated as endurance data.
+- **APK SHA-256:** App `e243a39c86bba2a94d94dbaae0ae6e3d88e6448b7132e31a2ab4ad6190742015`; OS `ed008c762d5e45fac8ae4525e5f377d7464c4fc265a54d552ea80f312fea1747`.
+- **NOT VERIFIED:** No unplugged baseline or optimized session was captured. No battery improvement, current draw, battery capacity, or 24-hour runtime is claimed.
+- **NOT VERIFIED:** The screen remained at Android Keyguard during the attempted wake check, so the new Activity's screen-on/off receiver logs and Battery Mode UI were not runtime-verified on the physical screen. Kodi was not available for command-latency, Audio/Subtitles, Find My Kodi, or post-sleep reconnect checks. Wi-Fi's single connected snapshot is not a reconnection test.
+- **LIMITATION:** The Gradle build succeeds with the existing JDK 21 / Java 8 source-target deprecation warnings. There are no new Android permissions, root requirements, system setting writes, package changes, or firmware changes.
+
 # FarfarRemote 0.4.4 RC1 — favorites and release packaging
 
 - **PASS:** Existing v0.3 source-contract regression script and new favorites source-contract script pass.

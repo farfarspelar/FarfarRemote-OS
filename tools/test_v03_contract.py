@@ -77,12 +77,22 @@ check(new_client == old_client, "KodiClient byte-for-byte unchanged from v0.2 ba
 
 protected_methods = (
     "applyOrientationPreference",
-    "addDpad", "showStreams", "presentTracks", "chooseStream", "back", "playPause",
+    "addDpad", "presentTracks", "chooseStream", "back", "playPause",
     "stop", "seekStep", "goTo", "seekPercent", "activate", "adjustVolume",
-    "toggleMute", "action", "client", "applySnapshot",
+    "toggleMute", "client", "applySnapshot",
 )
 for name in protected_methods:
     check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from v0.2")
+
+new_show_streams = method_block(new_main, "showStreams").replace("userRequestExecutor().execute(", "io.execute(", 1)
+check(new_show_streams == method_block(old_main, "showStreams"),
+      "Audio/Subtitles stream selection unchanged except for its responsive command executor")
+new_action = method_block(new_main, "action").replace("userRequestExecutor().execute(", "io.execute(", 1)
+new_action = new_action.replace(" if (isDedicatedOs()) { consecutivePollFailures = 0; schedulePoll(0); }", "")
+new_action = new_action.replace(" if (isDedicatedOs()) schedulePoll(0);", "")
+new_action = new_action.replace(' if (isDedicatedOs() && prefs.getBoolean("auto_reconnect", true)) { consecutivePollFailures++; schedulePoll(reconnectDelayMs()); }', "")
+check(new_action == method_block(old_main, "action"),
+      "Kodi action payloads and UI results unchanged apart from executor and OS polling bookkeeping")
 
 for name in ("buildPortrait", "buildLandscape"):
     check(method_block(new_main, name) == method_block(old_main, name),
@@ -90,7 +100,7 @@ for name in ("buildPortrait", "buildLandscape"):
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 8" in build and "versionName '0.4.4-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.4 RC metadata")
+check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 9" in build and "versionName '0.4.5-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.5 RC metadata")
 check(re.search(r"app \{(?:(?!\n\s*\}).)*targetSdk 36", build, re.S) is not None, "App flavor targets API 36")
 check(re.search(r"os \{(?:(?!\n\s*\}).)*targetSdk 28", build, re.S) is not None, "OS flavor retains conservative API 28 target")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
@@ -119,7 +129,8 @@ check('call("System.Shutdown", new JSONObject())' in new_main and 'Power off Kod
 check("The Android remote will stay on." in new_main, "Power Off confirmation distinguishes Kodi host from Android remote")
 check("addPowerControl(header, power, 31)" in new_main, "Power Off occupies the header control position")
 check("stopKodiDiscovery(true)" in new_main and "KODI_DISCOVERY_TIMEOUT_MS" in new_main, "discovery has timeout and lifecycle cleanup")
-check("activityStarted;" in new_main and "schedulePoll(2800)" in new_main, "Kodi polling resumes with the foreground activity")
+check("activityStarted;" in new_main and "long next = isDedicatedOs() ? osPollDelayMs(result) : 2800" in new_main,
+      "OS battery policy is flavor-gated and App retains its 2.8-second foreground poll")
 check("@Override protected void onStart()" in new_main and "handler.removeCallbacks(poll)" in new_main, "poll loop starts without duplicate callbacks")
 check("@Override protected void onStop()" in new_main and "activityStarted = false; handler.removeCallbacks(poll)" in new_main, "polling stops when the activity is backgrounded")
 check("setShowText(" not in new_main, "no Switch API 21 setShowText call on API 19")
@@ -128,4 +139,4 @@ check("Api33BackHandler.register(this, this::closeSettings)" in new_main, "App S
 check('android:usesCleartextTraffic="true"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(), "Kodi HTTP connectivity remains enabled")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4.4 RC distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.5 RC distribution and regression contract checks passed.")

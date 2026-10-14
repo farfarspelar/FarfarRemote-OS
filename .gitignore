@@ -6,6 +6,8 @@ local.properties
 # Device-specific captures can contain serials, Wi-Fi names, IPs and log data.
 reports/device_audit/
 reports/debloat/*/
+reports/os_battery/
+__pycache__/
 
 # Keep the source PNGs once under graphics/originals instead of duplicating them.
 FarfarRemote_Asset_Pack/assets/
@@ -43,3 +45,8 @@ FarfarRemote_Settings_Assets_v0.3.zip
 !dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk.sha256
 !dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk.sha256
 !dist/SHA256SUMS-0.4.4-rc1.txt
+!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.5-rc1.apk
+!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.5-rc1.apk
+!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.5-rc1.apk.sha256
+!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.5-rc1.apk.sha256
+!dist/SHA256SUMS-0.4.5-rc1.txt

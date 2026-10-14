@@ -9,8 +9,8 @@ android {
         applicationId 'org.farfarremote'
         minSdk 19
         targetSdk 28
-        versionCode 8
-        versionName '0.4.4-rc1'
+        versionCode 9
+        versionName '0.4.5-rc1'
     }
     flavorDimensions 'distribution'
     productFlavors {

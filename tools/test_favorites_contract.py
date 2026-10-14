@@ -32,5 +32,5 @@ check('"GUI.ActivateWindow"' in source and 'new JSONArray().put(path)' in source
       "selecting a stored favorite navigates to its saved path")
 check("saveCurrentFolder()" in source and "Save current folder" in source, "saving requires a direct user action")
 check("removeFolderFavorite(path)" in source and "Remove favorite" in source, "saved favorites can be removed explicitly")
-check("io.execute(() -> {\n            String path = null" in source, "Kodi metadata lookup runs on the existing I/O executor")
+check("userRequestExecutor().execute(() -> {\n            String path = null" in source, "user-requested Kodi metadata lookup uses the flavor-aware request executor")
 print("All folder-favorites source contract checks passed; Kodi runtime behavior still requires a Kodi host.")

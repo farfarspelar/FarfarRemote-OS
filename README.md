@@ -81,6 +81,8 @@ Find My Kodi additionally needs Kodi Zeroconf service announcements and multicas
 
 These are prerelease APKs for testing. See the [v0.4.4-rc1 release notes and checksums](https://github.com/farfarspelar/FarfarRemote-OS/releases/tag/v0.4.4-rc1). For other versions, browse the [GitHub Releases page](https://github.com/farfarspelar/FarfarRemote-OS/releases). Choose the APK for the intended use:
 
+The OS battery-optimization work is being developed as v0.4.5-rc1 on the `feature/os-battery-optimization` branch. It is not a published GitHub release; branch APKs and checksums are kept in `dist/` for testing.
+
 - **FarfarRemote App:** install `FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk` as a regular app and open it from the app drawer. Android's Home button continues to open the phone's existing launcher.
 - **FarfarRemote OS:** install `FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk` on a dedicated device. Press Android Home and select FarfarRemote to make it the launcher. For an existing OS installation, update with the OS APK only; do not uninstall the app or clear its data. Updates must use the same signing certificate as the installed build.
 
