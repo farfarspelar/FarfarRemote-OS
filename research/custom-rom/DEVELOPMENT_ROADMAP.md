@@ -18,14 +18,14 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 ### Gate 2 — offline stock image analysis (**partial progress**)
 
 - **Done for the unverified R10A candidate only:** extracted `boot.sin`, `fotakernel.sin` and `system.sin` offline with bounds-checked readers; SIN integrity checks passed. Inspected the 3.10.48+ kernel ELF, cpio ramdisks, init scripts and fstab. Boot/FOTA share a kernel segment but have different ramdisks. Reconstructed `/system` is a 2,097,152,000-byte ext4 image; `/build.prop` confirms E2003 / 25.0.A.2.31 / API 19 / customization 1293-7276 R10A. Read-only e2fsck reports only an inode bitmap padding warning, so the filesystem is not recorded as a clean checker pass.
-- Still required: obtain matching R7A images; determine whether the Sony ELF can be faithfully mapped into the correct Android boot format; inspect DTB/cmdline and kernel config. No embedded config was found and the public Sony kernel-copyleft branch search did not find an E2003/25.0.A source branch.
+- New evidence: a complete captured `/system` tree comparison shows 4,248/4,263 common paths byte-identical; a retrieved historical E2003 TWRP candidate has the exact same kernel bytes as the R10A candidate and fstab maps p9 to recovery, matching the live `fotakernel` partition number. Still required: obtain matching R7A images; determine whether the Sony ELF can be faithfully mapped into Android boot format; inspect DTB/cmdline/kernel config. No embedded config or matching public kernel branch found.
 - Identify actual device tree/config and proprietary driver dependencies; reconcile MT6732 marketing SoC vs MT6752 platform identifiers.
 - Test Magisk v22.1 boot-image parser/patch process offline on copies only, if its official legacy payload is available and trusted.
 - **Exit:** reproducible parse and source/image match; no phone writes.
 
 ### Gate 3 — root feasibility decision
 
-- Verify a stock recovery route first and ensure exact original images are accessible. A historical E4g TWRP thread and E2003 owner reports now support that a recovery was used on this family, but the artifact/build source is not auditable yet and another report describes a bootloop.
+- A historical E2003 TWRP 2.8.7.0 artifact is now retrievable and statically parsed. Its kernel matches the E2003 R10A boot kernel byte-for-byte, and its recovery fstab uses p9. But the build has no source recipe/checksum, is customized R5A, and has not been tested on live R7A. Validate exact stock restoration first; no image load/write yet.
 - Compare a controlled historical Magisk boot patch vs retaining unrooted Android. Do not run opaque KingRoot/KingoRoot tools.
 - Obtain separate authorization before on-device root/bootloader operation.
 - **Exit:** only if recovery works and expected data loss/risk is understood; verify root read-only before any package change.
@@ -51,10 +51,10 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 
 ## Exact blockers now
 
-1. Matching stock FTF or boot/FOTA/system images with reliable provenance/hash. The E2003 R10A UK candidate passes local ZIP/SIN integrity, but has no trusted external hash and its system is `1293-7276 R10A`, not installed `1293-7358 R7A`; it is not a restore base.
+1. Exact/official recovery base for live CDA `1293-7358 R7A`; current R10A candidate has valid internal ZIP/SIN integrity but no trusted provenance/hash and system CDA `1293-7276 R10A`.
 2. Kernel source/defconfig/toolchain for this exact firmware and board. Candidate image reports Linux 3.10.48+ / GCC 4.8 but does not identify an exact source revision or config; no embedded config or matching Sony public branch was found.
 3. E2003-specific device tree. Candidate proprietary userspace/HALs are now extractable, but match to R7A and completeness still require comparison.
-4. Audited exact-variant recovery artifact and verified recovery/restore procedure; bootloader state remains owner-reported.
+4. Recovery operation and restore procedure remain unverified. A historical E2003 TWRP candidate is a strong lead (matching kernel and p9 mapping) but is R5A, unaudited and untested on R7A; unlock state remains owner-reported.
 5. Exact device-tested root patch path; no trusted KingRoot/KingoRoot binary.
 6. Unplugged controlled battery baseline and comparable post-change measurements.
 7. Sufficient persistent build host/source storage for any full ROM branch.
@@ -65,11 +65,11 @@ To avoid conflating “can build an image” with “can safely run it on the ha
 
 | Outcome | Current estimate | Evidence / gate |
 |---|---:|---|
-| Produce and inspect an offline stock-derived API 19 system-image POC from available E2003-family material | ~80% | A 2 GB ext4 system image reconstructs; 42/42 sampled essential R7A/R10A files match; toolchain can process it. Not all files are compared, and the candidate's CDA differs. |
-| First boot of a modified image on this actual R7A handset | ~45–60% | Shared sampled userspace and same model/build family are favorable; actual boot/FOTA bytes, exact image match, bootloader behavior and a verified recovery path remain unknown. |
-| Recover safely if that first boot fails using evidence already in hand | <30% | No exact restore package or audited recovery artifact; Sony Companion has not been shown to serve this device/build. |
+| Produce and inspect an offline stock-derived API 19 system-image POC from available E2003-family material | ~80% | A 2 GB ext4 system image reconstructs; 4,248/4,263 common captured `/system` files match byte-for-byte; toolchain can process it. File metadata/boot partitions are not compared, and candidate CDA differs. |
+| First boot of a minimal stock-derived build on this R7A handset | ~70% conditional; low-to-moderate confidence | 99.65% identical common `/system` files plus historical E2003 recovery with byte-identical kernel and matching p9 mapping. Assumes reported unlock is true, recovery target maps correctly, and R7A-specific files are preserved. None of those boot/recovery assumptions has been tested on-device. |
+| Safely recover if first boot fails using evidence already in hand | <50% | Recovery binary is not audited or tested on R7A; no exact/official restore package or proven repair path. Sony Companion has not been shown to serve this device/build. |
 | Build a newer AOSP/LineageOS ROM for E2003 | <20% | Exact kernel source/config and device tree are still absent; no reproducible port was found. |
 
-The requested ≥70% confidence has been reached only for the limited **offline stock-derived image-analysis/assembly** milestone. It has **not** been reached for a modified image successfully booting, being fully usable, or being recoverable on the phone. Raising those claims without the missing evidence would be misleading. A read-only Fastboot identity probe has now confirmed the E2003 product and S1 bootloader version, but not unlock state or temporary-boot support. The highest-value next step remains an exact restore route and an auditable E2003 recovery artifact/source; no device write has been performed.
+The ≥70% threshold is now met only as a **conditional estimate for first boot of a minimal stock-derived build**, not as an observed result or an overall safe-ROM success probability. The estimate relies on an untested historical recovery candidate and owner-reported bootloader unlock. No ROM has been built or booted on the phone, and safe rollback remains below 70%. The highest-value next step is to obtain/confirm an exact restore route, then independently review recovery provenance and—only after separate authorization—test recovery/rollback before any ROM write. No device write or image boot has been performed.
 
 **Root research note:** a 2016 community report describes KingRoot on E2003/Android 4.4.4/build `25.0.A.2.31`, but the handset had previously been rooted and commenters questioned whether residual files explain the result. Treat it as weak evidence only; APK/version/provenance, CDA and reproducibility are missing. It is not an approved procedure. See [ROOT_METHODS.md](ROOT_METHODS.md).

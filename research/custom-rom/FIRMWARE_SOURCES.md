@@ -83,7 +83,7 @@ The public Sony [`kernel-copyleft`](https://github.com/sonyxperiadev/kernel-copy
 
 The active ADB device again reported `E2003`, build fingerprint `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`, CDA `1293-7358`, revision `R7A`. In addition to the previously recorded 33 matching core files, nine further files were pulled individually from the read-only live `/system` and compared to the local R10A ext4 image. All nine SHA-256 pairs match: `/system/bin/netd`, `servicemanager`, `surfaceflinger`, `vold`, `wpa_supplicant`; `/system/lib/libnetutils.so`, `libwpa_client.so`; `/system/etc/firmware/WIFI_RAM_CODE_6752`; and `/system/etc/wifi/p2p_supplicant_overlay.conf`. Total sampled match: **42/42**.
 
-The host comparison output is temporary in `/tmp/farfar-e2003-extended-compare` and is not committed. Android 4.4's shell lacks several common utilities, so only explicit file reads were used. A full `/system` pull was cancelled at ~354 MB; no bulk copy is available and no device partitions were read. This is sampled evidence only; it must not be described as a complete R7A/R10A image diff.
+The original 42-file comparison was a targeted sample. A later read-only directory pull and offline comparison covered the accessible `/system` files; see the complete tree comparison section below. No raw device partition was read.
 
 ## Extraction workflow (offline only)
 
@@ -95,3 +95,17 @@ The host comparison output is temporary in `/tmp/farfar-e2003-extended-compare` 
 6. Check whether extracted package includes `boot`, `fotakernel`, `system`, loader and any TA/security-critical data. Do not publish copyrighted images or vendor blobs.
 
 Sony Companion software repair is a possible official recovery service but may choose current or server-available firmware and may wipe user data. It has not been tested on this E2003. Treat the only exact restore candidate as **BLOCKED** until a matching package and end-to-end recovery route are established.
+
+
+### Complete extracted `/system` tree comparison — 2026-10-14
+
+A read-only ADB pull of the live E2003 R7A `/system` tree was compared offline against the R10A candidate's extracted ext4 tree with [`tools/compare_system_trees.py`](tools/compare_system_trees.py). The script hashes file contents with SHA-256, dereferences file symlinks, does not traverse symlinked directories, and performs no device access. Reproduction command:
+
+```sh
+python3 research/custom-rom/tools/compare_system_trees.py \
+  /path/to/live-r7a-system /path/to/extracted-r10a-system
+```
+
+Observed result: R7A 4,320 files; R10A 4,283; 4,263 common paths; 57 R7A-only and 20 R10A-only paths. Of the common paths, 4,248 are byte-identical (99.65%); 13 differ in size; 15 differ in SHA-256 overall, including the 13 size mismatches and two same-size content mismatches. The different files include build/customization properties, region-specific media and wallpaper, and Sony/Android overlay resources. R10A-only entries include customization packages and thermal configuration; the R7A-only set is largely vendor files and overlays. These differences are not safe to overwrite blindly.
+
+The R7A tree was acquired by read-only ADB pulls and the R10A tree came from the unverified FTF. This is a content comparison of the captured `/system` payloads, not proof that metadata, SELinux labels, sparse layout, boot/FOTA partitions, radio/NVRAM data or startup behavior match. ADB could not pull the protected `lost+found`; the comparison concerns files, not raw partition identity. Both captures and the proprietary candidate remain outside Git.

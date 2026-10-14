@@ -4,7 +4,7 @@
 
 Captured from the connected Sony E2003 by listing `/dev/block/platform/mtk-msdc.0/by-name` and `/proc/partitions`. The mapping and sizes were rechecked over ADB on 2026-10-14. No partition data was read. `/system` is mounted read-only. The `boot` block node is `root:system` mode `0640`, and a one-byte attempt to read it as shell UID 2000 was denied by permissions; it did not write data. ADB properties independently reported model E2003/build `25.0.A.2.31`, customization `1293-7358` revision `R7A`, and software base `1292-0502` variant `GENERICSS`.
 
-**REPORTED:** the owner says the bootloader is unlocked. **UNKNOWN:** whether `fotakernel` is used as recovery on this installed firmware. **BLOCKED:** image extraction and recovery validation until an exact stock image is obtained.
+**REPORTED:** the owner says the bootloader is unlocked. **VERIFIED offline candidate mapping:** historical E2003 TWRP fstab maps recovery to p9, which live metadata labels `fotakernel`; whether this bootloader's recovery flash target selects p9 and whether the R5A image works on R7A are **UNKNOWN**. Recovery validation remains **BLOCKED** pending a verified restore route.
 
 Sizes below come from `/proc/partitions` in 1-KiB blocks. They are device-reported sizes, not flash instructions. `mmcblk0boot0`, `boot1`, RPMB and raw partition content were not accessed.
 
