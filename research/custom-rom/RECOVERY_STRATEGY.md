@@ -3,7 +3,9 @@
 ## Current recovery position
 
 - **VERIFIED:** Sony firmware exposes a `fotakernel` partition alias; there is no separately named `recovery` partition in the live read-only partition map.
-- **REPORTED:** historical community posts link E4g TWRP builds/recovery instructions. A contemporaneous E4g forum discussion also notes boot-image unpacking problems. These artifacts have not been downloaded, hashed or tested against this E2003, build 25.0.A.2.31, CDA 1293-7358 R7A.
+- **REPORTED, untrusted lead:** a 2017 E4g blog post links unsigned/signed TWRP ZIP files and describes installing them through the stock recovery's update path. It does not establish exact support for E2003 vs E2006/E2053, firmware 25.0.A.2.31, or CDA 1293-7358 R7A; the linked payloads have not been acquired, hashed, source-audited or tested. The described stock-recovery sideload is an exploit-like privileged installation path, not a safe read-only probe. Do not download-and-run or follow it as an install procedure.
+- **REPORTED:** an XDA thread titled “TWRP recovery Sony Xperia E4g” is referenced by a contemporaneous E4g forum post. The thread is inaccessible through the current research browser, so its exact device variants, source and artifacts remain **UNKNOWN**.
+- **VERIFIED community status report:** an /e/OS device request says there is no official or unofficial LineageOS build for the E4g as of April 2022. This is not proof no abandoned/private port ever existed, but it supports the present finding that there is no maintained public ROM baseline located for this model.
 - **UNKNOWN:** whether bootloader supports `fastboot boot` of a recovery image, whether `fotakernel` is recovery-only/update storage on this firmware, and whether any exact E2003 TWRP can mount/decrypt this `/data`/system layout.
 - **REPORTED:** owner says bootloader unlocked; no independent read-only Fastboot confirmation. Current USB connection is normal ADB mode.
 - **VERIFIED service exists:** Sony Xperia Companion has a software repair feature on supported Windows/macOS clients. Whether it still serves exact E2003 25.0.A.2.31/CDA 1293-7358 R7A is unknown; repair may wipe data.
@@ -22,6 +24,12 @@ The `boot.sin` and `fotakernel.sin` payloads were decoded offline and checked ag
 4. Verify Fastboot identity and allowed read-only variables only when the owner deliberately places the device in that mode. Do not issue unlock, erase, flash, format or reboot commands as part of discovery.
 5. Obtain a recovery image explicitly built for E2003 single-SIM and matching layout; inspect source, build recipe and checksums. Test first only if a safe temporary boot path is proven.
 6. Before any separately authorized write, prepare a recovery checklist, charger/cable, host tools, exact image hash, rollback path and expected data-loss statement.
+
+### Public recovery leads reviewed — 2026-10-14
+
+- [Dian Ariyanto's 2017 E4g TWRP post](https://dianariyanto.com/twrp-recovery-sony-xperia-e4g/) links two ZIPs through third-party redirect/file hosts and describes temporary/permanent recovery installation. It provides no source repository, build identity, cryptographic digest or variant/CDA matrix. The page's broad “E4g” label is insufficient for the single-SIM E2003. Treat the files and procedure as **unverified and not approved**; in particular, do not test its stock-recovery sideload procedure on the phone.
+- [XDA thread reference](https://xdaforums.com/t/twrp-recovey-sony-xperia-e4g-t3425174) was found linked from a contemporaneous forum post, but could not be fetched in this research session. No claim about its contents or compatibility is made.
+- The [E4g /e/OS device request](https://community.e.foundation/t/sony-xperia-e4g-e2003/40466) reports no official or unofficial LineageOS build in 2022. A separate unofficial “Lineage OS 15 Oreo” blog claim exists, but no source/build artifacts or reproducible E2003 hardware evidence were established here. It does not change the buildability assessment.
 
 ## Protected areas and constraints
 
