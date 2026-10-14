@@ -54,7 +54,7 @@ The unverified R10A Customized UK FTF described in [FIRMWARE_SOURCES.md](FIRMWAR
 
 The candidate ramdisk's `init.mt6752.rc` and `/proc/version` naming align with the live `mt6752` platform string. This helps explain the board label; it does not establish a compatible board variant or authorize use of that image. The live firmware's CDA remains `1293-7358 R7A`, while candidate manifest CDA/revision are blank.
 
-The extracted files remain in `/tmp`; proprietary images/blobs have not been added to Git. No flashable Android `boot.img` was produced. The Sony ELF container's segments do not by themselves reveal a fully validated Android boot header or restore procedure.
+The extracted files remain in `/tmp`; proprietary images/blobs have not been added to Git. No flashable Android `boot.img` was produced. The ELF/kernel payload has no embedded `IKCFG_ST`/`IKCFG_ED` kernel config markers. Sony's public kernel-copyleft branch inventory has no matching 25.0.A/E2003 branch, and no `callass` defconfig was found. The Sony ELF container's segments do not by themselves reveal a fully validated Android boot header or restore procedure.
 
 ## Current conclusion
 

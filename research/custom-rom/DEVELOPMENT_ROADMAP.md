@@ -18,7 +18,7 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 ### Gate 2 — offline stock image analysis (**partial progress**)
 
 - **Done for the unverified R10A candidate only:** extracted `boot.sin` and `fotakernel.sin` with a bounds-checked local SIN v3 reader; embedded payload SHA-256 checks passed. Inspected ELF segments, 3.10.48+ kernel string, cpio ramdisks, init scripts and fstab. Boot/FOTA share a kernel segment but have different ramdisks.
-- Still required: obtain matching R7A images; determine whether the Sony ELF can be faithfully mapped into the correct Android boot format; inspect DTB/cmdline and kernel config; inspect system image only after confirming exact package relevance.
+- Still required: obtain matching R7A images; determine whether the Sony ELF can be faithfully mapped into the correct Android boot format; inspect DTB/cmdline and kernel config. No embedded config was found and the public Sony kernel-copyleft branch search did not find an E2003/25.0.A source branch. Inspect system image only after confirming exact package relevance.
 - Identify actual device tree/config and proprietary driver dependencies; reconcile MT6732 marketing SoC vs MT6752 platform identifiers.
 - Test Magisk v22.1 boot-image parser/patch process offline on copies only, if its official legacy payload is available and trusted.
 - **Exit:** reproducible parse and source/image match; no phone writes.
@@ -52,7 +52,7 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 ## Exact blockers now
 
 1. Matching stock FTF or boot/FOTA image with reliable provenance/hash. The E2003 R10A UK candidate has been ZIP-checked and its boot/FOTA payload hashes verified locally, but has no trusted external hash, blank CDA/revision, and no proven match to the installed `1293-7358 R7A`; it is not a restore base.
-2. Kernel source/defconfig/toolchain for this exact firmware and board. Candidate image reports Linux 3.10.48+ / GCC 4.8 but does not identify an exact source revision or config.
+2. Kernel source/defconfig/toolchain for this exact firmware and board. Candidate image reports Linux 3.10.48+ / GCC 4.8 but does not identify an exact source revision or config; no embedded config or matching Sony public branch was found.
 3. E2003-specific device tree and complete compatible vendor blobs.
 4. Verified recovery/restore procedure and bootloader state.
 5. Exact device-tested root patch path; no trusted KingRoot/KingoRoot binary.
