@@ -1,5 +1,13 @@
 # Recovery and restore strategy
 
+## Fresh read-only prerequisite refresh — 2026-10-14
+
+The repository's `tools/collect_e2003_prerequisites.sh` was run against the single authorized ADB device. It confirmed model/device `E2003`, board `callass`, Android 4.4.4/API 19, build `25.0.A.2.31`, CDA `1293-7358 R7A`, MT6752 platform string, and Linux `3.10.48+`. The live partition aliases report `boot -> mmcblk0p10`, `fotakernel -> mmcblk0p9` (32 MiB), and `system -> mmcblk0p19`; only partition metadata was read. `/proc/config.gz` is absent and ordinary ADB cannot read the boot command line. This refresh did not inspect raw partition contents or verify the owner-reported unlocked state. Temporary output was kept outside Git.
+
+The pinned Flashtool E20XX FSC profile was also re-read locally at `Androxyde/devices` commit `4f354572579e62337d56a6b9319f7f8b31b3378a`. Its static sequence includes loader/partition-table, `preloader_s1sbl`, `secro`, `cache`, `boot`, `fotakernel`, `lk`, `logo`, `tee1`, `tee2`, `userdata`, `system`, `elabel`, and TA `writeTA:2127` / `writeTA:2212` operations. This is a broad service-flash recipe, not a narrow recovery procedure. It reinforces that a generic Flashtool profile cannot be treated as a safe rollback path; do not run it as a “restore test.”
+
+**Readiness effect:** no new recovery or exact-R7A firmware was discovered, so the end-to-end safe-ROM estimate does not increase. A recovery path still requires either a supported-host Sony Companion preflight that identifies the exact handset and offered repair customization, or a traceable E2003/R7A-compatible stock package plus an independently reviewed restore procedure. Neither has been established.
+
 ## Current recovery position
 
 - **VERIFIED:** Sony firmware exposes a `fotakernel` partition alias; there is no separately named `recovery` partition in the live read-only partition map.
