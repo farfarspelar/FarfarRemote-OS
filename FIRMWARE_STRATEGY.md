@@ -1,5 +1,7 @@
 # Firmwarestrategi
 
+Den uppdaterade, skrivskyddade root-beredskapskontrollen finns i [docs/ROOT_READINESS.md](docs/ROOT_READINESS.md), med körbart verktyg `tools/root_readiness.sh`. FarfarRemote OS som launcher är redan implementerat i appens OS-flavor; en rootad ROM är ett separat och ännu inte verifierat delprojekt.
+
 ## Rekommendation: A först
 
 Behåll den exakta 25.0.A.2.31-installationen och gör en kiosk/launcher-app. Ta först bort eller inaktivera en komponent endast efter inventering och helst med reversibel paketåtgärd. Factory-image ska arkiveras lokalt, dess ursprung och hash dokumenteras och återflashvägen provplaneras. Sony-bootloadern tillåter enligt uppgift upplåsning, men detta måste verifieras i service-menyn och unlock kräver en modellspecifik kod. Upplåsning är inte root och kan radera data/ändra DRM-relaterade funktioner.
