@@ -19,7 +19,7 @@ Sizes below come from `/proc/partitions` in 1-KiB blocks. They are device-report
 | lk | mmcblk0p7 | 1,024 | Low-level bootloader stage; never alter |
 | ltalabel | mmcblk0p8 | 16,384 | Purpose not established |
 | fotakernel | mmcblk0p9 | 32,768 | Sony FOTA/recovery-named partition; recovery use not verified |
-| boot | mmcblk0p10 | 32,768 | Kernel boot image candidate; contents inaccessible without root/firmware package |
+| boot | mmcblk0p10 | 32,768 | Live raw contents inaccessible to ADB shell; an unmatched E2003 R10A mirror candidate's Sony ELF payload has been inspected offline |
 | secro | mmcblk0p11 | 6,144 | Protected security data; never alter |
 | para | mmcblk0p12 | 512 | Purpose not established |
 | logo | mmcblk0p13 | 8,192 | Boot logo candidate; purpose inferred from name |

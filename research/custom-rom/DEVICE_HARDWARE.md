@@ -48,6 +48,14 @@ The running firmware exposes Mali EGL/GLES, MediaTek gralloc and hardware-compos
 
 The readiness script matched E2003/build `25.0.A.2.31`; ADB shell is UID 2000, no `su` command was found on its PATH, and no Fastboot device was connected. `pm list packages -d` reported `com.sonyericsson.startupflagservice` and `com.sonymobile.usm`. Follow-up `dumpsys package` showed user state `enabled=2` for the first and `enabled=0` (default) for the second. Their origin/status history is **UNKNOWN**; this inspection changed neither package. Do not treat this list as permission to disable or restore anything.
 
+## Firmware boot-image analysis candidate — 2026-10-14
+
+The unverified R10A Customized UK FTF described in [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md) was inspected offline. Its `boot.sin` payload has a verified embedded SHA-256 and decodes to a 32-bit ARM ELF with two load segments. The first segment's embedded kernel string reports Linux `3.10.48+`, GCC 4.8, build date 2015-09-08. The second is a gzip-compressed cpio ramdisk containing Android init scripts, `fstab`, `adbd`, and Sony/MediaTek setup. The FOTA image shares the same kernel bytes but contains a separate FOTA ramdisk. This is **VERIFIED for the downloaded file only**, not for the phone's installed R7A customization.
+
+The candidate ramdisk's `init.mt6752.rc` and `/proc/version` naming align with the live `mt6752` platform string. This helps explain the board label; it does not establish a compatible board variant or authorize use of that image. The live firmware's CDA remains `1293-7358 R7A`, while candidate manifest CDA/revision are blank.
+
+The extracted files remain in `/tmp`; proprietary images/blobs have not been added to Git. No flashable Android `boot.img` was produced. The Sony ELF container's segments do not by themselves reveal a fully validated Android boot header or restore procedure.
+
 ## Current conclusion
 
-The phone is a usable stock-based dedicated remote, but it is not yet a buildable ROM target. Missing items include an authenticated matching stock FTF/image set, extracted boot and recovery/FOTA images, E2003-specific kernel config/device tree, complete proprietary blobs and a proven recovery route. The board-string discrepancy must be resolved from the exact firmware/board source before compiling or porting a kernel.
+The phone is a usable stock-based dedicated remote, but it is not yet a buildable ROM target. We have a valuable offline image-analysis candidate, but still lack an authenticated matching R7A stock image set, exact E2003 kernel config/source, device tree, complete proprietary blobs and a proven recovery route. The board-string discrepancy is better explained by the candidate's MT6752-labelled platform files, but exact single-SIM board compatibility remains unproven.

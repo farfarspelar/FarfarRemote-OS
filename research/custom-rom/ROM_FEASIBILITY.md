@@ -12,6 +12,12 @@
 
 Use stock Android 4.4.4/API 19 as the compatibility baseline now. No newer Android base is recommended until a device-specific ROM boots and passes screen/touch, Wi-Fi, audio, charging, USB/ADB, suspend/resume and Kodi tests. A 5.x/6.x MTK port is a theoretical target, not a demonstrated E2003 build. Newer OS support would require new vendor HALs/blobs, kernel compatibility, SELinux policy and working recovery; merely compiling AOSP is insufficient.
 
+## Newly available image evidence
+
+An unverified E2003 R10A Customized UK FTF has now yielded offline `boot` and `fotakernel` ELF payloads with their embedded SHA-256 checks passing. The boot payload includes a Linux 3.10.48+ kernel, Android init ramdisk, MediaTek fstab and Sony connectivity setup. This materially improves our understanding of the stock boot chain. It does **not** make a ROM buildable: the package CDA/revision are blank, it is not matched to the live `1293-7358 R7A`, its origin has no trusted independent checksum, and no exact kernel source/defconfig, device tree or complete vendor extraction is available. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md) for file-level evidence.
+
+The extracted boot container is Sony ELF format rather than a standard Android `boot.img`. An Android boot header and a valid restore method have not been reconstructed. Magisk compatibility therefore remains untested despite having a candidate ramdisk to inspect.
+
 ## What a minimal dedicated build must keep
 
 Android init/Binder/system_server; SurfaceFlinger and Mali/gralloc/hwcomposer; touchscreen/input; Package Manager and text input; Wi-Fi framework, vendor driver/firmware and supplicant; network stack; storage and media path; power, battery, thermal and charging services; USB gadget and ADB; Sony/MediaTek boot and board services; and Settings or a reliable alternative path for Wi-Fi/debugging. Bluetooth can be omitted only after confirming no external controls use it. Remove user apps only after package/service dependency and recovery tests.
