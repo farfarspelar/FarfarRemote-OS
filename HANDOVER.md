@@ -5,11 +5,12 @@ Last updated: 2026-10-14
 ## Where the work is
 
 - Repository: `farfarspelar/FarfarRemote-OS`
-- Current branch: `feature/kodi-power-off-button`
-- Current commit: `a61d923` — `Move Power Off to the top header`
+- Current integrated branch: `main`
+- Latest implementation merge before this handover update: `5f374b8` — `Note Power Off is not in current RC APKs`
+- OS continuation branch: `integration/os-continuation` at `44ed21d`; it is also pushed to `origin`.
 - Previous feature commit: `b6865d9` — `Add confirmed Kodi power off control`
-- Branch is pushed to `origin`; working tree was clean after the push.
-- `main` was not changed or merged.
+- The Power Off feature and release-download naming changes are now in `main`; the integration branch preserves the unified feature history.
+- Working tree was clean after the latest push.
 
 Continue on `feature/kodi-power-off-button` unless the project owner chooses another branch. Do not merge this feature to `main` without an explicit request.
 
@@ -18,6 +19,8 @@ Continue on `feature/kodi-power-off-button` unless the project owner chooses ano
 The main screen has a red **Power Off** control in the top-right header, replacing the header Settings gear. The existing Settings buttons lower in the portrait and landscape views remain available. Tapping Power Off asks for confirmation, then calls Kodi JSON-RPC `System.Shutdown` using the existing background I/O executor. The confirmation says that the Kodi device will shut down while the Android remote stays on.
 
 This shuts down the **device running Kodi** (for example, the MeLE computer). It does not shut down the Xperia handset. Kodi's host operating system must permit shutdown, and the Kodi JSON-RPC account must have the `ControlPower` permission. Do not test this by sending the command unless the owner intends to power down the Kodi host.
+
+The published v0.4.2-rc1 APKs were built before this feature was added. The current `main` source has the feature; a later version/build is needed before it appears in a downloadable APK.
 
 ## Verified on the Sony Xperia E4g E2003
 
@@ -28,6 +31,15 @@ This shuts down the **device running Kodi** (for example, the MeLE computer). It
 - Installation was an in-place update; the app was not uninstalled and its data was not cleared.
 - The actual Power Off confirmation and `System.Shutdown` command were **not** exercised. Shutdown behavior on the MeLE host remains to be verified intentionally.
 - The test was visual and used ADB; no physical button tap was performed.
+
+## Downloadable RC artifacts
+
+The v0.4.2-rc1 GitHub prerelease APK assets now include their minimum Android version/API in the filenames:
+
+- `FarfarRemote-App-Android4.4plus-API19plus-v0.4.2-rc1.apk` — min Android 4.4/API 19, target API 36; emulator checks on Android 13 and 15, plus the owner-reported Samsung Android 13 use.
+- `FarfarRemote-OS-Android4.4plus-API19plus-v0.4.2-rc1.apk` — min Android 4.4/API 19, target API 28; dedicated HOME launcher verified on Xperia E2003.
+
+The renamed release assets were downloaded again and matched the local SHA-256 manifest. Their APK bytes and version metadata did not change. These prerelease APKs do not contain the later Power Off feature.
 
 ## Automated checks and build
 
@@ -47,8 +59,8 @@ This shuts down the **device running Kodi** (for example, the MeLE computer). It
 1. On the Xperia, visually confirm the header spacing and that Settings lower on the screen still opens correctly in portrait and landscape.
 2. With the owner ready to shut down the Kodi host, tap **Power Off**, inspect the confirmation, and choose Cancel once to verify cancellation does nothing.
 3. When it is safe to turn Kodi off, confirm the action and check that the MeLE host shuts down while the Xperia stays on. If it fails, check Kodi's `ControlPower` permission and host OS shutdown configuration; capture the user-visible error without logging credentials.
-4. Re-run the contract test and build both App and OS APKs after any code change. Install the OS APK with `adb install -r` to preserve the existing app data.
-5. Review the feature diff and commits, then ask the owner before merging to `main` or preparing a public release.
+4. For the OS optimization track, start from `reports/debloat/DEBLOAT_0.1_PLAN.md`. Phase A dry-run currently lists seven user apps; five were previously approved as a first batch. ADB shell `pm disable-user` was denied by firmware 25.0.A.2.31 before any package changed. In the latest check, the phone was at its lock screen, so the Settings App info disable route could not be inspected. Unlock the Xperia before continuing; do not retry the denied shell command or use uninstall/root/system edits without separately verifying and authorizing a method.
+5. Re-run the contract test and build both App and OS APKs after any code change. Install the OS APK with `adb install -r` to preserve the existing app data.
 
 ## Useful commands
 
