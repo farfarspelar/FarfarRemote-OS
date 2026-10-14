@@ -8,7 +8,7 @@
 - **VERIFIED community status report:** an /e/OS device request says there is no official or unofficial LineageOS build for the E4g as of April 2022. This is not proof no abandoned/private port ever existed, but it supports the present finding that there is no maintained public ROM baseline located for this model.
 - **UNKNOWN:** whether bootloader supports `fastboot boot` of a recovery image, whether `fotakernel` is recovery-only/update storage on this firmware, and whether any exact E2003 TWRP can mount/decrypt this `/data`/system layout.
 - **REPORTED:** owner says bootloader unlocked; no independent read-only Fastboot confirmation. Current USB connection is normal ADB mode.
-- **VERIFIED service exists:** Sony Xperia Companion has a software repair feature on supported Windows/macOS clients. Whether it still serves exact E2003 25.0.A.2.31/CDA 1293-7358 R7A is unknown; repair may wipe data.
+- **VERIFIED official route exists, exact restore unverified:** Sony's E4g support page lists Xperia Companion, and Sony's current Companion support page says Software Repair is supported across Xperia models. Sony's repair guidance warns that device data is deleted. **UNKNOWN:** whether the current repair flow still recognizes this specific E2003 and what build/CDA it downloads; it is not confirmed to restore 25.0.A.2.31 or CDA 1293-7358 R7A. Official desktop support is Windows/macOS, not Linux Mint.
 
 ### Candidate image analysis update — 2026-10-14
 
@@ -18,14 +18,17 @@ The `boot.sin` and `fotakernel.sin` payloads were decoded offline and checked ag
 
 ## Recovery route required before root or ROM
 
-1. Find an independently traceable exact E2003 stock package matching CDA `1293-7358 R7A`; the R10A Customized UK mirror candidate is insufficient. Verify provenance/checksums and inspect included images offline.
-2. Preserve original image copies and hashes offline, with two independent copies. The app's preferences can be backed up logically only through normal app UI/export; do not assume an image restore retains user data.
-3. Verify Sony Companion repair availability for this model on the actual supported desktop OS, or establish an exact FTF restore method using documented Sony/Flashtool tooling. No actual repair/flash trial here.
-4. Verify Fastboot identity and allowed read-only variables only when the owner deliberately places the device in that mode. Do not issue unlock, erase, flash, format or reboot commands as part of discovery.
-5. Obtain a recovery image explicitly built for E2003 single-SIM and matching layout; inspect source, build recipe and checksums. Test first only if a safe temporary boot path is proven.
-6. Before any separately authorized write, prepare a recovery checklist, charger/cable, host tools, exact image hash, rollback path and expected data-loss statement.
+1. **Promising official route to validate:** on a supported Windows/macOS host, inspect the current Xperia Companion repair flow for E2003 while stopping before the final confirmation that starts repair. Record whether it recognizes E2003 and any offered software/customization metadata. Do not start repair during this preflight. A later actual repair test would erase device data and needs separate explicit authorization.
+2. Find an independently traceable exact E2003 stock package matching CDA `1293-7358 R7A`; the R10A Customized UK mirror candidate is insufficient. Verify provenance/checksums and inspect included images offline.
+3. Preserve original image copies and hashes offline, with two independent copies. The app's preferences can be backed up logically only through normal app UI/export; do not assume an image restore retains user data.
+4. Establish what Sony Companion would restore and whether it is adequate as a recovery route, or establish an exact FTF restore method using documented Sony/Flashtool tooling. No actual repair/flash trial here.
+5. Verify Fastboot identity and allowed read-only variables only when the owner deliberately places the device in that mode. Do not issue unlock, erase, flash, format or reboot commands as part of discovery.
+6. Obtain a recovery image explicitly built for E2003 single-SIM and matching layout; inspect source, build recipe and checksums. Test first only if a safe temporary boot path is proven.
+7. Before any separately authorized write, prepare a recovery checklist, charger/cable, host tools, exact image hash, rollback path and expected data-loss statement.
 
 ### Public recovery leads reviewed — 2026-10-14
+
+- Sony's [Xperia E4g support page](https://www.sony.com.au/electronics/support/mobile-phones-tablets-mobile-phones/xperia-e4g) lists Xperia Companion among product support resources. Sony's [current Xperia Companion information](https://www.sony.jp/xperia/support/software/xperia-companion/) identifies Software Repair as supported; neither page specifies the firmware/CDA the repair flow will install on this retired E2003. Sony's repair process deletes device data. This is a better recovery lead than an unverified mirror, but not yet a validated restore base.
 
 - [Dian Ariyanto's 2017 E4g TWRP post](https://dianariyanto.com/twrp-recovery-sony-xperia-e4g/) links two ZIPs through third-party redirect/file hosts and describes temporary/permanent recovery installation. It provides no source repository, build identity, cryptographic digest or variant/CDA matrix. The page's broad “E4g” label is insufficient for the single-SIM E2003. Treat the files and procedure as **unverified and not approved**; in particular, do not test its stock-recovery sideload procedure on the phone.
 - [XDA thread reference](https://xdaforums.com/t/twrp-recovey-sony-xperia-e4g-t3425174) was found linked from a contemporaneous forum post, but could not be fetched in this research session. No claim about its contents or compatibility is made.
