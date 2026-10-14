@@ -90,7 +90,7 @@ for name in ("buildPortrait", "buildLandscape"):
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 7" in build and "versionName '0.4.3-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.3 RC metadata")
+check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 8" in build and "versionName '0.4.4-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.4 RC metadata")
 check(re.search(r"app \{(?:(?!\n\s*\}).)*targetSdk 36", build, re.S) is not None, "App flavor targets API 36")
 check(re.search(r"os \{(?:(?!\n\s*\}).)*targetSdk 28", build, re.S) is not None, "OS flavor retains conservative API 28 target")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
@@ -128,4 +128,4 @@ check("Api33BackHandler.register(this, this::closeSettings)" in new_main, "App S
 check('android:usesCleartextTraffic="true"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(), "Kodi HTTP connectivity remains enabled")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4.3 RC distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.4 RC distribution and regression contract checks passed.")

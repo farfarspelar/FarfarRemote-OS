@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.4.4 RC1
 
+- Added a Favorites button below the content shortcuts. Users can save the currently open Kodi folder locally, reopen it later, and remove saved paths.
+- Clipped stray neighboring sprite fragments from the Home and Stop artwork without replacing the original PNG assets.
 - Added a confirmed Power Off control that asks Kodi to shut down the Kodi host; the Android remote stays on.
+- Bumped the App and OS distribution version to 0.4.4-rc1 while keeping their application IDs, API levels, and flavor-specific launcher behavior.
 
 ## 0.4.3 RC1 — Screen timeout default
 

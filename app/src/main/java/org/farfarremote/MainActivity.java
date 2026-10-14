@@ -16,6 +16,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -333,7 +334,9 @@ public final class MainActivity extends Activity {
 
     private void addIconControl(LinearLayout parent, int res, String label, float weight, Runnable action) {
         LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.setFocusable(true); box.setContentDescription(label); box.setOnClickListener(v -> { haptic(); action.run(); });
-        ImageView image = new ImageView(this); image.setImageResource(res); image.setScaleType(ImageView.ScaleType.FIT_CENTER); box.addView(image, new LinearLayout.LayoutParams(-1, dp(isLandscape() ? 54 : 48)));
+        ImageView image = (res == R.drawable.action_home || res == R.drawable.action_stop)
+                ? new EdgeClippedImageView(this, res == R.drawable.action_stop) : new ImageView(this);
+        image.setImageResource(res); image.setScaleType(ImageView.ScaleType.FIT_CENTER); box.addView(image, new LinearLayout.LayoutParams(-1, dp(isLandscape() ? 54 : 48)));
         TextView caption = text(label, isLandscape() ? 9 : 9, MUTED, false); caption.setGravity(Gravity.CENTER); caption.setMaxLines(1); box.addView(caption);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, weight); lp.leftMargin = dp(1); lp.rightMargin = dp(1); parent.addView(box, lp);
         box.setOnLongClickListener(v -> false);
@@ -377,6 +380,142 @@ public final class MainActivity extends Activity {
         addImageOnlyControl(categories, R.drawable.category_tv_shows, "TV Shows", () -> activate("videos", new String[]{"TVShowTitles"}));
         addImageOnlyControl(categories, R.drawable.category_music, "Music", () -> activate("music", null));
         addImageOnlyControl(categories, R.drawable.category_addons, "Add-ons", () -> activate("addons", null));
+        LinearLayout favoriteRow = row(parent); favoriteRow.setGravity(Gravity.CENTER);
+        TextView favorites = text("☆  Favorites", 12, CYAN, true); favorites.setGravity(Gravity.CENTER); favorites.setPadding(dp(16), 0, dp(16), 0);
+        favorites.setBackground(round(PANEL, dp(16))); favorites.setContentDescription("Open saved Kodi folder favorites"); favorites.setFocusable(true);
+        favorites.setOnClickListener(v -> showFavorites());
+        LinearLayout.LayoutParams favoriteLp = new LinearLayout.LayoutParams(-2, dp(36)); favoriteLp.topMargin = dp(1); favoriteRow.addView(favorites, favoriteLp);
+    }
+
+    /** Clips adjacent sprite-sheet fragments from only the two affected action PNGs. */
+    private final class EdgeClippedImageView extends ImageView {
+        private final boolean trimLeft;
+        EdgeClippedImageView(Context context, boolean trimLeft) { super(context); this.trimLeft = trimLeft; }
+        @Override protected void onDraw(Canvas canvas) {
+            Drawable drawable = getDrawable();
+            if (drawable == null || drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) { super.onDraw(canvas); return; }
+            RectF imageBounds = new RectF(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+            getImageMatrix().mapRect(imageBounds);
+            float trim = imageBounds.width() * 0.08f;
+            int save = canvas.save();
+            canvas.clipRect(trimLeft ? imageBounds.left + trim : imageBounds.left,
+                    imageBounds.top,
+                    trimLeft ? imageBounds.right : imageBounds.right - trim,
+                    imageBounds.bottom);
+            super.onDraw(canvas);
+            canvas.restoreToCount(save);
+        }
+    }
+
+    private static final String FAVORITES_PREF = "folder_favorites_v1";
+
+    private void showFavorites() {
+        final AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Kodi folder favorites").create();
+        LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(8));
+        TextView hint = text("Save the folder currently open in Kodi, then tap it here to return.", 12, MUTED, false);
+        hint.setPadding(0, 0, 0, dp(8)); content.addView(hint);
+        ScrollView listScroll = new ScrollView(this); listScroll.setFillViewport(false); listScroll.setVerticalScrollBarEnabled(false);
+        LinearLayout list = column(); listScroll.addView(list); content.addView(listScroll, new LinearLayout.LayoutParams(-1, dp(190)));
+        JSONArray saved = readFolderFavorites();
+        if (saved.length() == 0) {
+            TextView empty = text("No saved folders yet.", 13, MUTED, false); empty.setGravity(Gravity.CENTER); list.addView(empty, new LinearLayout.LayoutParams(-1, dp(64)));
+        } else {
+            for (int i = 0; i < saved.length(); i++) {
+                JSONObject favorite = saved.optJSONObject(i); if (favorite == null) continue;
+                final String name = favorite.optString("name", "Kodi folder");
+                final String path = favorite.optString("path", "");
+                final String window = favorite.optString("window", "videos");
+                if (path.isEmpty()) continue;
+                LinearLayout entry = row(list); entry.setGravity(Gravity.CENTER_VERTICAL); entry.setPadding(dp(8), 0, dp(4), 0); entry.setBackground(round(PANEL, dp(9)));
+                LinearLayout.LayoutParams entryLp = new LinearLayout.LayoutParams(-1, dp(48)); entryLp.bottomMargin = dp(5); entry.setLayoutParams(entryLp);
+                LinearLayout label = column(); label.setGravity(Gravity.CENTER_VERTICAL); label.setContentDescription("Open favorite " + name); label.setFocusable(true);
+                label.addView(text(name, 13, TEXT, true)); TextView pathText = text(path, 9, MUTED, false); pathText.setSingleLine(true); pathText.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE); label.addView(pathText);
+                entry.addView(label, new LinearLayout.LayoutParams(0, -1, 1)); label.setOnClickListener(v -> { dialog.dismiss(); openFolderFavorite(window, path); });
+                TextView remove = text("×", 22, MUTED, true); remove.setGravity(Gravity.CENTER); remove.setContentDescription("Remove favorite " + name); entry.addView(remove, new LinearLayout.LayoutParams(dp(38), -1));
+                remove.setOnClickListener(v -> new AlertDialog.Builder(this).setMessage("Remove “" + name + "” from favorites?")
+                        .setNegativeButton("Cancel", null).setPositiveButton("Remove", (d, which) -> { removeFolderFavorite(path); dialog.dismiss(); showFavorites(); }).show());
+            }
+        }
+        dialog.setView(content);
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, "Save current folder", (android.content.DialogInterface.OnClickListener) null);
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Close", (android.content.DialogInterface.OnClickListener) null);
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> { dialog.dismiss(); saveCurrentFolder(); });
+        });
+        dialog.show();
+    }
+
+    private JSONArray readFolderFavorites() {
+        try { return new JSONArray(prefs.getString(FAVORITES_PREF, "[]")); }
+        catch (Exception ignored) { return new JSONArray(); }
+    }
+
+    private void saveCurrentFolder() {
+        toast("Reading the current Kodi folder…");
+        io.execute(() -> {
+            String path = null, name = null, window = "videos", error = null;
+            try {
+                JSONObject labels = client().call("XBMC.GetInfoLabels", new JSONObject().put("labels",
+                        new JSONArray().put("Container.FolderPath").put("Container.FolderName").put("Container.Content")));
+                path = labels.optString("Container.FolderPath", "").trim();
+                name = labels.optString("Container.FolderName", "").trim();
+                String content = labels.optString("Container.Content", "").toLowerCase(Locale.US);
+                if (content.contains("song") || content.contains("album") || content.contains("artist") || content.contains("music")) window = "music";
+                if (path.isEmpty()) error = "Kodi did not report an open folder. Open a folder in Kodi first.";
+                else if (path.equalsIgnoreCase("root") || path.equalsIgnoreCase("sources://")) error = "Open a folder below the Kodi root before saving a favorite.";
+            } catch (Exception e) { error = e.getMessage() == null ? "Could not read the current Kodi folder." : e.getMessage(); }
+            final String currentPath = path, currentName = name, currentWindow = window, failure = error;
+            handler.post(() -> {
+                if (isFinishing() || destroyed) return;
+                if (failure != null) { toast(failure); return; }
+                promptFavoriteName(currentPath, currentName, currentWindow);
+            });
+        });
+    }
+
+    private void promptFavoriteName(String path, String suggestedName, String window) {
+        EditText nameField = edit(suggestedName == null || suggestedName.isEmpty() ? pathLeaf(path) : suggestedName,
+                "Favorite name", InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        new AlertDialog.Builder(this).setTitle("Save Kodi folder").setView(nameField)
+                .setNegativeButton("Cancel", null).setPositiveButton("Save", (dialog, which) -> {
+                    String name = nameField.getText().toString().trim();
+                    if (name.isEmpty()) name = pathLeaf(path);
+                    if (saveFolderFavorite(name, path, window)) { toast("Folder favorite saved."); showFavorites(); }
+                }).show();
+    }
+
+    private String pathLeaf(String path) {
+        if (path == null || path.isEmpty()) return "Kodi folder";
+        String clean = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
+        int slash = Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\'));
+        String leaf = clean.substring(slash + 1);
+        return leaf.isEmpty() ? "Kodi folder" : leaf;
+    }
+
+    private boolean saveFolderFavorite(String name, String path, String window) {
+        JSONArray old = readFolderFavorites(), updated = new JSONArray();
+        try {
+            for (int i = 0; i < old.length(); i++) {
+                JSONObject item = old.optJSONObject(i);
+                if (item != null && !path.equals(item.optString("path", ""))) updated.put(item);
+            }
+            updated.put(new JSONObject().put("name", name).put("path", path).put("window", window));
+            prefs.edit().putString(FAVORITES_PREF, updated.toString()).apply();
+            return true;
+        } catch (Exception e) { toast("Could not save this folder favorite."); return false; }
+    }
+
+    private void removeFolderFavorite(String path) {
+        JSONArray old = readFolderFavorites(), updated = new JSONArray();
+        for (int i = 0; i < old.length(); i++) {
+            JSONObject item = old.optJSONObject(i);
+            if (item != null && !path.equals(item.optString("path", ""))) updated.put(item);
+        }
+        prefs.edit().putString(FAVORITES_PREF, updated.toString()).apply();
+    }
+
+    private void openFolderFavorite(String window, String path) {
+        action(c -> c.call("GUI.ActivateWindow", new JSONObject().put("window", window).put("parameters", new JSONArray().put(path))));
     }
 
     private void addImageOnlyControl(LinearLayout parent, int res, String label, Runnable action) {

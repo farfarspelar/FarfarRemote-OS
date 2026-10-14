@@ -1,0 +1,2 @@
+0c53d483a133f0a1f7f9e91117c54fedf8dddaf553fc11800f835db14e6a07fc  FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk
+a6d1c3e19c63037d36f20387784b88c10b321034dc3ba880edbc7fcf659b18da  FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk

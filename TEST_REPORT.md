@@ -1,3 +1,25 @@
+# FarfarRemote 0.4.4 RC1 — favorites and release packaging
+
+- **PASS:** Existing v0.3 source-contract regression script and new favorites source-contract script pass.
+- **PASS:** Both App and OS debug variants compile and assemble; Gradle unit-test tasks report `NO-SOURCE`.
+- **PASS:** Release packaging checks verify App ID `org.farfarremote.app`, OS ID `org.farfarremote`, versionCode 8, versionName `0.4.4-rc1`, minimum API 19, App target API 36, and OS target API 28.
+- **PASS:** APK SHA-256 files are generated and checked against the APK bytes.
+- App SHA-256: `0c53d483a133f0a1f7f9e91117c54fedf8dddaf553fc11800f835db14e6a07fc`.
+- OS SHA-256: `a6d1c3e19c63037d36f20387784b88c10b321034dc3ba880edbc7fcf659b18da`.
+- **PASS:** The OS APK signing certificate fingerprint matches the locally retained v0.4.3 OS APK (`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`), preserving its in-place update signing path.
+- **NOT VERIFIED:** No Kodi host is available in this work session, so saving and reopening a real Kodi folder favorite is not behavior-tested. Favorites still require physical Kodi verification.
+- **NOT VERIFIED:** No update install was performed on the Xperia in this release build. The OS package ID and debug signing setup remain unchanged; confirm the certificate fingerprint matches the installed build before installing over it.
+
+# Current development work — folder favorites and Home/Stop artwork
+
+- **PASS:** Existing `python3 tools/test_v03_contract.py` regression contract checks; protected layout builders, Kodi client, remote actions, existing preference keys, and distribution manifests remain unchanged.
+- **PASS:** `tools/test_favorites_contract.py` checks the opt-in capture action, Kodi folder path retrieval, local persistence, launch-window path use, removal, and localized Home/Stop edge clipping. This is a source contract check, not a Kodi behavior test.
+- **PASS:** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew testAppDebugUnitTest testOsDebugUnitTest assembleAppDebug assembleOsDebug`. Both debug variants compile and assemble; Gradle unit-test tasks are `NO-SOURCE`. The existing JDK 21 Java 8 source/target warnings remain.
+- **PASS:** APK metadata check reports App `org.farfarremote.app` and OS `org.farfarremote`; both remain versionCode 7/versionName `0.4.3-rc1`, minSdk 19; App targetSdk 36 and OS targetSdk 28.
+- **PASS:** The OS favorites test APK's signing-certificate SHA-256 matches the existing local v0.4.3 OS APK (`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`). Device-side in-place update was not run.
+- **NOT VERIFIED:** No Kodi/MeLE host is reachable in this work session. A real `XBMC.GetInfoLabels` response, save flow, `GUI.ActivateWindow` folder navigation, and operation with multiple Kodi content types must be tested with Kodi. No physical device was changed or flashed for this task.
+- **NOT VERIFIED:** Touch appearance and clipping on the Xperia display; both APKs have only been compiled here. The generated APK outputs are in the Gradle build output directories and are not a new public release.
+
 # FarfarRemote 0.4.3 RC1 — display timeout verification
 
 ## Change
