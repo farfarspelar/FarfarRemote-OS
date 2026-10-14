@@ -125,6 +125,12 @@ With the exact E2003 attached, host Fastboot 34.0.4's documented `fetch` operati
 
 **Readiness effect:** unchanged; direct boot/FOTA backup remains unavailable through ordinary ADB and this Fastboot implementation. Do not retry `fetch` or infer that the command is generally safe on another bootloader from the host help text alone.
 
+### Sony Companion installer authenticity check — 2026-10-14
+
+The local `/tmp/Xperia_Companion.exe` candidate was checked offline with `osslsigncode 2.8` and the host's CA store. SHA-256 is `17dabeaae83f7b68e8a20a9678619637bce5b1efb0645d09b894e986bb082dda`; Authenticode file digest matched, certificate chain and timestamp verified, and the tool reported one verified signature. The signer is Sony Nordic (Sweden), with a DigiCert Trusted G4 Code Signing chain; the authenticated description is `Xperia Companion Setup`, and its signed URL metadata points to `https://app.swup.update.sony.net/xperia-companion-links/support`. This authenticates the installer publisher/signature, not its current repair-server behavior, Linux/Wine compatibility, or eligibility for this unlocked E2003.
+
+The installer has not been executed or installed during this check, and the phone was not connected to it. The meaningful next step remains running Sony Companion on a supported Windows/macOS host, selecting the exact E2003 repair flow, and stopping before the final action that starts repair. No repair or data-erasing operation is authorized here. This strengthens confidence in the official preflight software source but does **not** establish a restore path or increase the safe end-to-end ROM estimate yet.
+
 ### Additional exact-model/build mirror lead — 2026-10-14
 
 A public XperiaStockROM page links a Google Drive archive whose central directory names an E2003 `25.0.A.2.31` FTF with CDA `1293-9486` / revision R3A. We verified the outer archive's ZIP metadata by byte range only; the 1.296-GB inner FTF payload has not been retrieved, its CRC has not been checked, and it is not the handset's `1293-7358 R7A` CDA. It is a more closely matched candidate than an E2006 package, but remains a third-party mirror and cannot yet serve as a verified restore route. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md).
