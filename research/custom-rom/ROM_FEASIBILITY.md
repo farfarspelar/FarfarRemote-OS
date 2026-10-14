@@ -17,7 +17,13 @@ Use stock Android 4.4.4/API 19 as the compatibility baseline now. No newer Andro
 
 An unverified E2003 R10A Customized UK FTF has now yielded offline `boot`, `fotakernel` and `system` payloads. Embedded SIN SHA-256 checks passed. The reconstructed system image is the exact observed partition size; its build properties identify `1293-7276 R10A`, not the live `1293-7358 R7A`. A read-only `e2fsck` scan completes but reports an inode-bitmap padding warning, so we do not treat the filesystem check as fully clean. The boot payload includes a Linux 3.10.48+ kernel, Android init ramdisk, MediaTek fstab and Sony connectivity setup. This materially improves understanding of the stock stack and gives us a basis for offline file-level inspection. It does **not** authenticate the mirror or prove cross-CDA compatibility, provide kernel source/defconfig or device tree, or validate a restore/recovery path. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md) for file-level evidence.
 
-The extracted boot container is Sony ELF format rather than a standard Android `boot.img`. An Android boot header and a valid restore method have not been reconstructed. Magisk compatibility therefore remains untested despite having a candidate ramdisk to inspect.
+The extracted boot container is Sony ELF format rather than a standard Android `boot.img`. An offline tool now reconstructs a **container-format POC** using the stock kernel/ramdisk payloads and geometry from the historical E2003 recovery. This resolves the narrow header/packing question, but not whether the bootloader accepts the image, whether the R5A header geometry matches the live R7A firmware, or whether it boots. Magisk compatibility and a restore method therefore remain unverified.
+
+### Stock boot-image container POC — 2026-10-14
+
+`tools/repack_e2003_stock_boot_poc.py` assembled a local 8,445,952-byte Android legacy `boot.img` container from the extracted R10A stock kernel and stock ROOTFS ramdisk. Static checks verified that (a) the stock kernel exactly matches the retrieved E2003 recovery kernel, (b) the MediaTek ROOTFS wrapper length and gzip/newc cpio parse correctly, (c) required init files exist, and (d) output kernel and ramdisk bytes round-trip exactly. The `file` utility recognizes the result as an Android boot image with 2,048-byte pages and the recovery reference's kernel/ramdisk addresses. Output SHA-256: `1d71c03b172d23b7830922153559df37966321bd28fbb9a28666fd81268543dc`; it remains in private `/tmp` and is not in Git.
+
+The reference image is an unaudited community TWRP artifact marked R5A; payloads are from an unauthenticated R10A FTF, not the phone's R7A customization. Its command line/header are borrowed from the recovery. The POC has never been booted and must not be flashed. It proves a reproducible host-side container repack only; it does **not** establish correct stock boot parameters, partition semantics, image signature acceptance, root/Magisk support, or a recovery route. Negative checks rejected a modified kernel, invalid ramdisk, and repository output path without creating an artifact. Source: [`repack_e2003_stock_boot_poc.py`](tools/repack_e2003_stock_boot_poc.py).
 
 ### Full live R7A versus candidate R10A `/system` tree comparison — 2026-10-14
 
@@ -29,7 +35,7 @@ This supports using the R10A package as a source of candidate files and confirms
 
 The archived XDA first post expressly identifies E2003, claims the TWRP functions were tested, and documents a recovery flash procedure. We retrieved the linked image and verified its Android boot-image header. Its embedded device/build properties identify E2003 / API 19 / `25.0.A.2.31`, and its kernel SHA-256 exactly matches the kernel segment in the R10A stock boot candidate. Its recovery fstab maps recovery to p9, which the live phone reports as `fotakernel`. The image is nevertheless a historical community artifact with customization R5A, no auditable source/build recipe or trusted checksum, and no independent test on this handset. No boot/flash/restore was attempted. It improves feasibility substantially but does not itself establish a rollback route.
 
-The archived post and binary analysis are documented in [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md). Sony ELF-to-Android boot-image conversion and Magisk compatibility remain untested.
+The archived post and binary analysis are documented in [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md). Sony ELF-to-Android **container assembly** has a successful offline POC; hardware bootability and Magisk compatibility remain untested.
 
 ## What a minimal dedicated build must keep
 
