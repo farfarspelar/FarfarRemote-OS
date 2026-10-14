@@ -20,7 +20,7 @@ Purpose: read-only continuation check for the FarfarRemote OS track
 - At approximately 136 seconds uptime, `dumpsys meminfo org.farfarremote` reported total PSS of **7,352 kB** (about **7.2 MiB**) and private dirty memory of **5,504 kB**. This is a single post-reboot sample, not a before/after comparison.
 - `/proc/meminfo` at an earlier post-reboot sample reported `MemTotal` 918,424 kB, `MemFree` 273,640 kB, `Cached` 348,592 kB, `Active` 102,068 kB, and `Inactive` 315,104 kB. Linux page cache is reported separately from process PSS; these values should not be summed as if they were independent RAM pools.
 - A short `dumpsys cpuinfo` interval around 136 seconds uptime reported FarfarRemote at approximately **0.5% CPU** and total CPU rounded to **0%** for that interval. Background compilation and other activity were still visible, so this is not a settled idle baseline.
-- Wi-Fi remained enabled but showed `SCANNING` / `DISCONNECTED` after the reboot and over a further 25-second check. Do not treat Kodi connectivity as verified in this session. Check that the configured access point is in range and reconnect through Android Settings if required; no network configuration was altered.
+- Wi-Fi remained enabled but showed `SCANNING` / `DISCONNECTED` after the reboot, over a further 25-second check, and again more than 13 minutes after startup. No scan results were exposed in the diagnostic dump. A reversible `svc wifi disable/enable` attempt was rejected with `SecurityException` because the ADB shell lacks `CHANGE_WIFI_STATE`; the radio remained enabled and saved network settings were not changed. Do not treat Kodi connectivity as verified in this session. Check that the configured access point is in range and reconnect through Android Settings if required.
 
 ## Conclusions
 
@@ -28,7 +28,7 @@ Purpose: read-only continuation check for the FarfarRemote OS track
 - The reported unlocked bootloader has not been independently confirmed by the available Fastboot query responses. This does not change the observed fact that Android ADB is unprivileged and not rooted.
 - There is still no verified root/recovery image or safe, reproducible root procedure for this exact E2003 firmware. Historical 2016 KingRoot claims are anecdotal and are not a recommended procedure.
 - Phase A reversible package disabling remains unavailable through the previously tested ADB and Appinfo routes. Do not substitute uninstall or system partition edits.
-- Wi-Fi reconnection needs a manual check before claiming a complete post-reboot Kodi regression pass.
+- Wi-Fi reconnection needs a manual check in Android Settings before claiming a complete post-reboot Kodi regression pass; ADB shell cannot toggle Wi-Fi on this firmware.
 
 ## Next safe steps
 
