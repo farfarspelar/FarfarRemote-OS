@@ -156,7 +156,7 @@ public final class MainActivity extends Activity {
     }
 
     private void applyKeepAwake() {
-        if (prefs.getBoolean("keep_awake", true)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (prefs.getBoolean("keep_awake", false)) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -443,7 +443,7 @@ public final class MainActivity extends Activity {
                 prefs.edit().putString("orientation", String.valueOf(button.getTag())).apply(); applyOrientationPreference();
             });
         }
-        settingsSwitch(display, "Keep Screen Awake", prefs.getBoolean("keep_awake", true), "Prevent the display from sleeping", (button, checked) -> { prefs.edit().putBoolean("keep_awake", checked).apply(); applyKeepAwake(); });
+        settingsSwitch(display, "Keep Screen Awake", prefs.getBoolean("keep_awake", false), "Override Android's configured screen timeout", (button, checked) -> { prefs.edit().putBoolean("keep_awake", checked).apply(); applyKeepAwake(); });
 
         LinearLayout remote = settingsCard(root, "Remote", R.drawable.settings_ic_remote);
         settingsSwitch(remote, "Auto Reconnect", prefs.getBoolean("auto_reconnect", true), "Reconnect to Kodi when it becomes available", (button, checked) -> prefs.edit().putBoolean("auto_reconnect", checked).apply());

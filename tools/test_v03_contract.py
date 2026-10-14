@@ -76,7 +76,7 @@ new_client = (ROOT / "app/src/main/java/org/farfarremote/KodiClient.java").read_
 check(new_client == old_client, "KodiClient byte-for-byte unchanged from v0.2 baseline")
 
 protected_methods = (
-    "applyOrientationPreference", "applyKeepAwake",
+    "applyOrientationPreference",
     "addDpad", "showStreams", "presentTracks", "chooseStream", "back", "playPause",
     "stop", "seekStep", "goTo", "seekPercent", "activate", "adjustVolume",
     "toggleMute", "action", "client", "applySnapshot",
@@ -90,7 +90,7 @@ for name in ("buildPortrait", "buildLandscape"):
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 6" in build and "versionName '0.4.2-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.2 RC metadata")
+check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 7" in build and "versionName '0.4.3-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.3 RC metadata")
 check(re.search(r"app \{(?:(?!\n\s*\}).)*targetSdk 36", build, re.S) is not None, "App flavor targets API 36")
 check(re.search(r"os \{(?:(?!\n\s*\}).)*targetSdk 28", build, re.S) is not None, "OS flavor retains conservative API 28 target")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
@@ -104,6 +104,11 @@ check(app_manifest.find("application").attrib.get(f"{{{ANDROID}}}enableOnBackInv
 
 for key in ("host", "port", "user", "pass", "orientation", "keep_awake", "auto_reconnect", "haptics"):
     check(f'"{key}"' in new_main, f"preference key {key} retained")
+
+check(new_main.count('prefs.getBoolean("keep_awake", false)') == 2,
+      "screen-awake preference defaults off in behavior and Settings UI")
+check("FLAG_KEEP_SCREEN_ON" in new_main and "clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)" in new_main,
+      "Keep Screen Awake remains an explicit opt-in override")
 
 check('https://buymeacoffee.com/farfarspelar' in new_main and "Intent.ACTION_VIEW" in new_main, "support link uses requested external ACTION_VIEW URL")
 check("ClipboardManager" in new_main and "ActivityNotFoundException" in new_main, "no-browser clipboard fallback present")
@@ -123,4 +128,4 @@ check("Api33BackHandler.register(this, this::closeSettings)" in new_main, "App S
 check('android:usesCleartextTraffic="true"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(), "Kodi HTTP connectivity remains enabled")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4.2 RC distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.3 RC distribution and regression contract checks passed.")

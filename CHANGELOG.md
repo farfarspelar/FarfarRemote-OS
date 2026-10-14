@@ -4,6 +4,12 @@
 
 - Added a confirmed Power Off control that asks Kodi to shut down the Kodi host; the Android remote stays on.
 
+## 0.4.3 RC1 — Screen timeout default
+
+- FarfarRemote no longer keeps the display awake by default. Android's configured screen timeout is now honored; the Xperia E2003's current timeout is 30 seconds.
+- Kept the existing **Keep Screen Awake** override and preference key for users who choose to prevent the screen from sleeping.
+- Built separate App and OS APKs with updated version metadata; package IDs, launcher behavior, minimum API, and Kodi implementation are unchanged.
+
 ## 0.4.2 RC1 — Release track SDK split
 
 - Split the target SDK strategy: FarfarRemote App targets API 36; FarfarRemote OS stays at API 28 for the proven Xperia HOME setup.

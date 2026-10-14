@@ -1,4 +1,19 @@
-# FarfarRemote 0.4.2 RC1 — release track split QA
+# FarfarRemote 0.4.3 RC1 — display timeout verification
+
+## Change
+
+- The Xperia system screen timeout was read as **30,000 ms**. FarfarRemote had been overriding it because `keep_awake` defaulted to `true` in both the activity behavior and Settings presentation.
+- Changed only the fallback value to `false`; the existing `keep_awake` preference key remains unchanged. The existing switch still opts in to `FLAG_KEEP_SCREEN_ON` when enabled. With the override off, Android's configured screen timeout applies (30 seconds on the checked Xperia; other phones use their own system timeout).
+- Kodi client, remote controls, HOME manifests, orientation handling, application IDs, minimum SDK, and saved Kodi preference keys are unchanged.
+- **PASS:** `tools/build_distributions.sh` and `python3 tools/test_v03_contract.py`; both APK flavors compile and assemble. Unit-test tasks are `NO-SOURCE` because there are no unit-test source files. Existing JDK 21 warnings for Java 8 source/target remain.
+- **PASS:** APK metadata: App `org.farfarremote.app`, OS `org.farfarremote`, both versionCode 7 / versionName `0.4.3-rc1` / minSdk 19; App targets 36 and OS targets 28.
+- **PASS:** `adb install -r` updated the Xperia OS package in place; Android reported version 0.4.3-rc1 and FarfarRemote was selected again as the HOME activity. The preference file could not be read by ADB `run-as` (permission denied); no uninstall or data clear was performed.
+- **PASS:** On the physical Xperia, system timeout remained 30,000 ms. After 35 seconds without input, `dumpsys power` reported `mWakefulness=Asleep`, `mScreenOn=false`, and `mWakeLockSummary=0x0`. Waking and swiping back returned to FarfarRemote HOME.
+- **NOT VERIFIED:** Kodi reconnection and control after this update; Wi-Fi was still `SCANNING/DISCONNECTED`. App APK was built and metadata-checked but not installed on a second device in this task.
+- SHA-256: App `c1c7f216b66a253961b9200ee36b0cd2de7fc0aa3adcf760d9d09b03e1ed94ca`; OS `74aabf653bf31c4367d9077d3975ef2b8c476fd289aec16c87126220c3d44ec4`.
+- Artifacts: `dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.3-rc1.apk`, `dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.3-rc1.apk`, and `dist/SHA256SUMS-0.4.3-rc1.txt`.
+
+## Prior release-track QA: 0.4.2 RC1
 
 **Branch:** `feature/release-track-split`  **Base:** `9232787` (FarfarRemote 0.4.1 RC1)
 
