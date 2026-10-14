@@ -61,7 +61,7 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 
 ### New tooling evidence — 2026-10-14
 
-The public Flashtool device database was inspected at a pinned commit. Its `E20XX` profile explicitly recognizes E2003 and provides the Sony Flashmode FTF workflow; this makes Flashtool a credible host-side restore-tool candidate **if** an exact, verified FTF is found. Its generic profile does not bundle a recovery bootkit, and its FSC recipe includes sensitive partitions, so the profile is not itself a safe rollback plan. Current blockers remain exact R7A image provenance, whether the tool/loader can restore the required partitions on this phone, and an independently verified recovery path. No device write was performed.
+The public Flashtool device database was inspected at a pinned commit. Its `E20XX` profile explicitly recognizes E2003 and provides the Sony Flashmode FTF workflow; this makes Flashtool a credible host-side restore-tool candidate **if** an exact, verified FTF is found. Its generic profile does not bundle a recovery bootkit, and its FSC recipe includes sensitive partitions, so the profile is not itself a safe rollback plan. Sony's current Companion documentation now explicitly lists Software Repair as supported for all Xperia products, while the E4g support page links Companion. This raises the official-repair path from a generic lead to a strong product-family route, but actual backend acceptance of this retired, owner-reported-unlocked handset and the offered build/CDA are still unverified. No repair or device write was performed.
 
 ## Probability checkpoint — 2026-10-14
 
