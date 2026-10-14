@@ -13,6 +13,13 @@ The shell/workspace used for this research reports x86_64 Linux, 4 logical CPUs,
 - **UNKNOWN — Magisk source/tool build:** official Magisk build docs require Linux x64, Python 3.8+, Git, Android SDK, JDK 17 (recommended) and a downloaded ONDK via `build.py ndk`. It is not necessary to build Magisk merely to unpack a boot image. Device compatibility still needs verification.
 - **BLOCKED — full modern AOSP/LineageOS:** not practical on the current workspace as configured and no E2003 device source set is available. AOSP's current guidance for recent Android lists about 400 GB free and 64 GB RAM; requirements vary by branch, but this host's 95 GB free/15 GiB RAM falls short. An old Android 4.4 build may have different requirements, yet its matching source manifest/device configuration is the larger blocker.
 - **PARTIAL — kernel build:** the mirrored `callass` kernel source now generates a configuration and successfully builds an offline ARM `zImage` using a temporary Python 2.7.18 and Google's archived Android NDK r10e GCC 4.8. This proves the mirror is buildable with a legacy toolchain, not that its source provenance or generated config matches the live R7A kernel. The config enables `CONFIG_IKCONFIG_PROC=y` although live `/proc/config.gz` was absent; exact source-to-binary match remains blocked. The old kernel emits many warnings, and a modern-host `dtc` issue required `HOST_EXTRACFLAGS=-fcommon`. Details follow below.
+- **VERIFIED — stock system image edit POC:** [`tools/create_system_app_poc.sh`](tools/create_system_app_poc.sh) inserts the existing API 19 FarfarRemote OS APK into a copy of the locally inspected R10A ext4 image. It pins the source image hash and APK signing certificate, applies the expected SELinux file label, validates a readback, and runs `e2fsck -fn`. It requires `debugfs`, `e2fsck`, `file`, `keytool`, `jarsigner`, `cmp`, and Android SDK `aapt2` (`AAPT2_BIN`). Example (use a destination outside Git):
+
+  ```sh
+  AAPT2_BIN="$ANDROID_HOME/build-tools/35.0.0/aapt2" research/custom-rom/tools/create_system_app_poc.sh /path/to/verified-local-R10A-system.ext4 dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk /path/outside/repository/FarfarRemote-system-poc.img
+  ```
+
+  The current run produced SHA-256 `35d8a29e1ac8b91e04c2975a832ef686166fc2d21b775669861234772fb8b731` and passed ext4 checking. This is an offline filesystem-image POC, not a complete firmware package, not boot-tested and not suitable to flash.
 
 ### Device-specific kernel facts captured over read-only ADB — 2026-10-14
 
