@@ -62,3 +62,5 @@ The checks are reproducible with `tools/verify_e2003_recovery.py`, which reads o
 python3 research/custom-rom/tools/verify_e2003_recovery.py \
   /path/to/recovery.img /path/to/e2003-stock-kernel-segment.bin
 ```
+
+The verifier was also checked against a deliberately mismatched kernel (exit 1 / `static_checks=FAIL`) and a non-Android input (exit 2 / header error), so a parsed but mismatched image is not reported as passing.
