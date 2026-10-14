@@ -58,3 +58,5 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 5. Exact device-tested root patch path; no trusted KingRoot/KingoRoot binary.
 6. Unplugged controlled battery baseline and comparable post-change measurements.
 7. Sufficient persistent build host/source storage for any full ROM branch.
+
+**Root research note:** a 2016 community post claims KingRoot succeeded on E2003/Android 4.4.4/build `25.0.A.2.31`. This makes rooting plausible, but the APK version/provenance, CDA and test evidence are missing. It is not an approved procedure and must not be tried as a shortcut. See [ROOT_METHODS.md](ROOT_METHODS.md).
