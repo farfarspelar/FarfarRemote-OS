@@ -60,3 +60,11 @@ A stock-based debloat might free user RAM/storage and reduce background wake/net
 7. Full hardware matrix: display/touch; orientation; Wi-Fi and reboot reconnection; Bluetooth if retained; audio; storage; charging/current/thermal; USB/ADB; deep sleep/wake; Kodi app and launcher.
 
 Until milestones 1–5 are complete, focus on the proven stock launcher and app. No image built from unrelated E4g/E4/E2033 sources is an acceptable shortcut. The current work raises confidence in **offline stock-image analysis**, not in a safe flash or successful boot.
+
+### Read-only boot/FOTA partition access probe — 2026-10-14
+
+The attached device was re-identified before probing as E2003 / `25.0.A.2.31`. ADB shell is UID 2000. Reading just four bytes from each of `/dev/block/platform/mtk-msdc.0/by-name/boot` and `fotakernel`, discarding the bytes to the phone's `/dev/null`, returned `Permission denied` for both. No raw data was collected or saved. [`tools/probe_e2003_boot_read_access.sh`](tools/probe_e2003_boot_read_access.sh) reproduces this bounded, read-only probe and refuses a different model/build. This confirms that ordinary ADB cannot provide the exact live boot/recovery images; recovering those bytes requires a separately verified elevated or service/recovery path. It does not prove that root or Fastboot is unavailable.
+
+### Rejected older Android 8 ROM claim — 2026-10-14
+
+A 2018 post titled “Install Custom ROM Sony Xperia E4g Lineage OS 15 Oreo” was reviewed. It describes a beta port based on a Samsung Galaxy Note 8 custom ROM, distributes files through redirect/file-host links, and does not identify supported E2003 customization, source tree, checksums, build logs, or independently reproducible device tests. A 2022 `/e/OS` device request explicitly says no official or unofficial LineageOS build was available at that time. The 2018 claim is therefore not accepted as proof of an E2003 Oreo port or as a source for our build. Links: [2018 ROM claim](https://dianariyanto.com/custom-rom-sony-xperia-e4g-lineage-os-15-oreo/), [/e/OS device request](https://community.e.foundation/t/sony-xperia-e4g-e2003/40466).

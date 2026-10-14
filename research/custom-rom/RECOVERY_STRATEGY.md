@@ -71,3 +71,11 @@ python3 research/custom-rom/tools/verify_e2003_recovery.py \
 ```
 
 The verifier was also checked against a deliberately mismatched kernel (exit 1 / `static_checks=FAIL`) and a non-Android input (exit 2 / header error), so a parsed but mismatched image is not reported as passing.
+
+### Ordinary ADB read-access probe — 2026-10-14
+
+The connected handset was checked again without rebooting. It identifies as E2003 / `25.0.A.2.31`; `adb shell id` reports UID 2000 (`shell`). A bounded probe attempted to read four bytes each from the `boot` (p10) and `fotakernel` (p9) block devices and immediately discard those bytes to `/dev/null`. Both returned `Permission denied`; no block image was created. The reproducible helper is [`tools/probe_e2003_boot_read_access.sh`](tools/probe_e2003_boot_read_access.sh). This removes ordinary ADB as a way to obtain exact live boot/FOTA backups under the current access level. It neither establishes that root is impossible nor tests Fastboot read/write behavior. **Recovery/rollback remains unverified.**
+
+### Fresh ROM-source catalog review — 2026-10-14
+
+The [Sony Open Devices supported-device page](https://opendevices.sony.net/supported-devices-and-functionality) describes support for selected models and its current list does not include E2003. The [Sony open-source archive catalog](https://opendevices.sony.net/aosp-on-xperia-open-devices/downloads/open-source-archives) currently displays recent firmware archives, with no discoverable E2003 `25.0.A.2.31` source bundle. This does not rule out a historical GPL archive elsewhere, but it does not provide a device tree, defconfig, or exact kernel source today. The separately reviewed Android 8 beta claim is not reproducible and supplies none of these missing inputs. No evidence changes the ROM buildability assessment.
