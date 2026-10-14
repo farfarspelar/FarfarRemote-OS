@@ -17,7 +17,7 @@ Live device: E2003, Android 4.4.4/API 19, build `25.0.A.2.31`, Sony customizatio
 | Flashtool E20XX device profile | The public `Androxyde/devices` database explicitly recognizes `E2003` in the Xperia E4g profile and sets `canflash=true`, `canfastboot=true`, `cankernel=false`; the profile's FSC lists the firmware update sequence. | **VERIFIED static tool/profile support**, not a successful test on this handset. It demonstrates a model-specific Flashtool path for signed stock FTF service/flash mode; it does not establish an exact R7A package, custom recovery flashing, or a rollback trial. |
 | AZROM firmware index | Lists `E2003-25.0.A.2.31-R10A-Customized-UK.ftf` under E2003. The `E2003` model and `25.0.A.2.31` build text match; CDA and package contents were not stated on the listing. | **REPORTED, unverified mirror lead**; locally inspected as detailed below, but no trusted SHA-256 or direct Sony provenance. Not approved as a restore image. |
 | AZROM E2006 listing | Lists `E2006-25.0.A.2.31-R7A-Nextel-PE.ftf` under the E2006 section. | **VERIFIED listing association, wrong model**. Explicitly exclude from E2003 work despite matching firmware/R7A text. |
-| Android File Host listing and detail page | Lists `E2003_25.0.A.2.31_R3A_E2003_Customized DE_1294-2854.ftf` (~1.2 GB), uploaded 2017-09-04 by AFH user `Milianoids`; publishes MD5 `d47d25c4bdadb3116d2f39c94a69a4bc` | **REPORTED community mirror, partial offline inspection completed.** Manifest says E2003 / `25.0.A.2.31_R3A`, branding `E2003_Customized DE_1294-2854`, but CDA/revision fields are blank. This is not the phone's `1293-7358 R7A`. Only selected ZIP entries were fetched/CRC-checked; full archive and published MD5 were not verified. Not an exact restore package. |
+| Android File Host listing and detail page | Lists `E2003_25.0.A.2.31_R3A_E2003_Customized DE_1294-2854.ftf`; uploaded 2017-09-04 by AFH user `Milianoids`; published MD5 `d47d25c4bdadb3116d2f39c94a69a4bc` | **REPORTED community mirror, full archive integrity checked locally.** Complete file MD5 matches the listing and ZIP test passes; its manifest identifies E2003/R3A/1294-2854, not live `1293-7358 R7A`. Useful for offline comparison, not an exact restore package. |
 | XperiaStockROM mirror listing | Lists `Sony_Xperia_E4G_E2003_25.0.A.2.31_1293-9486_Customized_MEA` (1.3 GB) | **REPORTED unverified mirror**; same marketed model/build but CDA 1293-9486 differs from live 1293-7358 R7A. The site provides no independently trusted checksum or Sony provenance. Not approved as restore base. |
 | SamSony E2003 catalog | Currently lists `Customized MEA 25.0.A.2.35`; no 25.0.A.2.31 / 1293-7358 item is exposed on the model page | **VERIFIED page contents at research time**; not a matching recovery source. |
 | Xperia Forum resources catalog | Search index lists E2003 25.0.A.2.31 Central Europe 5 Generic and Australia Generic resources | **REPORTED community catalog entries**; exact CDA, downloadable artifact availability, provenance and integrity are not established. Neither entry is identified as 1293-7358 R7A. |
@@ -62,12 +62,13 @@ The FTF's `default.fsc` contains operations for critical boot/security partition
 
 ### Second E2003 build-matched FTF lead — AFH R3A, 2026-10-14
 
-The [AFH detail page](https://androidfilehost.com/?fid=889764386195927191) identifies an E2003 `25.0.A.2.31_R3A` FTF, branding `E2003_Customized DE_1294-2854`, uploaded by AFH user `Milianoids` on 2017-09-04. It lists 402 downloads, size 1.2 GB and MD5 `d47d25c4bdadb3116d2f39c94a69a4bc`. This is a community-hosted original-firmware candidate, not a Sony-published artifact. The local archive's total size and MD5 have **not** been verified: only the central directory and selected entries were fetched using HTTP byte ranges, so this is not a complete FTF or usable restore package.
+The [AFH detail page](https://androidfilehost.com/?fid=889764386195927191) identifies an E2003 `25.0.A.2.31_R3A` FTF, branding `E2003_Customized DE_1294-2854`, uploaded by AFH user `Milianoids` on 2017-09-04. It lists 402 downloads, size 1.2 GB and MD5 `d47d25c4bdadb3116d2f39c94a69a4bc`. A complete copy was downloaded privately on 2026-10-14 (1,272,063,349 bytes); its MD5 matches the AFH listing and its SHA-256 is `b44519496d91c36769467b10f59e0427bc861f3da633701a567c88f1554ec479`. `unzip -t` reported no compressed-data errors. This verifies transfer integrity against the host's published MD5 and ZIP consistency, not Sony provenance or authenticity. It remains a community-hosted R3A/1294-2854 candidate, not the phone's R7A/1293-7358 restore package.
 
 | Locally verified selected-entry evidence | Result |
 |---|---|
 | `META-INF/MANIFEST.MF` | ZIP CRC passes; `device=E2003`, `version=25.0.A.2.31_R3A`, branding `E2003_Customized DE_1294-2854`; `cda` and `revision` fields blank |
-| `boot.sin` / `fotakernel.sin` | Each ZIP entry CRC passed; bounded SIN reader validated embedded SHA-256 payload records and extracted ARM ELF images |
+| Full archive | 1,272,063,349 bytes; published MD5 matches; SHA-256 recorded above; full ZIP integrity check passes |
+| `boot.sin` / `fotakernel.sin` | ZIP entry CRC passes; bounded SIN reader validated embedded SHA-256 payload records and extracted ARM ELF images |
 | R3A boot ELF segment 1 | Kernel SHA-256 `4115fd4775103d21c622abf22b27e260100d005aa5f5b22ed1fd9dfc183e0d36`, byte-identical to R10A kernel and historical E2003 TWRP kernel |
 | R3A boot ELF segment 2 | ROOTFS SHA-256 `ddd9513e14c700433b2b3a36af94cd7e91b82a3895829cb8b5816410ac321152`, byte-identical to R10A boot ROOTFS segment |
 | R3A extracted ELF hashes | `boot.elf`: `a37587ac9a7166ff2ed32ac6e32744af058fff66b1ef67f43d644c21ddaa3217`; `fotakernel.elf`: `e7a116f44dc41d81c8e31f7b991776e12d473d1b1eb0e4167fb4e7017909196a` |
@@ -82,21 +83,23 @@ The boot ramdisk's read-only cpio listing includes Android `init`, `init.mt6752.
 
 The SIN parser reference was the read-only v3 implementation in [Androxyde/Flashtool](https://github.com/Androxyde/Flashtool/tree/master/Flashtool/src/main/java/org/flashtool/parsers/sin/v3), checked out at commit `7529dce9a1ffb81e365ba1d7e15f6773463ffd7a`. The repository now includes `tools/extract_e2003_boot_payloads.py`, a bounded standard-library reader for only the two named SIN entries. It refuses non-E2003 manifests, requires a new output directory, verifies SHA-256 payload records and emits only 32-bit ARM ELF images. The general `j4nn/sinunpack` executable was not used because its main program scans all SINs and includes USB/flashing code. Extracted firmware and payloads remain outside the repository. Example: `python3 research/custom-rom/tools/extract_e2003_boot_payloads.py /absolute/path/to/E2003.ftf /tmp/e2003-boot-analysis`.
 
-### System image extraction — read-only/offline, 2026-10-14
+### System image extraction and R3A/R7A comparison — read-only/offline, 2026-10-14
 
-`research/custom-rom/tools/extract_e2003_system_image.py` was added and run against that local candidate. It accepts only an E2003/25.0.A.2.31 FTF, caps the archive/SIN/output sizes, validates the SIN v3 block-hash table and every mapped ADDR SHA-256 range, writes only a new image outside the repository, and has no ADB/Fastboot code. It reconstructs the observed 2,097,152,000-byte `/system` extent with zero-filled unmapped ranges. The tool's checks passed for the local candidate.
+`research/custom-rom/tools/extract_e2003_system_image.py` was run against the complete local candidate. It accepts only an E2003/25.0.A.2.31 FTF, caps the archive/SIN/output sizes, validates the SIN v3 block-hash table and every mapped ADDR SHA-256 range, writes only a new image outside the repository, and has no ADB/Fastboot code. It reconstructs the observed 2,097,152,000-byte `/system` extent with zero-filled unmapped ranges. The tool's checks passed for the local candidate.
 
 | Offline check | Result |
 |---|---|
 | Reconstructed image | 2,097,152,000 bytes (matches live `system` partition size from read-only ADB metadata) |
-| Image SHA-256 | `931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949` |
-| SIN post-header SHA-256 | `1ee0cc509db65bd50afc9564a72491e6c06a5e2f3a86338ada205175ff06b33a` |
+| Image SHA-256 | `972ed4172d322a678c36cbd00dd902a6d998e01fa3276f7081be0edbc04ce598` |
+| SIN post-header SHA-256 | `c71e93fcd3e9062e428b49cdd7bd05ca9cc514afa8c2ed9f7f0eee8f42c8a263` |
 | Filesystem | ext4, 4 KiB blocks, 512,000 blocks, clean state flag |
 | Build identity in `/build.prop` | `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`; API 19; MediaTek platform `MT6752` |
-| Actual candidate customization in `/build.prop` | `1293-7276 R10A`, not the phone's `1293-7358 R7A` |
+| Actual candidate customization | `1294-2854 R3A`, not the phone's `1293-7358 R7A` |
 | Read-only `e2fsck -fn` | Scanned all five passes and found one `Padding at end of inode bitmap is not set` warning (exit 4). No repair was attempted; treat this filesystem check as **WARN**, not a clean pass. |
 
-This confirms that an E2003/KitKat system image from the exact firmware-version family can be inspected and that it contains the device's proprietary userspace/HAL material. It improves the stock-derived image analysis, but does not authenticate the mirror, match the installed CDA, provide kernel source/device tree, or establish a safe restore/boot path. The proprietary image remains under `/tmp` and must not be committed, redistributed, or flashed.
+The R3A ext4 image was also inspected with read-only `e2fsck -fn`; it completed all passes but reported the same inode-bitmap padding warning (exit 4), so it is not a clean checker pass. `debugfs rdump` produced a comparable regular-file tree but printed ownership-change permission warnings; this limited metadata fidelity, not file-content reads. Running the repository tree comparer over live R7A files versus R3A yielded 4,320 live files, 4,265 extracted files, 4,258 common paths, 4,247 identical size+SHA-256 pairs (99.74% of common paths), 11 differing common paths (8 size mismatches; 3 same-size content differences), 62 live-only paths and 7 R3A-only paths. Differences include `build.prop`, customization configuration/wallpaper/media, and overlay resources. The tree comparison covers regular file contents; it does not establish metadata, SELinux labels, symlink equivalence, or partition-image identity.
+
+This strengthens the conclusion that most R7A `/system` file content is shared with a separate E2003 25.0.A.2.31 customization and supports offline stock-derived image work. It does **not** authenticate the mirror, match the installed CDA, supply kernel source/device tree, or establish a safe restore/boot path. The proprietary image remains under `/tmp` and must not be committed, redistributed, or flashed.
 
 ### Kernel source search
 
@@ -104,7 +107,7 @@ The public Sony [`kernel-copyleft`](https://github.com/sonyxperiadev/kernel-copy
 
 An additional Sourcegraph search including archived and forked repositories found no indexed matches for `callass_defconfig`, `init.callass.rc`, or E2003 kernel-tree identifiers. This is corroborating negative evidence, not an exhaustive search of private or unindexed archives. Sony's [general source distribution service](https://oss.sony.net/Products/Linux/common/search.html) says physical GPL/LGPL source copies may be requested for three years after the product's last shipment; it does not list Xperia mobile products on that landing page or establish whether E2003 source was ever available there. Given the E4g's 2015 launch, that stated request period is likely expired, while any archived digital source package remains **UNKNOWN**.
 
-**Conclusion:** We now have a useful E2003/build-labelled *offline analysis candidate*, not an authenticated exact restore base. Exact installed customization remains unmatched. The next safe work is to compare relevant image/ramdisk properties and obtain the exact 1293-7358 R7A package or an independently verified official Sony repair path.
+**Conclusion:** We now have a complete, internally consistent E2003/build-labelled *offline analysis candidate* and a 99.74% matching common-file comparison, not an authenticated exact restore base. Exact installed customization remains unmatched. The next safe work is to determine whether Sony Companion currently offers a repair for this exact E2003 and to locate an exact 1293-7358 R7A package or another independently verified restore path.
 
 ### Direct R7A/R10A system-file comparison — 2026-10-14
 
