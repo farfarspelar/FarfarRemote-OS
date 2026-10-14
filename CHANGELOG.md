@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.4.6 RC5 — Open the folder currently playing
+
+- When Kodi is playing media, opening the library first tries the parent directory of the active stream, so the browser returns to the folder the content came from instead of a generic source such as `Videos`.
+- If Kodi cannot provide or list that stream directory, FarfarRemote falls back to the last successfully browsed location and then the existing source fallback.
+- A failed stale-folder lookup no longer replaces the saved location with the fallback source.
+
+## 0.4.6 RC4 — Remember Kodi browser location
+
+- Restore the last successfully browsed Kodi folder when the library is reopened, including after leaving to the remote or restarting FarfarRemote.
+- Save the location only after a folder/source listing succeeds. If the saved folder is no longer available, fall back to video sources without discarding the saved path.
+
+## 0.4.6 RC3 — Kodi folder request and swipe-back fixes
+
+- Simplified `Files.GetDirectory` requests to omit optional properties rejected by some Kodi JSON-RPC versions.
+- Enabled contextual back swipes: right from Settings returns to the remote; left from Kodi Library returns to the remote; right in Kodi Library goes up one folder.
+- Text-entry fields keep their normal horizontal editing gesture.
+
+## 0.4.6 RC2 — Kodi folder browser navigation fix
+
+- Reduced the horizontal swipe threshold so navigation is easier to trigger on smaller touchscreens.
+- Added swipe-right navigation back to the parent Kodi folder; at the source/root view it returns to the remote.
+- If Kodi cannot enumerate its reported current folder, the browser now falls back to configured video sources instead of stopping at an error.
+- Added a Kodi JSON-RPC file-mode fallback for paths that cannot be listed in video mode.
+
+## 0.4.6 RC1 — Swipe navigation and folder track preferences
+
+- Added horizontal swipes on the remote screen: swipe left for Settings and swipe right for a Kodi folder browser.
+- Added an in-app Kodi video source/folder browser using JSON-RPC; users can navigate folders and start a selected item without opening Kodi's TV-side menus.
+- Added explicit per-folder audio and subtitle preference saving, matching tracks by language/name metadata instead of unstable stream indexes. Subtitle Off can be remembered; saved rules can be removed.
+- Existing one-tap audio/subtitle selection and Kodi folder favorites remain available.
+
 ## 0.4.5 RC1 — OS battery optimization phase 1
 
 - Added OS-only Normal, Balanced, and Maximum Battery Saving profiles with 2/5/10-second idle polling choices.

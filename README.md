@@ -49,6 +49,8 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 - Confirmed Power Off control for the Kodi device. It asks Kodi to close and shut down its host; it does not power off the Android remote.
 - Kodi Now Playing information, artwork, playback progress, and seek controls.
 - Audio and subtitle stream selection on the remote, including subtitle Off when Kodi provides it.
+- Swipe left on the remote screen to open Settings; swipe right to browse Kodi video sources and folders, then start a selected item from the phone.
+- Audio or subtitle choices can be remembered explicitly per media folder using Kodi's reported language/name metadata. Rules can be forgotten and do not rely on stream indexes.
 - Local folder favorites: save the currently open Kodi folder with a chosen name and reopen it from the Favorites button beneath the Movies/TV Shows/Music/Add-ons shortcuts.
 - Portrait, landscape, and automatic orientation modes.
 - Saved Kodi connection settings, optional keep-awake, reconnect, and haptic settings.

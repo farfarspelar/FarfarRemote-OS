@@ -25,6 +25,7 @@ final class KodiClient {
         String title = "Nothing playing";
         String subtitle = "";
         String thumbnail = "";
+        String file = "";
         String elapsed = "0:00";
         String duration = "0:00";
         double percentage;
@@ -166,7 +167,7 @@ final class KodiClient {
         } catch (KodiException e) { state.error = e.getMessage(); android.util.Log.w("FarfarRemote", "Subtitle stream list unavailable: " + e.getMessage()); }
         try {
             itemResponse = call("Player.GetItem", json("playerid", p.id, "properties",
-                    new JSONArray().put("title").put("showtitle").put("episode").put("season").put("thumbnail").put("artist").put("album")));
+                    new JSONArray().put("title").put("showtitle").put("episode").put("season").put("thumbnail").put("artist").put("album").put("file")));
         } catch (KodiException e) { state.error = e.getMessage(); android.util.Log.w("FarfarRemote", "Now Playing metadata unavailable: " + e.getMessage()); }
         JSONObject item = itemResponse.optJSONObject("item"); if (item == null) item = new JSONObject();
         String title = item.optString("title", "");
@@ -177,10 +178,54 @@ final class KodiClient {
         int episode = item.optInt("episode", 0), season = item.optInt("season", 0);
         p.subtitle = !show.isEmpty() && episode > 0 ? show + " · S" + twoDigits(season) + " E" + twoDigits(episode) : item.optString("artist", item.optString("album", ""));
         p.thumbnail = item.optString("thumbnail", "");
+        p.file = item.optString("file", "");
         p.elapsed = formatTime(props.optJSONObject("time")); p.duration = formatTime(props.optJSONObject("totaltime"));
         p.percentage = Math.max(0, Math.min(100, props.optDouble("percentage", 0))); p.speed = props.optInt("speed", 1); p.canSeek = props.optBoolean("canseek", false);
         state.player = p;
         return state;
+    }
+
+    JSONObject getDirectory(String directory) throws KodiException {
+        // Keep the request to Kodi's required parameter plus media only. Older Kodi JSON-RPC
+        // schemas reject optional file properties that newer versions accept.
+        try {
+            return call("Files.GetDirectory", json("directory", directory, "media", "video"));
+        } catch (KodiException videoModeError) {
+            // Some Kodi paths (notably add-on and filesystem paths) are only enumerable in file mode.
+            try {
+                return call("Files.GetDirectory", json("directory", directory, "media", "files"));
+            } catch (KodiException filesModeError) {
+                throw new KodiException(videoModeError.getMessage() + " (Kodi file-mode fallback also failed: " + filesModeError.getMessage() + ")");
+            }
+        }
+    }
+
+    JSONObject getSources(String media) throws KodiException {
+        return call("Files.GetSources", json("media", media));
+    }
+
+    String currentPlayingDirectory() throws KodiException {
+        JSONArray active = callArray("Player.GetActivePlayers", new JSONObject());
+        if (active.length() == 0) return "";
+        JSONObject player = active.optJSONObject(0);
+        if (player == null) return "";
+        JSONObject response = call("Player.GetItem", json("playerid", player.optInt("playerid", 0),
+                "properties", new JSONArray().put("file")));
+        JSONObject item = response.optJSONObject("item");
+        if (item == null) return "";
+        String file = item.optString("file", "").trim();
+        if (file.isEmpty()) return "";
+
+        // Add-on URLs can carry playback parameters after '?'; they are not part of the folder path.
+        int query = file.indexOf('?');
+        if (query >= 0) file = file.substring(0, query);
+        while (file.endsWith("/") && file.length() > file.indexOf("://") + 3) {
+            file = file.substring(0, file.length() - 1);
+        }
+        int slash = file.lastIndexOf('/');
+        int schemeEnd = file.indexOf("://");
+        if (slash < 0 || slash <= (schemeEnd < 0 ? -1 : schemeEnd + 2)) return "";
+        return file.substring(0, slash + 1);
     }
 
     static String imageUrl(String host, String port, String image) {

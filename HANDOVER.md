@@ -2,18 +2,58 @@
 
 Last updated: 2026-10-14
 
-## Where the work is
+## Next session: Xperia root-readiness and Kodi checks
+
+The owner plans to continue when home with both the Xperia and Kodi host available. This is preparation and investigation; no root app has been installed and no root, firmware, package, partition, or bootloader change has been made in this work.
+
+### What we found
+
+- The phone is the single-SIM **Sony Xperia E4g E2003**, Android 4.4.4/API 19, firmware `25.0.A.2.31`, customization `1293-7358 R7A`.
+- There are historical user reports claiming **KingRoot** worked on an E2003 with firmware `25.0.A.2.31`. One report says root was obtained and then KingRoot was replaced with SuperSU. These are anecdotal reports from 2016, not a repeatable, security-reviewed method. Other E2003 users reported that KingRoot failed. KingRoot and KingoRoot are different tools. See [the exact firmware report](https://4pda.to/forum/index.php?showtopic=668811&st=320) and [the E4g root discussion](https://forum.android.com.pl/topic/234990-xperia-e4g-e2003-e2006-e2053-w%C4%85tek-zbiorowy/223).
+- No trustworthy KingRoot APK, exact APK version/hash, or verified sequence for this exact customization has been established. Do not install an APK from a random mirror or run a PC rooting utility.
+- Firmware search found two leads, neither verified as the correct restore base for this phone: an E2003 `25.0.A.2.31 Customized UK` FTF listing and an E2003 `25.0.A.2.31 Customized DE` FTF listing. Neither has a verified SHA-256 or a confirmed match to `1293-7358 R7A`. They are not cleared for flashing. Details are in [`docs/ROOT_READINESS.md`](docs/ROOT_READINESS.md).
+- Owner says the bootloader is unlocked, but available read-only Fastboot queries did not independently confirm that. Android ADB currently has shell UID, not root.
+
+### Suggested order when the phone and Kodi are available
+
+1. Confirm the phone is booted normally, FarfarRemote OS opens, Wi-Fi reconnects, and Kodi is reachable. Check a harmless control/status request first; do not test Kodi Power Off unless the owner intends to shut down the host.
+2. Capture fresh read-only ADB properties and current FarfarRemote/Kodi behavior. Record the exact customization and firmware values again; do not publish device serials or private network details.
+3. Review the original KingRoot report and locate the exact historical package/version it refers to, if the forum attachment or original source is still available. Before considering installation, establish the file's provenance, hash, package signature and offline scan results. If these cannot be established, stop rather than substituting another APK.
+4. In parallel, obtain an exact-model stock FTF candidate and inspect it offline. Verify the archive structure, Sony build metadata, model, customization, all file hashes, and whether its contents include protected partitions. Compare the manifest with the live E2003 values. A filename alone is not verification.
+5. Decide explicitly whether to attempt the reported root method only after there is a credible restore path. A root attempt is a separate device change and should be confirmed at that point. Do not unlock, flash, wipe, repartition, disable packages, or write `TA`, `NVRAM`, `proinfo`, `protect*`, `secro`, `tee*`, or `seccfg` as part of initial checks.
+6. If root is ever obtained, verify it read-only first (`id` through the intended root manager), then stop and reassess before modifying `/system` or removing packages. Keep FarfarRemote and its settings untouched during the first root validation.
+
+### Working-tree state
+
+The previous root-readiness handover was on `feature/os-root-readiness`. The active branch is now `feature/swipe-browser-language-memory`, created from the same current code checkpoint. The worktree still contains the uncommitted root-readiness research: modified `FIRMWARE_STRATEGY.md`, new `docs/ROOT_READINESS.md`, and new read-only `tools/root_readiness.sh`, alongside the current app changes. Preserve these files; do not commit unrelated root research together with the app feature without reviewing the changeset. The script can be run from normal Linux Mint ADB mode and does not reboot or write to the phone.
+
+## Current development: Kodi folder browser and per-folder track preferences
+
+The active branch is `feature/swipe-browser-language-memory`. The worktree currently contains uncommitted app changes plus a separate root-readiness documentation/tooling change; these are being committed separately before pushing this branch. No merge to `main` has been made.
+
+### Kodi browser status
+
+Swipe left on the remote opens Settings; swipe right opens the in-app Kodi library browser. From the browser, swipe left returns to the remote and swipe right navigates to the parent. The browser can list sources/folders and launch selected files without opening Kodi's TV-side menus.
+
+Version 0.4.6-rc5 additionally asks Kodi for the active player's file and opens its parent directory first. On the Xperia E2003 with Kodi actively playing an episode, this displayed `Made in Abyss-Season 1` and its episode files. Returning to the remote and reopening the browser restored that folder. The check used ADB-injected swipe events; finger feel was not assessed. If Kodi has no usable active-file directory, the browser falls back to its saved location/source logic.
+
+Kodi's API documents `Files.GetDirectory` and `Player.Open` in the [Kodi JSON-RPC API](https://kodi.wiki/view/JSON-RPC_API/v13.11).
+
+### Per-folder audio/subtitle preferences
+
+The track pickers provide **Remember current for folder** and **Forget folder rule**. Rules are local and match language/name metadata rather than unstable stream indexes. Subtitle Off can be remembered. Kodi controls continue to use the existing JSON-RPC methods.
+
+Both App and OS debug APKs build. The OS v0.4.6-rc5 APK was installed in place on the Xperia without clearing app data. The live Kodi browser path was checked on-device. Per-folder language restoration across multiple episodes, offline fallbacks, and App flavor runtime behavior still need focused regression testing.
+
+### Repository checkpoints
 
 - Repository: `farfarspelar/FarfarRemote-OS`
-- Current integrated branch: `main`
-- Main fast-forwarded from the integrated development history; implementation checkpoint before the latest handover: `5f374b8` — `Note Power Off is not in current RC APKs`
-- Current OS work branch: `feature/os-track-continuation`, created from the integrated `main`.
-- Integration checkpoint: `integration/os-continuation` at `44ed21d`; it is pushed to `origin`.
-- Previous feature commit: `b6865d9` — `Add confirmed Kodi power off control`
-- The Power Off feature and release-download naming changes are now in `main`; the integration branch preserves the unified feature history.
-- Working tree was clean after the latest push.
+- Current branch: `feature/swipe-browser-language-memory`
+- Base commit before the pending changes: `29b8814` — `Fix wordmark wrapping in offline header`
+- `main` remains at its existing release history; no merge or force-push has been performed.
+- APK version in the pending source: `0.4.6-rc5`, versionCode 14. Both APKs were built in this workspace; the OS APK is installed on the Xperia.
 
-The requested development history is now on `main`. Make future changes on a new feature branch from the latest `main`; do not rewrite history or force-push.
+Root-readiness work is documentation and a read-only shell script only. No rooting, bootloader, firmware, partition, or Android package changes were made. The root research is intentionally in a separate commit from app development.
 
 ## Current Power Off behavior
 

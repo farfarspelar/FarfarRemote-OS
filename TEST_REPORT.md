@@ -1,3 +1,47 @@
+# FarfarRemote 0.4.6 RC5 — open the active stream's folder
+
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleOsDebug assembleAppDebug` built both APKs. OS: `org.farfarremote`, min API 19 / target API 28. App: `org.farfarremote.app`, min API 19 / target API 36. Both are version `0.4.6-rc5`, versionCode 14.
+- **PASS (physical update):** Installed the OS APK over the connected Sony Xperia E2003 / Android 4.4.4 (API 19) with `adb install -r`. It accepted the update in place; no uninstall or data clear was performed. Kodi remained connected and active playback status was visible afterward.
+- **PASS (physical Kodi browsing via ADB-injected gestures):** With Kodi actively playing an episode, opening the browser showed `Made in Abyss-Season 1` and episode files, derived from the active stream's parent folder. Returning to the remote and reopening the browser showed the same folder again. This exercises the actual Kodi JSON-RPC path and API 19 device; swipe feel was not assessed with a finger gesture.
+- **PASS (fallback behavior, code/build):** When active playback metadata is unavailable or its parent folder cannot be listed, the browser continues with the saved folder/source path. A failed stale saved-folder lookup no longer saves the source fallback over the prior preference.
+- **PASS (package identity):** OS remains `org.farfarremote`; App remains `org.farfarremote.app`. Both retain minSdk 19. OS targetSdk remains 28; App targetSdk remains 36.
+- **NOT TESTED:** Separate App flavor installation/use, modern Android device behavior, Kodi offline/transient failure fallback, and a no-active-playback browser launch were not re-tested in this pass.
+- **BUILD NOTES:** Existing JDK 21 / Java 8 source-target and Gradle deprecation warnings remain; build succeeded. `git diff --check` passed. No `FATAL EXCEPTION` was found in the captured device log window.
+- **APK SHA-256:** OS `8590ff750a647a6eeb43018dc82a8dbcb6af0e35b1a3de62ea5749962b94777d`; App `1ee26f0f49ed8a8ef23b0e64c49591e040baa86a394d23bc6cfc3c8a2b072948`.
+
+# FarfarRemote 0.4.6 RC4 — remember the last Kodi folder
+
+- **PASS (build):** Both App and OS debug APKs assembled with Gradle. App ID `org.farfarremote.app` / target API 36; OS ID `org.farfarremote` / target API 28; both min API 19. Version 0.4.6-rc4 / versionCode 13.
+- **PASS (physical update):** Installed OS APK on Xperia E2003 / Android 4.4.4 (API 19) with `adb install -r`; versionCode 13 is installed and the existing package/data were retained.
+- **CHANGE:** Remember the last successfully listed folder or source in existing app preferences. Reopening Kodi Library restores that location instead of querying Kodi's changing GUI folder after playback. Navigation updates the saved location only after a successful listing; a stale saved path falls back to video sources.
+- **PASS (physical location retention):** On the Xperia, opened Kodi video sources, entered `Videos`, swiped back to the remote, then reopened the library. It restored `Videos` rather than re-reading a different Kodi GUI location. The title was read on screen; preference contents/paths were not logged.
+- **DEVICE TEST STATE:** The persistence check left `Videos` as the last saved browser folder on this test phone. The new build will remember the next folder successfully opened; navigate to `Anime` once to make that the restored folder.
+- **LIMITATION:** The exact `Anime`-after-playback path was not reproduced in this check; confirm it with the owner’s normal Anime browsing/playback flow. The retained-location flow itself was exercised on the device.
+- **APK SHA-256:** OS `6ecddb3521eaa6eca45723034fa41b7e5e8d262e4f3fa48ae3c438c263062419`; App `fe527f67f9276b4e2f2b3317db73960c1feed5447fb5a45398effe166872d772`.
+
+## FarfarRemote 0.4.6 RC3 — Kodi folder request and swipe-back fixes
+
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleOsDebug assembleAppDebug` built both variants. App is `org.farfarremote.app`, target API 36; OS is `org.farfarremote`, target API 28; both retain min API 19. Version is 0.4.6-rc3 / versionCode 12.
+- **PASS (physical update):** Installed the OS APK on Sony Xperia E2003 / Android 4.4.4 (API 19) with `adb install -r`. Android reports versionCode 12 and target API 28. Existing and new APK signer SHA-256 fingerprints match: `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`. No uninstall or data clear was performed.
+- **PASS (live Kodi JSON-RPC):** Using the saved endpoint without printing its address or credentials, `XBMC.GetInfoLabels` returned a current folder and `Files.GetDirectory` returned 13 items in both `media: video` and `media: files` modes when optional `properties` were omitted. The old request shape with those extra properties was the source of Kodi's `Invalid params` response.
+- **CHANGED:** Reduced swipe distance threshold to 44 dp. Swipe right in Settings returns to the remote. Swipe left from Kodi Library returns to the remote; swipe right navigates to the parent folder (and exits at the root). Text fields retain horizontal editing gestures. Simplified `Files.GetDirectory` parameters to avoid Kodi-version schema rejection.
+- **PASS (physical UI via ADB input):** On the Xperia, an injected right swipe opened the current Kodi folder and displayed episode entries; a right swipe navigated to the parent folder; a left swipe returned to the remote. A right swipe from Settings also returned to the remote. This verifies gesture routing on the real API 19 screen, though finger feel was not evaluated with a physical swipe.
+- **APK SHA-256:** OS `250e8b9e2faf7844c763069fa07193dc05b5d173234f0e9955d6156bec1edbcb`; App `198ec8b63fdfd3ea2a6c843e5da5e947fad0f00ee30b3e30206c2570a10643d2`.
+- **BUILD WARNINGS:** Existing JDK 21 / Java 8 source-target and deprecated API warnings remain; both assemblies succeeded.
+
+## FarfarRemote 0.4.6 RC1 — swipe browser and per-folder track preferences
+
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleOsDebug assembleAppDebug` assembled both variants. App metadata: `org.farfarremote.app`, versionCode 10 / `0.4.6-rc1`, min API 19, target API 36. OS metadata: `org.farfarremote`, same version, min API 19, target API 28.
+- **PASS (signing metadata):** Both debug APKs verify and have the same local debug certificate fingerprint as the existing development key: `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`. This is not a production release signature.
+- **PASS (manifest inspection):** App has the ordinary `MAIN` + `LAUNCHER` entry and no HOME category; OS retains `MAIN` + `HOME` + `DEFAULT`.
+- **PASS (repository hygiene):** `git diff --check` passed.
+- **NOT RUN:** Automated behavioral tests were not added or run for this feature.
+- **PASS (device install):** Installed the OS APK on the connected Sony Xperia E2003 as an in-place update using `adb install -r`. The installed package reports `org.farfarremote`, versionCode 10 / `0.4.6-rc1`, target API 28. The installed and new APK signing certificate SHA-256 fingerprints match (`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`). No uninstall or data-clear was performed, so Android preserved the existing app data during the update.
+- **NOT VERIFIED ON DEVICE:** Swipe navigation, current-folder detection, folder/source listing, playback launch, saved language matching on the next episode, subtitle Off restoration, and behavior with live Kodi remain to be tested together with the owner.
+- **KNOWN BUILD WARNINGS:** Existing JDK 21 warnings for Java 8 source/target and deprecated APIs remain; both APK assemblies succeeded.
+- APK SHA-256 — OS: `35558a8d1719a59cc7697403f9ed6e4d5acef72d7b7b829cfdbc9a892fc4ac9f`.
+- APK SHA-256 — App: `1b5b7a6002b135cf8286efc99c4f8413f3d126546690eac2e715f9233bc32f64`.
+
 # UI follow-up — FarfarRemote wordmark wrapping
 
 - **CHANGE:** Prevented the header wordmark from wrapping when the longer startup/offline status competes for width. The wordmark is one styled, single-line `TextView`; the status and host labels are single-line and capped, and startup uses the compact offline status. No orientation policy or Kodi code changed.
