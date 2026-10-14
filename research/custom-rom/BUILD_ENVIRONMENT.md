@@ -4,7 +4,7 @@
 
 ## Current host snapshot
 
-The shell/workspace used for this research reports x86_64 Linux, 4 logical CPUs, 15 GiB RAM and OpenJDK 21. After temporary source, toolchain and build outputs, `/tmp` had about 4.7 GiB free at the latest check; remove disposable `/tmp` material before attempting a full Android tree. `adb`, `fastboot`, Python 3 and Git are present; Python 2 was built locally under `/tmp` and is not installed system-wide. This shell may not be the owner's bare-metal Linux Mint host; re-run the provided checker there before choosing a build machine. The temporary `/tmp/farfar-sdk` Android SDK built both FarfarRemote APK flavors, but is not a persistent ROM toolchain.
+**Rechecked 2026-10-14:** this shell reports x86_64 Linux, 4 logical CPUs, 15 GiB RAM and OpenJDK 21. The repository workspace is on `/mnt/data` with 93 GiB free, but `/tmp` shares the nearly full system volume and has only 4.7 GiB free. Do not put ROM source/output under `/tmp`; use the workspace volume or a dedicated larger build disk. `adb`, `fastboot`, Python 3 and Git are present. `repo`, `ndk-build`, `emulator` and `lunch` are not on `PATH`; the kernel POC's legacy Python 2.7 and NDK r10e exist only under temporary locations. AOSP source and build requirements vary by branch; this host is below current AOSP guidance and 93 GiB is a tight/possibly insufficient budget for a complete old Android checkout plus outputs. More importantly, no E2003 Android product/device tree is available yet. The temporary `/tmp/farfar-sdk` Android SDK built both FarfarRemote APK flavors, but is not a persistent ROM toolchain.
 
 ## Feasibility
 
@@ -41,7 +41,7 @@ The official vendor build wrapper `./makeMtk callass n k` was run only in the te
 
 The build log contains numerous legacy warnings, including incompatible pointer types, return-type issues, and redefinitions; no warning-clean or runtime test is claimed. The generated `.config` contains `CONFIG_IKCONFIG_PROC=y`, inconsistent with the observed absence of `/proc/config.gz` on the live device. Therefore the artifact is a **kernel build proof of concept**, not a R7A-matched kernel, boot image or flashable file. Artifacts, source mirror and logs remain outside Git under `/tmp`; do not commit proprietary source or binaries or infer device compatibility from successful compilation. No phone operation occurred.
 
-The non-destructive build wrapper is [`tools/build_e2003_kernel_poc.sh`](tools/build_e2003_kernel_poc.sh). It refuses an unexpected source commit/origin, checks for Python 2.7 and NDK GCC 4.8, and requires 3 GiB free before invoking the vendor build. Example:
+The non-destructive build wrapper is [`tools/build_e2003_kernel_poc.sh`](tools/build_e2003_kernel_poc.sh). It refuses an unexpected source commit/origin, checks for Python 2.7 and NDK GCC 4.8, and requires 3 GiB free before invoking the vendor build. The host inventory helper now reports both the workspace and `/tmp` filesystems and checks for common Android build tools (`repo`, `ndk-build`, `emulator`, `lunch`) so a nearly full root volume is visible before starting a large build. Example:
 
 ```sh
 research/custom-rom/tools/build_e2003_kernel_poc.sh \
