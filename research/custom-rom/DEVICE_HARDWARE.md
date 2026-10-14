@@ -25,6 +25,9 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Kernel | Linux 3.10.48+, GCC 4.8, Sony build dated 2015-09-08 | **VERIFIED**, live `/proc/version` |
 | Bootloader | `ro.bootloader=s1`; owner reports unlocked; live ADB shell is UID 2000. On 2026-10-14 the phone was in normal ADB mode, so this read-only check did not query Fastboot. Earlier Fastboot `getvar unlocked`/`oem device-info` did not confirm unlock. | Property **VERIFIED**; unlocked state **REPORTED**, independent confirmation **UNKNOWN** |
 | Recovery | Partition table has `fotakernel` but no partition labelled `recovery`; both `boot` and `fotakernel` are 32,768 1-KiB blocks. | **VERIFIED** names/sizes; which recovery path firmware uses and whether an image can be booted temporarily are **UNKNOWN** |
+| Graphics stack | Live `/system/lib/hw` contains `gralloc.mt6752.so` and `hwcomposer.mt6752.so`; `/system/lib/egl/libGLES_mali.so` is about 18.7 MB | **VERIFIED** file presence/size. Source revision, interface compatibility and redistribution rights are **UNKNOWN**; file size is not RAM use. |
+| Wi-Fi | Live interface is `wlan0`; sysfs binds it to platform driver `mt-wifi`. Firmware/configuration assets are present in `/system/lib/hw` and `/system/etc/firmware` | **VERIFIED** runtime interface/driver name and file presence. Exact chipset revision, source and blob set are **UNKNOWN**. Preserve the stock driver/firmware path for any stock-based OS. |
+| Bluetooth/audio hardware modules | `/system/lib/hw` contains `bluetooth.default.so` and audio HAL modules | **VERIFIED** file presence only. This does not by itself prove Bluetooth operation or all audio paths in a new ROM. |
 
 Primary Sony references: [E4g white paper](https://www-support-downloads.sonymobile.com/e2003/whitepaper_EN_e2003_e2006_e2053_xperia_E4g.pdf) and [E2003/E2006/E2053 user guide](https://www-support-downloads.sonymobile.com/e2003/userguide_EN_E2003-E2006-E2053_2_Android4.4.4.pdf).
 
@@ -42,7 +45,7 @@ Sony's white paper documents the E2003, E2006 and E2053 as distinct network SKUs
 
 ## Display, Wi-Fi and platform drivers
 
-The running firmware exposes Mali EGL/GLES, MediaTek gralloc and hardware-composer modules; Wi-Fi works on stock and reconnects after reboot per owner test. Exact driver source revisions, firmware blobs, calibration data, power profiles and kernel configuration have not been collected. These are **BLOCKED** for a reproducible ROM until matching stock firmware/source is available.
+The running firmware exposes Mali EGL/GLES, MediaTek gralloc and hardware-composer modules; Wi-Fi uses the `mt-wifi` platform driver and the `wlan0` interface. Firmware/configuration files and Bluetooth/audio HAL libraries are present under `/system`. Wi-Fi works on stock and reconnects after reboot per owner test. Exact driver source revisions, complete firmware blobs, calibration data, power profiles and kernel configuration have not been collected. These are **BLOCKED** for a reproducible ROM until matching stock firmware/source is available. The live proprietary stack is an important reason to prefer a stock-based dedicated image over a speculative AOSP port.
 
 ## Read-only package/root snapshot — 2026-10-14
 

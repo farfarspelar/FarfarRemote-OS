@@ -20,7 +20,7 @@ The extracted boot container is Sony ELF format rather than a standard Android `
 
 ## What a minimal dedicated build must keep
 
-Android init/Binder/system_server; SurfaceFlinger and Mali/gralloc/hwcomposer; touchscreen/input; Package Manager and text input; Wi-Fi framework, vendor driver/firmware and supplicant; network stack; storage and media path; power, battery, thermal and charging services; USB gadget and ADB; Sony/MediaTek boot and board services; and Settings or a reliable alternative path for Wi-Fi/debugging. Bluetooth can be omitted only after confirming no external controls use it. Remove user apps only after package/service dependency and recovery tests.
+Android init/Binder/system_server; SurfaceFlinger and Mali/gralloc/hwcomposer; touchscreen/input; Package Manager and text input; Wi-Fi framework, the observed `mt-wifi` driver/firmware and supplicant; network stack; storage and media path; power, battery, thermal and charging services; USB gadget and ADB; Sony/MediaTek boot and board services; and Settings or a reliable alternative path for Wi-Fi/debugging. Bluetooth can be omitted only after confirming no external controls use it. Remove user apps only after package/service dependency and recovery tests. The live stock system contains proprietary HAL/firmware artifacts, so a “minimal” image must preserve required components and respect their redistribution terms; exact dependencies are not fully mapped yet.
 
 ## Expected engineering cost and benefits
 
