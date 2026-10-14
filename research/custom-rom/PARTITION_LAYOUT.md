@@ -36,3 +36,7 @@ Sizes below come from `/proc/partitions` in 1-KiB blocks. They are device-report
 No standalone `recovery` label appeared. Sony's `fotakernel` convention is a plausible recovery location, but that is an inference only. The bootloader may expose additional vendor-specific modes or write rules; none were tested. The bootloader's accepted image type, partition aliases, signatures and rollback behavior remain **UNKNOWN**.
 
 **Hard boundary:** do not read/write raw protected areas or use scatter/preloader tools. This table is for identification, not authorization to access any block node. Root, repartitioning, flashing and recovery installation are outside this research task.
+
+## Follow-up read-only capture — 2026-10-14
+
+A separate `adb shell` metadata capture reconfirmed `mmcblk0` as 7,634,944 1-KiB blocks, `system` as 2,048,000 blocks, `boot` and `fotakernel` as 32,768 blocks each, and `userdata` as 5,168,640 blocks. `/proc/cmdline` access was denied to shell UID 2000. No block data was read in this follow-up, and the phone remained in normal Android/ADB mode.

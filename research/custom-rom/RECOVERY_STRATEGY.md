@@ -40,6 +40,8 @@ ADB still sees one authorized device with USB product/model/device `E2003`. Andr
 
 The 42/42 sampled R7A/R10A system-file matches improve confidence in the candidate's *userspace relevance*, not the recovery path. The exact restore/recovery gate remains **BLOCKED**. A historical E4g TWRP mention is not enough to authorize or safely try an image.
 
+An additional retrieval attempt used the two download links and the page's “mirror” link. The page identifies filenames `unsigned_twrp_sony-xperia-e4g_temp.zip` and `signed_twrp_sony-xperia-e4g.zip`, but all three redirects returned HTTP 403 through the available fetch route. Exact bytes, hashes, signing identity, install scripts, target partition and supported E2003 firmware therefore remain unavailable for audit. The article's own procedure installs a temporary package through stock recovery and then permanently installs recovery; that is a modifying procedure, not a read-only check, and is not suitable to test without a separately established restore path and explicit approval.
+
 ## Protected areas and constraints
 
 Do not write `ta`, `nvram`, `proinfo`, `protect1`, `protect2`, `seccfg`, `secro`, `tee1` or `tee2`. Never use a generic MTK scatter/preloader package. Never flash E2033/E2043 dual-SIM or other Xperia/MT6732/MT6752 images.

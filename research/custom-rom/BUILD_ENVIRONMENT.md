@@ -14,11 +14,18 @@ The shell/workspace used for this research reports x86_64 Linux, 4 logical CPUs,
 - **BLOCKED — full modern AOSP/LineageOS:** not practical on the current workspace as configured and no E2003 device source set is available. AOSP's current guidance for recent Android lists about 400 GB free and 64 GB RAM; requirements vary by branch, but this host's 95 GB free/15 GiB RAM falls short. An old Android 4.4 build may have different requirements, yet its matching source manifest/device configuration is the larger blocker.
 - **BLOCKED — kernel:** needs the exact vendor GPL source, matching defconfig/toolchain and proprietary modules. None is present locally.
 
+### Device-specific kernel facts captured over read-only ADB — 2026-10-14
+
+The live E2003 reports board `callass`, platform/hardware string `MT6752`/`mt6752`, a 32-bit ARMv7 runtime and Linux `3.10.48+` built by GCC 4.8 on 2015-09-08. The CPU MIDR part `0xd03` identifies Cortex-A53 cores. Sony specifies quad-core hardware and sysfs lists CPUs 0–3 as possible/present, but at this capture only CPU0 was online (CPUs 1–3 offline); confirm under load/cold boot before performance conclusions. CPU0 exposes MediaTek `mt-cpufreq` with `interactive` governor and 468–1495 MHz range. This narrows any eventual kernel build to the matching 32-bit Sony/MediaTek board integration; it is not evidence that a generic MT6752 tree will work. `/proc/config.gz` is absent, `/proc/cmdline` is denied to shell UID 2000, and `/proc/device-tree` is not exposed. `/system/lib/modules` is empty while Wi-Fi is bound as `mt-wifi` to platform node `180f0000.WIFI`; whether its implementation is built-in or loaded from another vendor path remains unresolved.
+
+No source revision, `callass` defconfig, linker scripts, module set or compiler patchset has been matched to this exact running kernel. Do not start a kernel build from another MT6732/MT6752 Sony model as a substitute.
+
 References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob/master/docs/build.md), [AOSP host requirements](https://source.android.com/docs/setup/start/requirements), [AOSP boot image tools](https://android.googlesource.com/platform/system/tools/mkbootimg/).
 
 ## Safe helper tools
 
 - `tools/root_readiness.sh`: exact-model, read-only ADB readiness checks; does not reboot, root, unlock or write the phone.
+- `research/custom-rom/tools/collect_e2003_prerequisites.sh`: verifies exactly one authorized E2003 running build ID `25.0.A.2.31`, then prints device/kernel/CPU-frequency/partition metadata and Wi-Fi driver bindings. It does not print the ADB serial, save a report, read raw partition contents, or reboot/write the phone.
 - `research/custom-rom/tools/host_check.sh`: inventories host tools/resources only.
 - The root-readiness script also prints the live Sony customization fields, software-base fields, kernel string, named partition map and `/proc/partitions` sizes. It intentionally never reads raw partition contents or prints the ADB serial.
 - `research/custom-rom/tools/inspect_ftf.sh`: hashes/checks/lists an FTF ZIP without extraction or flashing.
