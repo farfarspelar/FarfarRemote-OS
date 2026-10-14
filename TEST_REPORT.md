@@ -42,8 +42,8 @@ The owner reports that FarfarRemote UI artwork and visual references were genera
 
 ## Current RC artifacts
 
-- `dist/FarfarRemote-App-v0.4.2-rc1.apk` — target API 36, min API 19.
-- `dist/FarfarRemote-OS-v0.4.2-rc1.apk` — target API 28, min API 19.
+- `dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.2-rc1.apk` — target API 36, minimum Android 4.4/API 19.
+- `dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.2-rc1.apk` — target API 28, minimum Android 4.4/API 19; Xperia E2003 dedicated-device track.
 - SHA-256 sidecars and combined manifest are alongside the APKs in `dist/`.
 
 ---

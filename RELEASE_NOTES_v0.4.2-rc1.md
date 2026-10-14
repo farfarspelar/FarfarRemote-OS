@@ -27,11 +27,13 @@ Both APKs are built from the same source and share Kodi behavior, UI, Settings, 
 
 ## Install
 
-Download the `FarfarRemote-App-v0.4.2-rc1.apk` for an everyday phone. It opens from the app drawer and does not replace the phone launcher.
+Download [FarfarRemote-App-Android4.4plus-API19plus-v0.4.2-rc1.apk](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-App-Android4.4plus-API19plus-v0.4.2-rc1.apk) for an everyday phone. It opens from the app drawer and does not replace the phone launcher. Minimum: Android 4.4/API 19; target API 36. Android 13 device use was reported by the project owner; Android 13 and 15 emulator smoke checks passed.
 
-Download `FarfarRemote-OS-v0.4.2-rc1.apk` for a dedicated device. For an existing OS install, update in place with the OS APK only, signed with the same certificate; do not uninstall or clear data.
+Download [FarfarRemote-OS-Android4.4plus-API19plus-v0.4.2-rc1.apk](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.2-rc1.apk) for a dedicated device, including the Xperia E4g E2003. Minimum: Android 4.4/API 19; target API 28. For an existing OS install, update in place with the OS APK only, signed with the same certificate; do not uninstall or clear data.
 
 These RC APKs are debug-signed. They are for testing, not a finalized production signing policy. See [README](README.md) and [TEST_REPORT](TEST_REPORT.md).
+
+Verify downloads with [SHA256SUMS-0.4.2-rc1.txt](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/SHA256SUMS-0.4.2-rc1.txt). The APK filenames include the minimum Android version and API level.
 
 ## Verification status
 

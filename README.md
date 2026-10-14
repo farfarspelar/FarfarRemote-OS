@@ -75,13 +75,13 @@ Find My Kodi additionally needs Kodi Zeroconf service announcements and multicas
 
 ### Current release candidate: v0.4.2-rc1
 
-- **FarfarRemote App** — [Download the regular Android app](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-App-v0.4.2-rc1.apk). Use this edition on everyday Android phones, including Android 13 and Android 15. It does not register as the HOME launcher. Minimum: Android 4.4 / API 19; target: API 36.
-- **FarfarRemote OS** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-OS-v0.4.2-rc1.apk). Use this edition for old or dedicated devices such as the Xperia E4g E2003. Minimum: Android 4.4 / API 19; target: API 28; includes the HOME launcher intent.
+- **FarfarRemote App** — [Download the regular Android app](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-App-Android4.4plus-API19plus-v0.4.2-rc1.apk). For everyday phones; tested on Android 13 and smoke-tested on Android 15. It does not register as the HOME launcher. Minimum: Android 4.4 / API 19; target: API 36.
+- **FarfarRemote OS** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.2-rc1/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.2-rc1.apk). For old or dedicated devices such as the Xperia E4g E2003. Minimum: Android 4.4 / API 19; target: API 28; includes the HOME launcher intent and is verified on the Xperia E2003.
 
 These are prerelease APKs for testing. See the [v0.4.2-rc1 release notes and checksums](https://github.com/farfarspelar/FarfarRemote-OS/releases/tag/v0.4.2-rc1). For other versions, browse the [GitHub Releases page](https://github.com/farfarspelar/FarfarRemote-OS/releases). Choose the APK for the intended use:
 
-- **FarfarRemote App:** install `FarfarRemote-App-<version>.apk` as a regular app and open it from the app drawer. Android's Home button continues to open the phone's existing launcher.
-- **FarfarRemote OS:** install `FarfarRemote-OS-<version>.apk` on a dedicated device. Press Android Home and select FarfarRemote to make it the launcher. For an existing OS installation, update with the OS APK only; do not uninstall the app or clear its data. Updates must use the same signing certificate as the installed build.
+- **FarfarRemote App:** install `FarfarRemote-App-Android4.4plus-API19plus-<version>.apk` as a regular app and open it from the app drawer. Android's Home button continues to open the phone's existing launcher.
+- **FarfarRemote OS:** install `FarfarRemote-OS-Android4.4plus-API19plus-<version>.apk` on a dedicated device. Press Android Home and select FarfarRemote to make it the launcher. For an existing OS installation, update with the OS APK only; do not uninstall the app or clear its data. Updates must use the same signing certificate as the installed build.
 
 Android may ask you to allow APK installation from the browser or file manager. The current RC artifacts are debug-signed. Read [Signing and updates](#signing-and-updates) before distributing updates to an established installation.
 
