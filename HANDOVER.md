@@ -7,7 +7,8 @@ Last updated: 2026-10-14
 - Repository: `farfarspelar/FarfarRemote-OS`
 - Current integrated branch: `main`
 - Main fast-forwarded from the integrated development history; implementation checkpoint before the latest handover: `5f374b8` — `Note Power Off is not in current RC APKs`
-- OS continuation branch: `integration/os-continuation` at `44ed21d`; it is also pushed to `origin`.
+- Current OS work branch: `feature/os-track-continuation`, created from the integrated `main`.
+- Integration checkpoint: `integration/os-continuation` at `44ed21d`; it is pushed to `origin`.
 - Previous feature commit: `b6865d9` — `Add confirmed Kodi power off control`
 - The Power Off feature and release-download naming changes are now in `main`; the integration branch preserves the unified feature history.
 - Working tree was clean after the latest push.
@@ -59,7 +60,7 @@ The renamed release assets were downloaded again and matched the local SHA-256 m
 1. On the Xperia, visually confirm the header spacing and that Settings lower on the screen still opens correctly in portrait and landscape.
 2. With the owner ready to shut down the Kodi host, tap **Power Off**, inspect the confirmation, and choose Cancel once to verify cancellation does nothing.
 3. When it is safe to turn Kodi off, confirm the action and check that the MeLE host shuts down while the Xperia stays on. If it fails, check Kodi's `ControlPower` permission and host OS shutdown configuration; capture the user-visible error without logging credentials.
-4. For the OS optimization track, start from `reports/debloat/DEBLOAT_0.1_PLAN.md`. A Phase A dry-run lists seven user apps; all seven were confirmed enabled in the latest read-only package check. Five were previously approved as a first batch. ADB shell `pm disable-user` was denied by firmware 25.0.A.2.31 before any package changed. App info was opened without changing package state, but the phone remained at its lock screen, so the Settings disable route could not be inspected. Unlock the Xperia before continuing; do not retry the denied shell command or use uninstall/root/system edits without separately verifying and authorizing a method.
+4. For the OS optimization track, start from `reports/debloat/DEBLOAT_0.1_PLAN.md` and `FIRMWARE_STRATEGY.md`. The phone is now unlocked. A Phase A dry-run lists seven user apps; all seven were confirmed enabled in the latest read-only package check. Five were previously approved as a first batch. ADB shell `pm disable-user` was denied by firmware 25.0.A.2.31. Android Appinfo for the first candidate offered Force stop and Uninstall, but no Disable action. No package state changed. Do not replace disable with uninstall, or use root/system edits, without separately verifying and authorizing a method.
 5. Re-run the contract test and build both App and OS APKs after any code change. Install the OS APK with `adb install -r` to preserve the existing app data.
 
 ## Useful commands

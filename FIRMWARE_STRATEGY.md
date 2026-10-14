@@ -24,6 +24,14 @@ Sonys officiella bootloaderupplåsning är en verifierad generell Sony-process m
 - Samla auditdata via ADB och kontrollera applikations-/tjänstedumpen. Vissa filer/loggar är skyddade utan root.
 - Inaktivera vissa appar via Inställningar om firmware tillåter det; gör bara manuellt efter paketgranskning och håll launcher/recovery tillgänglig.
 
+### Reversibel Phase A på E2003: verifierad begränsning (2026-10-14)
+
+En skrivskyddad kontroll på den anslutna E2003/API 19 visade att alla fem tidigare godkända Phase A-paket fortfarande är aktiverade. ADB-kommandot `pm disable-user --user 0 app.gpsme` hade tidigare avvisats av firmware med `SecurityException` innan något paket ändrades. Med telefonen upplåst öppnades Androids Appinfo för `app.gpsme` (visningsnamn KidsControl): skärmen erbjöd **Tvinga avslut** och **Avinstallera**, men ingen **Inaktivera**-knapp. Ingen knapp trycktes och FarfarRemote återfördes till förgrunden.
+
+Slutsats: Phase A kan inte genomföras med den planerade reversibla inaktiveringen på den här firmwareversionen via ADB eller Appinfo-vyn. Avinstallation är en annan, mer destruktiv åtgärd och får inte ersätta inaktivering utan separat godkännande och verifierad återställningsväg. Ingen paketändring, root, bootloaderupplåsning eller flashning har gjorts.
+
+Sony Open Devices dokumenterar att bootloaderupplåsning **inte ger root**, utlöser fabriksåterställning och inte kan återställas till låst bootloader eller ursprungliga DRM-nycklar. Det gör upplåsning till en separat högriskväg, inte en lösning på `pm disable-user`-begränsningen. Se [Sonys aktuella upplåsningsguide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader/). Historiska KingRoot/KingoRoot-rapporter är fortfarande obestyrkta och rekommenderas inte.
+
 ### Kräver root eller modifierad firmware
 
 - Ta bort/korruptionssäkert ersätta systempaket från `/system`, init.rc/systemtjänster och bootanimationsfiler.
