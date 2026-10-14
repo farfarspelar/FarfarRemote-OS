@@ -5,6 +5,7 @@ This directory is a research record for the exact E2003 / Android 4.4.4 / firmwa
 ## Documents
 
 - [DEVICE_HARDWARE.md](DEVICE_HARDWARE.md) — verified hardware, MTK identification discrepancy, variants and drivers.
+- [DEVICE_TREE_BLOBS.md](DEVICE_TREE_BLOBS.md) — read-only R7A HAL/blob inventory, static dependencies, and mismatches in the candidate `callass` config.
 - [MAGISK_COMPATIBILITY.md](MAGISK_COMPATIBILITY.md) — Android-version boundaries, MagiskBoot and feasibility.
 - [ROOT_METHODS.md](ROOT_METHODS.md) — Magisk, KingRoot/KingoRoot, SuperSU and MTK method status.
 - [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md) — official sources, firmware leads, provenance and offline extraction.

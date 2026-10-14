@@ -66,6 +66,8 @@ The archived XDA first post expressly identifies E2003, claims the TWRP function
 
 The archived post and binary analysis are documented in [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md). Sony ELF-to-Android **container assembly** has a successful offline POC; hardware bootability and Magisk compatibility remain untested.
 
+The read-only HAL/blob inventory and mismatches between the live E2003 and the mirrored `callass` config are collected in [DEVICE_TREE_BLOBS.md](DEVICE_TREE_BLOBS.md). It confirms that a private API 19 blob set can be inventoried, but no product/device tree or reproducible ROM build exists yet.
+
 ### Cross-source E2003 boot payload corroboration — 2026-10-14
 
 A second public FTF listing identifies E2003 / `25.0.A.2.31_R3A` / branding `E2003_Customized DE_1294-2854` and publishes an AFH MD5. The complete 1.2-GB file and MD5 were not downloaded/verified; selected archive entries were fetched by byte range for offline analysis only. Its manifest plus selected ZIP CRCs and embedded SIN SHA-256 checks passed. The R3A `boot.sin` kernel and ROOTFS segments are each byte-identical to the corresponding R10A boot segments; the kernel hash also matches the historical E2003 TWRP image. This provides independent-source, same-model/same-build-family corroboration and modestly strengthens the conditional stock-first-boot assessment. It still does not identify the live R7A boot bytes or validate restore/recovery behavior. Full details and hashes: [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md).
