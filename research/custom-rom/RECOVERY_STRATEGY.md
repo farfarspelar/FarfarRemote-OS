@@ -131,6 +131,10 @@ The local `/tmp/Xperia_Companion.exe` candidate was checked offline with `osslsi
 
 The installer has not been executed or installed during this check, and the phone was not connected to it. The meaningful next step remains running Sony Companion on a supported Windows/macOS host, selecting the exact E2003 repair flow, and stopping before the final action that starts repair. No repair or data-erasing operation is authorized here. This strengthens confidence in the official preflight software source but does **not** establish a restore path or increase the safe end-to-end ROM estimate yet.
 
+### Wine USB enumeration capability — host-only check — 2026-10-14
+
+The development host has Wine 9.0; its existing Wine prefix contains `wineusb.sys` and a `wineusb` service registration. The connected Sony handset appears in Wine's `HKLM\System\CurrentControlSet\Enum\USB` tree under VID/PID `0FCE:51CB` (the instance identifier/serial is intentionally not recorded here). This proves Wine's USB layer enumerates the handset, but it does **not** prove Xperia Companion can communicate with it or offer repair. Companion has not been installed/launched in Wine, and its installer EULA has not been accepted by the agent. A supported Windows/macOS check remains the authoritative route; a Wine trial would be experimental and must stop before starting software repair.
+
 ### Additional exact-model/build mirror lead — 2026-10-14
 
 A public XperiaStockROM page links a Google Drive archive whose central directory names an E2003 `25.0.A.2.31` FTF with CDA `1293-9486` / revision R3A. We verified the outer archive's ZIP metadata by byte range only; the 1.296-GB inner FTF payload has not been retrieved, its CRC has not been checked, and it is not the handset's `1293-7358 R7A` CDA. It is a more closely matched candidate than an E2006 package, but remains a third-party mirror and cannot yet serve as a verified restore route. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md).
