@@ -55,3 +55,10 @@ No firmware or recovery image is in this repository. The R10A candidate and hist
 The image was identified as an Android boot image with a 2,048-byte page. Its legacy header reports kernel size 6,325,338 bytes, ramdisk size 6,068,355 bytes, kernel address `0x40008000`, ramdisk address `0x44000000`, tags address `0x4e000000`, and command line `bootopt=64S3,32S1,32S1`. The kernel payload SHA-256 is exactly the same as the R10A candidate's stock boot kernel segment. The ramdisk's `/etc/recovery.fstab` identifies p9 as recovery; read-only live partition mapping identifies that same p9 as `fotakernel`. This strongly supports a shared E2003 boot stack and partition layout.
 
 The full recovery file is 12,398,592 bytes, smaller than the live 32 MiB `fotakernel` partition, but size fit alone does not establish a valid flash target or safe image. The first XDA post's supported-device statement is specific to E2003; its recovery properties report CDA/customization `1293-7242 R5A`, so this does not establish R7A validation. Binary identity and static parsing are verified locally; successful recovery boot, touch/storage mounting, backup/restore, and actual rollback remain **UNKNOWN**. The image must not be treated as safe merely because its header parses.
+
+The checks are reproducible with `tools/verify_e2003_recovery.py`, which reads only a local recovery image and an offline stock kernel segment. On the retrieved artifact it reports `static_checks=PASS`: E2003 / API 19 / build `25.0.A.2.31`, boot header `N_S218`, the expected MediaTek command line, exact stock-kernel SHA-256 match, `/recovery` fstab mapped to p9, and an image size below the observed 32 MiB partition capacity. The script's scope explicitly excludes boot, flash, mount, and restore behavior. Example:
+
+```sh
+python3 research/custom-rom/tools/verify_e2003_recovery.py \
+  /path/to/recovery.img /path/to/e2003-stock-kernel-segment.bin
+```
