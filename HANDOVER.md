@@ -2,6 +2,14 @@
 
 Last updated: 2026-10-14
 
+## Current verified FarfarRemote baseline
+
+- Latest local OS build: `0.4.6-rc5` (`org.farfarremote`), installed as an in-place update on the Xperia E2003. The App flavor is `org.farfarremote.app` and both APK flavors build from the shared project.
+- The owner reports that Kodi controls, Find My Kodi, favorites, Kodi-host Power Off, Wi-Fi reconnection after reboot, HOME launcher, and the Android screen timeout have been physically verified.
+- The active-stream folder browser was additionally checked on the Xperia while Kodi played an episode: it opened the episode's parent folder and restored that folder after returning to the remote. Gestures were injected through ADB for this check.
+- Battery life around 12 hours is an informal owner estimate only. No unplugged, controlled endurance measurement has been completed; the current battery tooling correctly rejects USB-powered sessions.
+- Root is not verified. The owner reports the bootloader unlocked, but the current standard ADB shell is UID 2000 and the Fastboot unlock query did not provide a result.
+
 ## Next session: Xperia root-readiness and Kodi checks
 
 The owner plans to continue when home with both the Xperia and Kodi host available. This is preparation and investigation; no root app has been installed and no root, firmware, package, partition, or bootloader change has been made in this work.
@@ -25,11 +33,11 @@ The owner plans to continue when home with both the Xperia and Kodi host availab
 
 ### Working-tree state
 
-The previous root-readiness handover was on `feature/os-root-readiness`. The active branch is now `feature/swipe-browser-language-memory`, created from the same current code checkpoint. The worktree still contains the uncommitted root-readiness research: modified `FIRMWARE_STRATEGY.md`, new `docs/ROOT_READINESS.md`, and new read-only `tools/root_readiness.sh`, alongside the current app changes. Preserve these files; do not commit unrelated root research together with the app feature without reviewing the changeset. The script can be run from normal Linux Mint ADB mode and does not reboot or write to the phone.
+The active branch is `feature/swipe-browser-language-memory`. Root-readiness notes and the read-only `tools/root_readiness.sh` are tracked project research; the more complete feasibility study is under `research/custom-rom/`. The script can be run from normal Linux Mint ADB mode and does not reboot or write to the phone.
 
 ## Current development: Kodi folder browser and per-folder track preferences
 
-The active branch is `feature/swipe-browser-language-memory`. The worktree currently contains uncommitted app changes plus a separate root-readiness documentation/tooling change; these are being committed separately before pushing this branch. No merge to `main` has been made.
+The active branch is `feature/swipe-browser-language-memory`. Kodi app work and root/custom-ROM research are maintained as separate commits on this development branch. No merge to `main` has been made.
 
 ### Kodi browser status
 
@@ -61,7 +69,7 @@ The main screen has a red **Power Off** control in the top-right header, replaci
 
 This shuts down the **device running Kodi** (for example, the MeLE computer). It does not shut down the Xperia handset. Kodi's host operating system must permit shutdown, and the Kodi JSON-RPC account must have the `ControlPower` permission. Do not test this by sending the command unless the owner intends to power down the Kodi host.
 
-The published v0.4.2-rc1 APKs were built before this feature was added. The current `main` source has the feature; a later version/build is needed before it appears in a downloadable APK.
+Historical note: the published v0.4.2-rc1 APKs predate the Power Off feature. Current development source includes the feature; see the README for the latest published-download links and the current source version.
 
 ## Verified on the Sony Xperia E4g E2003
 

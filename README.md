@@ -60,6 +60,8 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 
 The Power Off control sends Kodi's `System.Shutdown` JSON-RPC request after confirmation. Shutdown depends on the operating system and permissions of the device running Kodi. See the [Kodi JSON-RPC System.Shutdown method](https://kodi.wiki/view/JSON-RPC_API/v8#System.Shutdown).
 
+The owner has manually verified the core remote, Find My Kodi, Favorites, Kodi-host Power Off, HOME launcher, Wi-Fi reconnection after reboot, and Android screen timeout on the Xperia E2003. The v0.4.6-rc5 development build additionally passed an active-stream-folder browsing check on that device. This is owner/device testing, not a claim that every feature has automated coverage.
+
 ## Android compatibility and security notes
 
 The App track targets API 36 to adopt modern Android behavior and meet the current Google Play target API requirement. Android 15 and later enforce edge-to-edge for apps targeting API 35+, so the App applies system bar, display cutout, and keyboard insets. On Android 13+, App Settings uses the platform Back callback. The OS track remains target API 28 to protect the established Xperia behavior. See Android's [target API requirements](https://developer.android.com/google/play/requirements/target-sdk), [Android 15 behavior changes](https://developer.android.com/about/versions/15/behavior-changes-15), and [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16).
@@ -76,7 +78,9 @@ Find My Kodi additionally needs Kodi Zeroconf service announcements and multicas
 
 ## Download and install
 
-### Current release candidate: v0.4.4-rc1
+### Latest published prerelease: v0.4.4-rc1
+
+The source in the current development branch is v0.4.6-rc5, which is not a published GitHub release. Use the release links below for the latest published APKs; development APKs must be built from source and are not interchangeable with a stable install unless their signing key matches.
 
 - **FarfarRemote App — Android 4.4+ (API 19+)** — [Download the regular Android app](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.4-rc1/FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk). For everyday phones, including Android 13 and Android 15. It does not register as the HOME launcher. Minimum: Android 4.4 / API 19; target: API 36.
 - **FarfarRemote OS — Android 4.4+ (API 19+)** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.4-rc1/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk). For older or dedicated devices such as the Xperia E4g E2003. Minimum: Android 4.4 / API 19; target: API 28; includes the HOME launcher intent and preserves the Xperia OS track.
