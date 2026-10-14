@@ -41,6 +41,25 @@ The live E2003 was confirmed read-only over ADB as Android 4.4.4 / `25.0.A.2.31`
 
 This supports using the R10A package as a source of candidate files and confirms high userspace similarity. It is **not** proof that one complete image can replace the other: file metadata/labels, protected `lost+found`, partition layout, boot/FOTA, radio-specific state and boot behavior are not covered. The R10A `/build.prop` identifies `1293-7276 R10A`, not the installed CDA. Preserve R7A-specific files and do not wholesale replace `/system`.
 
+### Live-matched R7A system partition POC — 2026-10-14
+
+The attached handset was rechecked read-only and matched `E2003`, Android 4.4.4, build `25.0.A.2.31`, CDA `1293-7358 R7A`. The new [`tools/capture_e2003_system_metadata.sh`](tools/capture_e2003_system_metadata.sh) captures `/system` names, types, modes, owners, groups and SELinux labels with `ls -laRZ`; its private output is kept outside Git. [`tools/compare_e2003_system_metadata.py`](tools/compare_e2003_system_metadata.py) compared that manifest with the pinned R10A ext4 candidate. Before editing, all 4,445 common entries matched type, mode, UID, GID and symlink target; 2 live paths were missing and 2 R10A paths were extra. SELinux matched 4,443/4,445, with two R7A labels absent from R10A.
+
+[`tools/create_r7a_system_image_poc.py`](tools/create_r7a_system_image_poc.py) then built a temporary ext4 copy using only the R7A file differences captured from the phone, removed the 17 candidate-only file/symlink paths, added 2 R7A paths, replaced 15 differing payloads, applied the two missing labels and inserted the existing signed FarfarRemote OS 0.4.7 APK. Source image SHA-256 was pinned to `931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949`; APK SHA-256 was `f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3a6aab0e7bc`, with package, API 19 minimum and signing certificate checked.
+
+The POC output SHA-256 was `3674083c9bda9171365574715d15650fda91a29658ff4ab861938cd29d838b89`. Read-only post-build checks matched all **4,447/4,447 manifest entries** for type, mode, UID, GID, SELinux label and symlink target, and SHA-256 matched all **4,193/4,193 regular-file payloads** against the live R7A pull. `e2fsck -fn` exited 0. The large generated image was removed from temporary storage after verification; no proprietary image or live metadata is in Git. Reproduce only with private local inputs, writing outside the repository:
+
+```sh
+AAPT2_BIN=/path/to/android-sdk/build-tools/35.0.0/aapt2 \
+  python3 research/custom-rom/tools/create_r7a_system_image_poc.py \
+  /path/to/R10A-system.ext4 /path/to/R10A-system-tree \
+  /path/to/live-R7A-system-tree /path/to/private-R7A-metadata.txt \
+  dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk \
+  /path/outside/repository/R7A-system-poc.img
+```
+
+This is strong evidence that the **system partition contents** can be reconstructed for this R7A handset from the inspected R10A base and read-only live differences. It is still only an ext4 partition: it is not repacked as Sony SIN/FTF, has no boot chain or recovery, has not been booted, and is not flashable as delivered. It does not prove the bootloader accepts the image or provide a safe rollback path. The earlier first-boot and end-to-end success estimates therefore do not automatically increase.
+
 ### Retrieved E2003 recovery candidate — 2026-10-14
 
 The archived XDA first post expressly identifies E2003, claims the TWRP functions were tested, and documents a recovery flash procedure. We retrieved the linked image and verified its Android boot-image header. Its embedded device/build properties identify E2003 / API 19 / `25.0.A.2.31`, and its kernel SHA-256 exactly matches the kernel segment in the R10A stock boot candidate. Its recovery fstab maps recovery to p9, which the live phone reports as `fotakernel`. The image is nevertheless a historical community artifact with customization R5A, no auditable source/build recipe or trusted checksum, and no independent test on this handset. No boot/flash/restore was attempted. It improves feasibility substantially but does not itself establish a rollback route.
