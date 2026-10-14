@@ -27,6 +27,22 @@
 
 The live E2003 reports board `callass`, platform/hardware string `MT6752`/`mt6752`, a 32-bit ARMv7 runtime and Linux `3.10.48+` built by GCC 4.8 on 2015-09-08. The CPU MIDR part `0xd03` identifies Cortex-A53 cores. Sony specifies quad-core hardware and sysfs lists CPUs 0–3 as possible/present, but at the latest capture only CPU0 was online (CPUs 1–3 offline); confirm under load/cold boot before performance conclusions. CPU0 exposes MediaTek `mt-cpufreq` with `interactive` governor and 468–1495 MHz range. This narrows any eventual kernel build to the matching 32-bit Sony/MediaTek board integration; it is not evidence that a generic MT6752 tree will work. `/proc/config.gz` is absent, `/proc/cmdline` is denied to shell UID 2000, and `/proc/device-tree` is not exposed. A fresh read-only capture also found `wlan0` bound to `mt-wifi` at `180f0000.WIFI`, no entries in `/proc/modules`, no module files in `/system/lib/modules` or standard vendor module paths, and MediaTek Wi-Fi firmware/configuration files in `/system/etc/firmware`. The pattern is consistent with a built-in vendor driver but is not conclusive; retain the stock kernel/firmware pairing until verified. Detailed observations are in [DEVICE_HARDWARE.md](DEVICE_HARDWARE.md).
 
+### Candidate callass partition-size cross-check — 2026-10-14
+
+The generated `BoardConfig.mk` and `partition_size.mk` in the pinned, unverified kernel-source mirror were compared with a fresh read-only ADB capture using [`tools/compare_partition_config.py`](tools/compare_partition_config.py). The candidate values match live raw partition sizes for `system` (2,097,152,000 bytes), `cache` (209,715,200), `protect1` and `protect2` (10,485,760 each), `ltalabel` (16,777,216), and `secro` (6,291,456). The live `boot` p10 and `fotakernel` p9 partitions are each 33,554,432 bytes; the generated makefiles do not declare corresponding `*_IMAGE_PARTITION_SIZE` values. **One discrepancy needs explanation:** candidate `BOARD_USERDATAIMAGE_PARTITION_SIZE` is 1,237,319,680 bytes, while live `userdata` p21 is 5,292,687,360 bytes. This may represent a smaller build-time userdata image rather than the physical partition extent, but that interpretation is **UNKNOWN**. Do not copy the generated sizing blindly into a new product configuration until its MediaTek build semantics are verified. This check improves partition-map confidence but does not authenticate the kernel source or make a flashable ROM.
+
+Re-run the offline comparison with a fresh, private capture and the candidate makefiles (the capture can contain device-specific details; keep it out of Git):
+
+```sh
+research/custom-rom/tools/collect_e2003_prerequisites.sh > /path/outside/repository/e2003-prerequisites.txt
+python3 research/custom-rom/tools/compare_partition_config.py \
+  /path/outside/repository/e2003-prerequisites.txt \
+  /path/to/kernel-source/out/target/product/callass/obj/CUSTGEN/config/BoardConfig.mk \
+  /path/to/kernel-source/out/target/product/callass/obj/PTGEN/configs/partition_size.mk
+```
+
+The collector requires an attached, authorized E2003 ADB target. Exit 0 means all candidate sizes were matched; exit 1 means one or more mismatches; exit 3 means some candidate values could not be mapped; exit 2 means the input format or files were invalid. The helper reads the capture and makefiles only and does not contact the device.
+
 ### E2003-specific kernel source candidate — 2026-10-14
 
 An external [GitLab mirror](https://gitlab.com/sobotkama/android_kernel_sony_e2003), pinned at commit `2a84825e8268393267e454e35a00f80d48c58949`, describes itself as taken from Sony's archive for `25.0.A.2.31` / `25.0.B.2.31`. Static inspection of that checkout verified Linux `3.10.48`, `mediatek/config/callass`, `MTK_PLATFORM=MT6752`, `MTK_K64_SUPPORT=no`, and an `armeabi-v7a`/`armeabi` board configuration. The project files include callass-specific kernel customizations and MT6752 platform sources. These match important live E2003 facts and materially improve kernel-source availability. Sony's old archive URL now redirects to Sony's homepage; the GitLab mirror has no signed tag or independently trusted archive checksum. Treat upstream provenance as **REPORTED**, while those contents and the Git commit ID are **VERIFIED in the mirror**.
@@ -57,6 +73,7 @@ References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob
 - `tools/root_readiness.sh`: exact-model, read-only ADB readiness checks; does not reboot, root, unlock or write the phone.
 - `research/custom-rom/tools/collect_e2003_prerequisites.sh`: verifies exactly one authorized E2003 running build ID `25.0.A.2.31`, then prints device/kernel/CPU-frequency/partition metadata, Wi-Fi driver bindings, display density, available hardware HAL filenames and sanitized input-device names/handlers. It does not print the ADB serial, save a report, read raw partition contents, or reboot/write the phone.
 - `research/custom-rom/tools/host_check.sh`: inventories host tools/resources only.
+- `research/custom-rom/tools/compare_partition_config.py`: offline size comparison between candidate MediaTek makefile partition values and a read-only prerequisite capture; reports mismatches without accessing a device.
 - The root-readiness script also prints the live Sony customization fields, software-base fields, kernel string, named partition map and `/proc/partitions` sizes. It intentionally never reads raw partition contents or prints the ADB serial.
 - `research/custom-rom/tools/inspect_ftf.sh`: hashes/checks/lists an FTF ZIP without extraction or flashing.
 - `research/custom-rom/tools/inspect_boot_image.sh`: copies an already obtained boot image into a new output directory and invokes a user-supplied trusted host `unpack_bootimg.py`; it never writes to a device or modifies the input image.
