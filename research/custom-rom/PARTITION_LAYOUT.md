@@ -6,6 +6,8 @@ Captured from the connected Sony E2003 by listing `/dev/block/platform/mtk-msdc.
 
 **REPORTED:** the owner says the bootloader is unlocked. Fastboot `getvar unlocked` remains blank. **VERIFIED offline candidate mapping:** historical E2003 TWRP fstab maps recovery to p9, which live metadata labels `fotakernel`; live Fastboot reports that partition as 32 MiB raw and no size for a `recovery` alias. Whether the flash command aliases recovery to p9 and whether the R5A image works on R7A are **UNKNOWN**. Recovery validation remains **BLOCKED** pending a verified restore route.
 
+**Additional read-only fstab match, 2026-10-14:** the candidate recovery's `/system`, `/cache`, `/data`, `/boot`, `/logo`, `/nvram`, `/lk`, `/proinfo` and `/protect*` path names resolve against the currently exposed E2003 `by-name` map; its raw p9 recovery path resolves to the live `fotakernel` block. Live `/proc/mounts` shows `/system`, `/data` and `/cache` as ext4, consistent with the recovery fstab. This is static layout/filesystem compatibility evidence only—not a recovery boot or restore test. The candidate also includes backup-enabled NVRAM/protect/proinfo targets and flashable entries; these must not be selected for broad backup/restore or written.
+
 Sizes below come from `/proc/partitions` in 1-KiB blocks. They are device-reported sizes, not flash instructions. `mmcblk0boot0`, `boot1`, RPMB and raw partition content were not accessed.
 
 | Label | Block node | 1-KiB blocks | Notes |
