@@ -73,10 +73,16 @@ read_remote /proc/partitions
 "${adb_device[@]}" shell 'ls -l /dev/block/platform/mtk-msdc.0/by-name' 2>&1 | tr -d '\r' || true
 
 section "Kernel module and Wi-Fi driver metadata"
-"${adb_device[@]}" shell 'ls -la /system/lib/modules' 2>&1 | tr -d '\r' || true
+"${adb_device[@]}" shell 'cat /proc/modules' 2>&1 | tr -d '\r' || true
 "${adb_device[@]}" shell 'cat /sys/bus/platform/devices/180f0000.WIFI/uevent' 2>&1 | tr -d '\r' || true
 "${adb_device[@]}" shell 'cat /sys/class/net/wlan0/uevent' 2>&1 | tr -d '\r' || true
 "${adb_device[@]}" shell 'readlink /sys/class/net/wlan0/device/driver' 2>&1 | tr -d '\r' || true
+
+section "Display, input and vendor HAL metadata"
+prop ro.sf.lcd_density
+prop ro.opengles.version
+"${adb_device[@]}" shell 'for path in /system/lib/hw /system/vendor/lib/hw /system/lib/modules; do echo "[$path]"; ls -la "$path" 2>&1; done' 2>&1 | tr -d '\r' || true
+"${adb_device[@]}" shell 'cat /proc/bus/input/devices' 2>&1 | tr -d '\r' | sed -E '/^(P: Phys=|U: Uniq=)/d' || true
 
 section "Read-only limitations"
 printf '%s\n' "No raw partition data was accessed. Empty or denied kernel interfaces above are reported as-is."

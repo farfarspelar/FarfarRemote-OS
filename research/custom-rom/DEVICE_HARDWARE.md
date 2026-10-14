@@ -30,6 +30,7 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Graphics stack | Live `/system/lib/hw` contains `gralloc.mt6752.so` and `hwcomposer.mt6752.so`; `/system/lib/egl/libGLES_mali.so` is about 18.7 MB | **VERIFIED** file presence/size. Source revision, interface compatibility and redistribution rights are **UNKNOWN**; file size is not RAM use. |
 | Wi-Fi | Live interface is `wlan0`; sysfs binds it to platform driver `mt-wifi`. Firmware/configuration assets are present in `/system/lib/hw` and `/system/etc/firmware` | **VERIFIED** runtime interface/driver name and file presence. Exact chipset revision, source and blob set are **UNKNOWN**. Preserve the stock driver/firmware path for any stock-based OS. |
 | Bluetooth/audio hardware modules | `/system/lib/hw` contains `bluetooth.default.so` and audio HAL modules | **VERIFIED** file presence only. This does not by itself prove Bluetooth operation or all audio paths in a new ROM. |
+| Input devices | `/proc/bus/input/devices` reports `mtk-tpd` (touch, handlers `mouse0`/`event7`) and `mtk-kpd` (keys, `event0`); Android density property is `240` dpi | **VERIFIED**, read-only ADB. Calibration, key layout and external controller behavior remain **UNKNOWN** for a new image. |
 
 Primary Sony references: [E4g white paper](https://www-support-downloads.sonymobile.com/e2003/whitepaper_EN_e2003_e2006_e2053_xperia_E4g.pdf) and [E2003/E2006/E2053 user guide](https://www-support-downloads.sonymobile.com/e2003/userguide_EN_E2003-E2006-E2053_2_Android4.4.4.pdf).
 
@@ -38,6 +39,8 @@ Primary Sony references: [E4g white paper](https://www-support-downloads.sonymob
 Read-only aliases in `/dev/block/platform/mtk-msdc.0/by-name` map to `mmcblk0p1` through `p22`; the detailed table is in [PARTITION_LAYOUT.md](PARTITION_LAYOUT.md). The block access policy denied reading even one byte of the `boot` partition as ADB shell. No raw boot/recovery/TA/NVRAM data was read. `/system` is mounted read-only.
 
 `ro.bootloader=s1` and the Sony `fotakernel` naming establish Sony/MTK-specific boot layout clues, not a validated flashing protocol. The host currently sees the handset in normal ADB mode. A temporary Fastboot identity probe was performed and is documented below; no write operation was performed.
+
+The live HAL inventory includes `gralloc.mt6752.so`, `hwcomposer.mt6752.so`, and `nfc_nci_pn547.mt6752.so` under `/system/lib/hw`, plus `audio.a2dp.blueangel.so` and `bluetooth.blueangel.so` under `/system/vendor/lib/hw`. `/system/lib/modules` is empty and `/proc/modules` returned no entries to the shell at the latest capture. These names and files are implementation prerequisites, not evidence of open-source availability or a complete working replacement stack. The NFC, audio, Bluetooth and graphics binaries must stay paired with compatible framework/kernel interfaces.
 
 ## Variant boundaries
 
@@ -65,7 +68,7 @@ The latest normal-Android ADB capture confirms `ro.product.board=callass`, `ro.h
 
 `/proc/cmdline` access is denied to ADB shell, `/proc/config.gz` is absent, and `/proc/device-tree` plus `/sys/firmware/devicetree/base` are absent. `/system/lib/modules` is present but empty; the live Wi-Fi interface `wlan0` is attached to platform device `180f0000.WIFI` with driver name `mt-wifi`. This suggests the Wi-Fi path is built into the running kernel or otherwise supplied outside that directory; exact implementation is **UNKNOWN** without kernel source/config. No module was loaded, changed or removed.
 
-CPU0 reported the `mt-cpufreq` driver with `interactive` governor, available range 468,000–1,495,000 kHz, current 1,170,000 kHz at capture. This is a single momentary sysfs reading, not a load or battery benchmark. The current `/proc/partitions` read reconfirms a 7,634,944 KiB eMMC block device, 2,048,000 KiB system partition, 32,768 KiB each for boot and fotakernel, and 5,168,640 KiB userdata. These are metadata only. No block contents were read in this capture. Live `MemTotal` is 918,424 kB.
+CPU0 reported the `mt-cpufreq` driver with `interactive` governor, available range 468,000–1,495,000 kHz, current 1,170,000 kHz at capture. This is a single momentary sysfs reading, not a load or battery benchmark. The current `/proc/partitions` read reconfirms a 7,634,944 KiB eMMC block device, 2,048,000 KiB system partition, 32,768 KiB each for boot and fotakernel, and 5,168,640 KiB userdata. These are metadata only. No block contents were read in this capture. Live `MemTotal` is 918,424 kB. A follow-up reports LCD density 240, OpenGL ES property `196608`, touch input `mtk-tpd`, key input `mtk-kpd`, the hardware directories described above, and no entries in `/proc/modules`; hardware input fields containing unique IDs were omitted from saved documentation.
 
 ### Fastboot identity probe — 2026-10-14
 

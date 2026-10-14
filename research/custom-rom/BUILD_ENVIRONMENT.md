@@ -25,7 +25,7 @@ References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob
 ## Safe helper tools
 
 - `tools/root_readiness.sh`: exact-model, read-only ADB readiness checks; does not reboot, root, unlock or write the phone.
-- `research/custom-rom/tools/collect_e2003_prerequisites.sh`: verifies exactly one authorized E2003 running build ID `25.0.A.2.31`, then prints device/kernel/CPU-frequency/partition metadata and Wi-Fi driver bindings. It does not print the ADB serial, save a report, read raw partition contents, or reboot/write the phone.
+- `research/custom-rom/tools/collect_e2003_prerequisites.sh`: verifies exactly one authorized E2003 running build ID `25.0.A.2.31`, then prints device/kernel/CPU-frequency/partition metadata, Wi-Fi driver bindings, display density, available hardware HAL filenames and sanitized input-device names/handlers. It does not print the ADB serial, save a report, read raw partition contents, or reboot/write the phone.
 - `research/custom-rom/tools/host_check.sh`: inventories host tools/resources only.
 - The root-readiness script also prints the live Sony customization fields, software-base fields, kernel string, named partition map and `/proc/partitions` sizes. It intentionally never reads raw partition contents or prints the ADB serial.
 - `research/custom-rom/tools/inspect_ftf.sh`: hashes/checks/lists an FTF ZIP without extraction or flashing.
