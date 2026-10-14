@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dependency-free contract guard for protected remote behavior and the v0.4.1 RC flavors."""
+"""Dependency-free contract guard for protected behavior and distribution manifests."""
 
 from pathlib import Path
 import re
@@ -8,7 +8,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = "a840155"
+# Freeze the last full implementation checkpoint. Earlier v0.2 comparisons became
+# invalid when later Kodi folder browsing and active-stream path support were added.
+BASE = "b71fbef"
 MAIN = "app/src/main/java/org/farfarremote/MainActivity.java"
 ANDROID = "http://schemas.android.com/apk/res/android"
 
@@ -73,7 +75,7 @@ except subprocess.CalledProcessError:
 
 new_main = (ROOT / MAIN).read_text()
 new_client = (ROOT / "app/src/main/java/org/farfarremote/KodiClient.java").read_text()
-check(new_client == old_client, "KodiClient byte-for-byte unchanged from v0.2 baseline")
+check(new_client == old_client, "KodiClient unchanged from the release implementation checkpoint")
 header = method_block(new_main, "addHeader")
 check('new SpannableString("FarfarRemote")' in header and "new ForegroundColorSpan(CYAN)" in header,
       "FarfarRemote wordmark uses one text view with cyan accent span")
@@ -89,25 +91,20 @@ protected_methods = (
     "toggleMute", "client", "applySnapshot",
 )
 for name in protected_methods:
-    check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from v0.2")
+    check(method_block(new_main, name) == method_block(old_main, name), f"{name} unchanged from the release implementation checkpoint")
 
-new_show_streams = method_block(new_main, "showStreams").replace("userRequestExecutor().execute(", "io.execute(", 1)
-check(new_show_streams == method_block(old_main, "showStreams"),
-      "Audio/Subtitles stream selection unchanged except for its responsive command executor")
-new_action = method_block(new_main, "action").replace("userRequestExecutor().execute(", "io.execute(", 1)
-new_action = new_action.replace(" if (isDedicatedOs()) { consecutivePollFailures = 0; schedulePoll(0); }", "")
-new_action = new_action.replace(" if (isDedicatedOs()) schedulePoll(0);", "")
-new_action = new_action.replace(' if (isDedicatedOs() && prefs.getBoolean("auto_reconnect", true)) { consecutivePollFailures++; schedulePoll(reconnectDelayMs()); }', "")
-check(new_action == method_block(old_main, "action"),
-      "Kodi action payloads and UI results unchanged apart from executor and OS polling bookkeeping")
+check(method_block(new_main, "showStreams") == method_block(old_main, "showStreams"),
+      "Audio/Subtitles stream selection unchanged from the release implementation checkpoint")
+check(method_block(new_main, "action") == method_block(old_main, "action"),
+      "Kodi action payloads and UI results unchanged from the release implementation checkpoint")
 
 for name in ("buildPortrait", "buildLandscape"):
     check(method_block(new_main, name) == method_block(old_main, name),
-          f"{name} unchanged from v0.2")
+          f"{name} unchanged from the release implementation checkpoint")
 
 build = (ROOT / "app/build.gradle").read_text()
 check("applicationId 'org.farfarremote'" in build, "OS applicationId retained")
-check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 9" in build and "versionName '0.4.5-rc1'" in build, "compile SDK 36, min SDK 19, and v0.4.5 RC metadata")
+check("compileSdk 36" in build and "minSdk 19" in build and "versionCode 15" in build and "versionName '0.4.7'" in build, "compile SDK 36, min SDK 19, and v0.4.7 stable metadata")
 check(re.search(r"app \{(?:(?!\n\s*\}).)*targetSdk 36", build, re.S) is not None, "App flavor targets API 36")
 check(re.search(r"os \{(?:(?!\n\s*\}).)*targetSdk 28", build, re.S) is not None, "OS flavor retains conservative API 28 target")
 app_manifest = ET.parse(ROOT / "app/src/app/AndroidManifest.xml").getroot()
@@ -142,8 +139,8 @@ check("@Override protected void onStart()" in new_main and "handler.removeCallba
 check("@Override protected void onStop()" in new_main and "activityStarted = false; handler.removeCallbacks(poll)" in new_main, "polling stops when the activity is backgrounded")
 check("setShowText(" not in new_main, "no Switch API 21 setShowText call on API 19")
 check("Build.VERSION.SDK_INT < 35" in new_main and "Api35WindowInsets.install(target)" in new_main, "App insets are API-gated; API 19 remains supported")
-check("Api33BackHandler.register(this, this::closeSettings)" in new_main, "App Settings use modern platform Back callback")
+check("Api33BackHandler.register(this, this::closeOverlay)" in new_main, "App Settings and library use modern platform Back callback")
 check('android:usesCleartextTraffic="true"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(), "Kodi HTTP connectivity remains enabled")
 check((ROOT / "app/src/main/res/drawable/settings_input_background.xml").is_file(), "focus-state input selector exists")
 check((ROOT / "app/src/main/res/drawable/settings_orientation_background.xml").is_file(), "selected orientation selector exists")
-print("All FarfarRemote v0.4.5 RC distribution and regression contract checks passed.")
+print("All FarfarRemote v0.4.7 distribution and regression contract checks passed.")

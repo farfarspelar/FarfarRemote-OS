@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.7 — Stable release
+
+- Added swipe navigation from the remote to Kodi's video folders and Settings, with swipe-back behavior from both views.
+- Added Kodi folder browsing, launching selected media, remembering the last successfully opened folder, and opening the folder of the currently playing item when Kodi provides that path.
+- Added optional per-folder audio and subtitle preferences, matched using Kodi track metadata.
+- Added OS-only Battery Mode profiles and bounded reconnect behavior while retaining immediate user commands and existing App behavior.
+- Preserved both distribution identities, API 19 minimum, the OS HOME launcher, and the modern App target SDK.
+- Includes the Favorites, Kodi Power Off, and screen-timeout behavior from 0.4.4.
+
 ## 0.4.6 RC5 — Open the folder currently playing
 
 - When Kodi is playing media, opening the library first tries the parent directory of the active stream, so the browser returns to the folder the content came from instead of a generic source such as `Videos`.

@@ -1,3 +1,16 @@
+# FarfarRemote 0.4.7 — stable release build
+
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./tools/build_distributions.sh` completed successfully for both flavors. Gradle unit-test tasks report `NO-SOURCE` because this project has no Android unit-test sources.
+- **PASS (source contracts):** `tools/test_v03_contract.py`, `tools/test_favorites_contract.py`, and `tools/test_os_battery_contract.py` passed. The v0.3 contract's comparison point was updated from the obsolete v0.2 snapshot to the current feature implementation checkpoint; no application behavior was changed for this release.
+- **PASS (APK metadata):** App `org.farfarremote.app`, OS `org.farfarremote`; both versionCode 15, versionName 0.4.7, min API 19. App target API 36; OS target API 28. App has no HOME category; OS retains HOME.
+- **PASS (checksums):** `cd dist && sha256sum -c SHA256SUMS-0.4.7.txt` verified both APKs.
+- **APK SHA-256:** App `442c6790f34f9a64eb071660a5e0adb2b88339e906a87c546cb2e07f082e78d6`; OS `f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3a6aab0e7bc`.
+- **APK size:** App 1,236,457 bytes; OS 1,236,439 bytes.
+- **Expected compatibility:** both APKs keep min API 19 and versionCode 15. App is `org.farfarremote.app`, target API 36, with no HOME intent; OS is `org.farfarremote`, target API 28, with HOME launcher behavior.
+- **Signing:** the retained local debug certificate fingerprint is `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`, matching the certificate recorded for prior Xperia OS updates.
+- **NOT VERIFIED IN THIS RELEASE PASS:** physical Samsung Android 13 swipe feel and Kodi browsing, physical Xperia update/install, Kodi live connection/audio/subtitle behavior, and launch/runtime tests on other Android devices. The Xperia is connected over ADB, but no install was performed. APK compilation does not prove these runtime behaviors.
+- **NOT CLAIMED:** No changes in this release establish new battery-life gains or a 24-hour runtime.
+
 # FarfarRemote 0.4.6 RC5 — open the active stream's folder
 
 - **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleOsDebug assembleAppDebug` built both APKs. OS: `org.farfarremote`, min API 19 / target API 28. App: `org.farfarremote.app`, min API 19 / target API 36. Both are version `0.4.6-rc5`, versionCode 14.

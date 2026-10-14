@@ -18,7 +18,7 @@ def check(ok, label):
     print(f"PASS: {label}")
 
 
-check("minSdk 19" in build and "targetSdk 28" in build and "versionCode 9" in build,
+check("minSdk 19" in build and "targetSdk 28" in build and "versionCode 15" in build,
       "legacy API 19 OS package identity and compatibility metadata retained")
 check('if (isDedicatedOs()) addBatteryModeSettings(root);' in main,
       "battery controls are added only to the OS flavor")
@@ -34,8 +34,8 @@ check('Intent.ACTION_SCREEN_OFF' in main and 'Intent.ACTION_SCREEN_ON' in main a
       "screen-off suspends scheduled polling and screen-on can resume it")
 check('registerReceiver(screenStateReceiver, filter)' in main and 'unregisterReceiver(screenStateReceiver)' in main,
       "screen-state receiver is lifecycle-scoped")
-check('if (isDedicatedOs() && (!screenIsOn || inSettings)) return;' in main,
-      "OS status polling pauses while screen is off or Settings is open")
+check('if (inBrowser || (isDedicatedOs() && (!screenIsOn || inSettings))) return;' in main,
+      "OS polling pauses while screen is off or Settings is open, and in-browser polling is suspended")
 check('private final ExecutorService commands = Executors.newSingleThreadExecutor();' in main and
       'private ExecutorService userRequestExecutor() { return isDedicatedOs() ? commands : io; }' in main and
       'userRequestExecutor().execute(() -> { try { KodiClient client = client(); request.run(client);' in main,

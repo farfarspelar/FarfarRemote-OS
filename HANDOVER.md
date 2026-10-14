@@ -4,7 +4,7 @@ Last updated: 2026-10-14
 
 ## Current verified FarfarRemote baseline
 
-- Latest local OS build: `0.4.6-rc5` (`org.farfarremote`), installed as an in-place update on the Xperia E2003. The App flavor is `org.farfarremote.app` and both APK flavors build from the shared project.
+- The Xperia currently has the OS `0.4.6-rc5` build installed in place (`org.farfarremote`). Stable v0.4.7 App and OS APKs have since been built with the same signing certificate, but were not installed during release packaging. Both flavors share the same project; App is `org.farfarremote.app`.
 - The owner reports that Kodi controls, Find My Kodi, favorites, Kodi-host Power Off, Wi-Fi reconnection after reboot, HOME launcher, and the Android screen timeout have been physically verified.
 - The active-stream folder browser was additionally checked on the Xperia while Kodi played an episode: it opened the episode's parent folder and restored that folder after returning to the remote. Gestures were injected through ADB for this check.
 - Battery life around 12 hours is an informal owner estimate only. No unplugged, controlled endurance measurement has been completed; the current battery tooling correctly rejects USB-powered sessions.

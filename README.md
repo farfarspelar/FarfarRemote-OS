@@ -78,21 +78,12 @@ Find My Kodi additionally needs Kodi Zeroconf service announcements and multicas
 
 ## Download and install
 
-### Latest published prerelease: v0.4.4-rc1
+### Latest stable release: v0.4.7
 
-The source in the current development branch is v0.4.6-rc5, which is not a published GitHub release. Use the release links below for the latest published APKs; development APKs must be built from source and are not interchangeable with a stable install unless their signing key matches.
+- **FarfarRemote App — Android 4.4+ (API 19+)** — [Download the regular Android app](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.7/FarfarRemote-App-Android4.4plus-API19plus-v0.4.7.apk). For everyday phones, including Android 13 and Android 15. It does not register as the HOME launcher. Target API 36.
+- **FarfarRemote OS — Android 4.4+ (API 19+)** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.7/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk). For older or dedicated devices such as the Xperia E4g E2003. Target API 28 and includes the HOME launcher intent.
 
-- **FarfarRemote App — Android 4.4+ (API 19+)** — [Download the regular Android app](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.4-rc1/FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk). For everyday phones, including Android 13 and Android 15. It does not register as the HOME launcher. Minimum: Android 4.4 / API 19; target: API 36.
-- **FarfarRemote OS — Android 4.4+ (API 19+)** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.4-rc1/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk). For older or dedicated devices such as the Xperia E4g E2003. Minimum: Android 4.4 / API 19; target: API 28; includes the HOME launcher intent and preserves the Xperia OS track.
-
-These are prerelease APKs for testing. See the [v0.4.4-rc1 release notes and checksums](https://github.com/farfarspelar/FarfarRemote-OS/releases/tag/v0.4.4-rc1). For other versions, browse the [GitHub Releases page](https://github.com/farfarspelar/FarfarRemote-OS/releases). Choose the APK for the intended use:
-
-The OS battery-optimization work is being developed as v0.4.5-rc1 on the `feature/os-battery-optimization` branch. It is not a published GitHub release; branch APKs and checksums are kept in `dist/` for testing.
-
-- **FarfarRemote App:** install `FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk` as a regular app and open it from the app drawer. Android's Home button continues to open the phone's existing launcher.
-- **FarfarRemote OS:** install `FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk` on a dedicated device. Press Android Home and select FarfarRemote to make it the launcher. For an existing OS installation, update with the OS APK only; do not uninstall the app or clear its data. Updates must use the same signing certificate as the installed build.
-
-Android may ask you to allow APK installation from the browser or file manager. The current RC artifacts are debug-signed. Read [Signing and updates](#signing-and-updates) before distributing updates to an established installation.
+See the [v0.4.7 release notes and SHA-256 checksums](https://github.com/farfarspelar/FarfarRemote-OS/releases/tag/v0.4.7) or browse [all GitHub Releases](https://github.com/farfarspelar/FarfarRemote-OS/releases). Install the App APK as a normal app and open it from the app drawer. For an existing FarfarRemote OS installation, update with the OS APK only; do not uninstall the app or clear its data. Android may ask you to allow APK installation from your browser or file manager.
 
 ## Build from source
 
@@ -108,7 +99,7 @@ Gradle flavors are named `app` and `os`. Both APKs compile against API 36 and re
 
 ## Signing and updates
 
-Debug APKs are for testing and the current development update path, not a production signing strategy. Android allows an in-place update only when both the application ID and signing certificate match. Keep a secure backup of the signing key for long-lived installations. Do not change the certificate for existing `org.farfarremote` installs or uninstall them to work around a signature mismatch.
+The v0.4.7 APKs are signed with the project's existing Android debug certificate so they can update compatible installations using the established signing identity. This certificate is suitable for this project's direct-download distribution but is not a private production signing key. Android permits an in-place update only when both the application ID and signing certificate match. Do not uninstall an existing `org.farfarremote` installation or clear its data to work around a signature mismatch.
 
 ## Graphics provenance
 
