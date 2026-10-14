@@ -14,7 +14,7 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Item | Finding | Evidence |
 |---|---|---|
 | Model | Sony Xperia E4g E2003, single SIM | **VERIFIED**, live `ro.product.model/device`; Sony groups E2003/E2006/E2053 in the user guide |
-| OS/build | Android 4.4.4, API 19; build 25.0.A.2.31; customization 1293-7358 R7A | **VERIFIED**, live properties and prior read-only audit |
+| OS/build | Android 4.4.4, API 19; build 25.0.A.2.31; customization 1293-7358 R7A | **VERIFIED**, read-only live properties. Specifically, `ro.semc.version.cust=1293-7358` and `ro.semc.version.cust_revision=R7A`; separate `ro.semc.version.sw=1292-0502` / `sw_variant=GENERICSS` values describe the software base and are not the CDA. |
 | SoC marketed by Sony | MediaTek MT6732, quad-core 1.5 GHz | **VERIFIED** by Sony white paper |
 | Vendor platform string | `ro.hardware=mt6752`; `/proc/cpuinfo` says Hardware MT6752 | **VERIFIED** observation; its relationship to the marketed MT6732 SKU is **UNKNOWN**. Do not infer MT6752-device image compatibility. |
 | CPU | ARMv7, architecture 7, 32-bit ABI `armeabi-v7a`/`armeabi`; CPU reports ARMv7 features including NEON/VFP | **VERIFIED**, live properties and `/proc/cpuinfo` |

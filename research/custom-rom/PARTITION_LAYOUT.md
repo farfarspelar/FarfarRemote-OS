@@ -2,7 +2,7 @@
 
 **Status key:** VERIFIED = directly observed/documented; REPORTED = owner statement; UNKNOWN = insufficient evidence; BLOCKED = cannot continue until named evidence is available.
 
-Captured from the connected Sony E2003 by listing `/dev/block/platform/mtk-msdc.0/by-name` and `/proc/partitions`. No partition data was read. `/system` is mounted read-only. A one-byte attempt to read `boot` as shell UID 2000 was denied by permissions; it did not write data.
+Captured from the connected Sony E2003 by listing `/dev/block/platform/mtk-msdc.0/by-name` and `/proc/partitions`. The mapping and sizes were rechecked over ADB on 2026-10-14. No partition data was read. `/system` is mounted read-only. The `boot` block node is `root:system` mode `0640`, and a one-byte attempt to read it as shell UID 2000 was denied by permissions; it did not write data. ADB properties independently reported model E2003/build `25.0.A.2.31`, customization `1293-7358` revision `R7A`, and software base `1292-0502` variant `GENERICSS`.
 
 **REPORTED:** the owner says the bootloader is unlocked. **UNKNOWN:** whether `fotakernel` is used as recovery on this installed firmware. **BLOCKED:** image extraction and recovery validation until an exact stock image is obtained.
 
