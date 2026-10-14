@@ -59,6 +59,10 @@ Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarR
 6. Unplugged controlled battery baseline and comparable post-change measurements.
 7. Sufficient persistent build host/source storage for any full ROM branch.
 
+### New tooling evidence — 2026-10-14
+
+The public Flashtool device database was inspected at a pinned commit. Its `E20XX` profile explicitly recognizes E2003 and provides the Sony Flashmode FTF workflow; this makes Flashtool a credible host-side restore-tool candidate **if** an exact, verified FTF is found. Its generic profile does not bundle a recovery bootkit, and its FSC recipe includes sensitive partitions, so the profile is not itself a safe rollback plan. Current blockers remain exact R7A image provenance, whether the tool/loader can restore the required partitions on this phone, and an independently verified recovery path. No device write was performed.
+
 ## Probability checkpoint — 2026-10-14
 
 To avoid conflating “can build an image” with “can safely run it on the handset,” estimates are separated by outcome. These are engineering judgments from current evidence, not statistical guarantees:
@@ -67,9 +71,9 @@ To avoid conflating “can build an image” with “can safely run it on the ha
 |---|---:|---|
 | Produce and inspect an offline stock-derived API 19 system-image POC from available E2003-family material | ~80% | A 2 GB ext4 system image reconstructs; 4,248/4,263 common captured `/system` files match byte-for-byte; toolchain can process it. File metadata/boot partitions are not compared, and candidate CDA differs. |
 | First boot of a minimal stock-derived build on this R7A handset | ~70% conditional; low-to-moderate confidence | 99.65% identical common `/system` files plus historical E2003 recovery with byte-identical kernel and matching p9 mapping. Assumes reported unlock is true, recovery target maps correctly, and R7A-specific files are preserved. None of those boot/recovery assumptions has been tested on-device. |
-| Safely recover if first boot fails using evidence already in hand | <50% | Recovery binary is not audited or tested on R7A; no exact/official restore package or proven repair path. Sony Companion has not been shown to serve this device/build. |
+| Safely recover if first boot fails using evidence already in hand | <50% | Flashtool's E2003 profile is now verified, improving host-tool confidence, but the available FTF mismatches CDA and is untrusted; neither Flashtool restore nor the historical recovery image has been tested on R7A. |
 | Build a newer AOSP/LineageOS ROM for E2003 | <20% | Exact kernel source/config and device tree are still absent; no reproducible port was found. |
 
-The ≥70% threshold is now met only as a **conditional estimate for first boot of a minimal stock-derived build**, not as an observed result or an overall safe-ROM success probability. The estimate relies on an untested historical recovery candidate and owner-reported bootloader unlock. No ROM has been built or booted on the phone, and safe rollback remains below 70%. The highest-value next step is to obtain/confirm an exact restore route, then independently review recovery provenance and—only after separate authorization—test recovery/rollback before any ROM write. No device write or image boot has been performed.
+The ≥70% threshold is met only as a **conditional estimate for first boot of a minimal stock-derived build**, not as an observed result or an overall safe-ROM success probability. Confidence in identifying a plausible stock-flash utility improved, but the chance of safely recovering after a failed boot remains below 50% on present evidence. No ROM has been built or booted on the phone. The highest-value next step is still an exact, traceable restore package and confirmation of Sony's service repair availability; then independently review recovery provenance and—only after separate authorization—test recovery/rollback before any ROM write. No device write or image boot has been performed.
 
 **Root research note:** a 2016 community report describes KingRoot on E2003/Android 4.4.4/build `25.0.A.2.31`, but the handset had previously been rooted and commenters questioned whether residual files explain the result. Treat it as weak evidence only; APK/version/provenance, CDA and reproducibility are missing. It is not an approved procedure. See [ROOT_METHODS.md](ROOT_METHODS.md).
