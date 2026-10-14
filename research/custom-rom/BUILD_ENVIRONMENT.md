@@ -20,6 +20,7 @@ References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob
 
 - `tools/root_readiness.sh`: exact-model, read-only ADB readiness checks; does not reboot, root, unlock or write the phone.
 - `research/custom-rom/tools/host_check.sh`: inventories host tools/resources only.
+- The root-readiness script also prints the live Sony customization fields, software-base fields, kernel string, named partition map and `/proc/partitions` sizes. It intentionally never reads raw partition contents or prints the ADB serial.
 - `research/custom-rom/tools/inspect_ftf.sh`: hashes/checks/lists an FTF ZIP without extraction or flashing.
 - `research/custom-rom/tools/inspect_boot_image.sh`: copies an already obtained boot image into a new output directory and invokes a user-supplied trusted host `unpack_bootimg.py`; it never writes to a device or modifies the input image.
 

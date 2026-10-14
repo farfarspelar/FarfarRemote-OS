@@ -18,12 +18,22 @@ device=$(getprop ro.product.device)
 firmware=$(getprop ro.build.display.id)
 fingerprint=$(getprop ro.build.fingerprint)
 api=$(getprop ro.build.version.sdk)
+customization=$(getprop ro.semc.version.cust)
+customization_revision=$(getprop ro.semc.version.cust_revision)
+software_base=$(getprop ro.semc.version.sw)
+software_variant=$(getprop ro.semc.version.sw_variant)
+platform=$(getprop ro.mediatek.platform)
+kernel_version=$(adb -s "$serial" shell cat /proc/version 2>/dev/null | tr -d '\r')
 id_line=$(adb -s "$serial" shell id 2>/dev/null | tr -d '\r')
 uid=$(sed -n 's/^uid=\([0-9][0-9]*\).*/\1/p' <<<"$id_line")
 
 printf 'FarfarRemote OS root readiness (read-only)\n'
 printf 'Model: %s\nDevice: %s\nFirmware: %s\nAndroid API: %s\n' "$model" "$device" "$firmware" "$api"
+printf 'Customization: %s %s\nSoftware base: %s %s\nPlatform: %s\n' \
+  "${customization:-unknown}" "${customization_revision:-unknown}" \
+  "${software_base:-unknown}" "${software_variant:-unknown}" "${platform:-unknown}"
 printf 'Build fingerprint: %s\n' "$fingerprint"
+printf 'Kernel: %s\n' "${kernel_version:-unavailable}"
 
 if [[ "$model" != "E2003" || "$device" != "E2003" || "$fingerprint" != Sony/E2003/E2003:* ]]; then
   printf 'Device match: FAIL (expected exact Sony E2003 identity)\n'
@@ -52,6 +62,20 @@ else
   printf 'Disabled Android packages: none reported\n'
 fi
 printf 'System image / package changes: none performed\n'
+
+printf '\nPartition metadata only (no raw partition contents read):\n'
+partition_map=$(adb -s "$serial" shell 'ls -l /dev/block/platform/mtk-msdc.0/by-name' 2>/dev/null | tr -d '\r' || true)
+if [[ -n "$partition_map" ]]; then
+  printf '%s\n' "$partition_map"
+else
+  printf 'Named partition map unavailable at the expected path\n'
+fi
+partition_sizes=$(adb -s "$serial" shell cat /proc/partitions 2>/dev/null | tr -d '\r' || true)
+if [[ -n "$partition_sizes" ]]; then
+  printf '%s\n' "$partition_sizes"
+else
+  printf 'Partition size table unavailable\n'
+fi
 
 if command -v fastboot >/dev/null 2>&1; then
   mapfile -t fb_devices < <(fastboot devices 2>/dev/null | awk 'NF >= 2 { print $1 }')
