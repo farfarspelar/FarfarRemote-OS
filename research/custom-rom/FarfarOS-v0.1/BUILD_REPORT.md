@@ -6,10 +6,9 @@ The Service Menu initially showed `Bootloader unlock allowed: Yes`, but not
 `Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` was blank. After
 explicit owner authorization, the guarded helper revalidated the exact E2003 /
 `25.0.A.2.31` / `1293-7358 R7A` identity, sent one Sony `oem unlock` command,
-and received `OKAY`. `fastboot reboot` also returned `OKAY`. The phone now
-enumerates as an Android USB device, but no authorized ADB target is available
-after the reset. Actual unlocked status is **pending Service Menu
-verification** after setup and USB debugging are restored. No ROM or system
+and received `OKAY`. `fastboot reboot` also returned `OKAY`. ADB reconnected,
+and the owner subsequently confirmed Service Menu `Bootloader unlocked: Yes`.
+This confirms bootloader state; it does not establish root. No ROM or system
 image was flashed. Sony's official guide states unlocking factory-resets user
 data, does not grant root, and prevents restoration of DRM keys: [Sony Open
 Devices — unlock bootloader](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader).

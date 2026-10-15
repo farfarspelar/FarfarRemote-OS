@@ -1,6 +1,6 @@
 # E2003 bootloader unlock operation record
 
-**Status: UNLOCK COMMAND ACCEPTED; POST-RESET VERIFICATION PENDING**
+**Status: OWNER CONFIRMED `Bootloader unlocked: Yes`; no ROM image flashed**
 
 This proposal is for the exact connected Sony Xperia E4g E2003, Android 4.4.4,
 firmware `25.0.A.2.31`, CDA `1293-7358 R7A`, using its S1 Fastboot interface.
@@ -8,12 +8,13 @@ It does not authorize a ROM/system write.
 
 ## Current evidence
 
-- The Android Service Menu showed `Bootloader unlock allowed: Yes` but did
-  **not** show `Bootloader unlocked: Yes`.
+- Before unlock, the Android Service Menu showed `Bootloader unlock allowed: Yes` but did
+  **not** show `Bootloader unlocked: Yes`. The owner later confirmed the unlocked state as recorded below.
 - Fastboot identified product `E2003` and bootloader
   `1290-9780 S1_Boot_MT6732_TC9PRA_9`; `getvar unlocked` returned no value.
-- Fastboot connectivity works, but that does not mean the bootloader is
-  currently unlocked until the post-operation status is checked.
+- The owner subsequently checked Service info > Configuration > Rooting
+  Status and reports `Bootloader unlocked: Yes`. This confirms unlock status;
+  it does not mean Android is rooted or that a ROM image is validated.
 - The experimental system image exists locally, but it has not been accepted
   or booted by this handset. A validated exact-R7A restoration path is still
   missing.
@@ -33,13 +34,10 @@ not saved in the repository or printed by the helper. Fastboot returned
 `OKAY` for the single `oem unlock` command (3.809 seconds). No system/boot image
 or other partition image was flashed.
 
-Afterward `fastboot reboot` returned `OKAY`. The handset enumerated on USB as
-an Android device, but ADB reported zero authorized targets; this is consistent
-with the factory reset disabling USB debugging or requiring host reapproval,
-but the exact screen state is **UNKNOWN**. The Service Menu has not yet been
-rechecked, so record the result as **unlock command accepted; actual unlocked
-status pending post-reset verification**. No additional device command has
-been sent since reboot.
+Afterward `fastboot reboot` returned `OKAY`. ADB later reconnected and verified
+the device as E2003 / Android 4.4.4 / `25.0.A.2.31`. The owner then checked the
+Service Menu and confirmed `Bootloader unlocked: Yes`. No ROM or other
+partition image has been flashed.
 
 ## Operation effects
 
@@ -65,8 +63,8 @@ Official references:
    not stored in Git or this report.
 3. Issued Sony's documented unlock command once. Fastboot returned `OKAY`.
 4. Issued `fastboot reboot`; it returned `OKAY`.
-5. The handset enumerated as Android USB, but ADB did not reconnect. Service
-   Menu verification of `Bootloader unlocked: Yes` remains pending.
+5. ADB reconnected; the owner confirmed Service Menu status
+   `Bootloader unlocked: Yes`.
 6. No system/boot/recovery image was flashed. System-image testing remains a
    separate, unauthorized operation and has no validated restore path.
 
@@ -93,9 +91,8 @@ the same local user while the unlock command is executing.
 
 ## Remaining verification and next operation
 
-The unlock operation was explicitly authorized and Fastboot accepted it. To
-verify the resulting state, complete Android's first-start setup if shown,
-re-enable USB debugging, approve this host, and inspect Service info >
-Configuration > Rooting Status for `Bootloader unlocked: Yes`. The current
-system-image trial remains a separate operation: no exact restoration route
-has been validated, and no flash authorization has been given.
+The unlock operation was explicitly authorized, Fastboot accepted it, and the
+owner confirmed `Bootloader unlocked: Yes` in the Service Menu. Android ADB is
+available again. Root is not established. The current system-image trial
+remains a separate operation: no exact restoration route has been validated,
+and no system-image flash authorization has been given.

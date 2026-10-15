@@ -15,23 +15,24 @@ The conditional first-boot estimate below originally assumed the owner's
 report that the bootloader was already unlocked. The subsequent Service Menu
 check instead showed only `Bootloader unlock allowed: Yes`; Fastboot's
 `getvar unlocked` was blank. The owner later authorized the official unlock,
-and Fastboot returned `OKAY` for that command. The phone rebooted, but ADB has
-not reconnected, so Service Menu confirmation of `Bootloader unlocked: Yes`
-is still pending. The former 70–75% estimate remains conditional on unlock
-success and image acceptance; it is not a verified end-to-end success rate.
+and Fastboot returned `OKAY` for that command. The owner subsequently
+confirmed `Bootloader unlocked: Yes` in the Service Menu and ADB reconnected.
+This removes unlock-state uncertainty, but does not validate the system image,
+root, restore route, or first boot. The former 70–75% estimate remains
+conditional on image acceptance; it is not a verified end-to-end success rate.
 
 Sony's official documentation says unlocking performs a factory reset, does
 not itself grant root, and permanently removes DRM security keys that Sony
 says cannot be restored. The owner later authorized the exact-device unlock;
-Fastboot returned `OKAY` and the phone rebooted, but post-reset verification
-of `Bootloader unlocked: Yes` is still pending because ADB has not reconnected.
+Fastboot returned `OKAY` and the phone rebooted. The owner has since confirmed
+`Bootloader unlocked: Yes` in the Service Menu.
 Sony's current Open Devices target list does not
 include E2003. That is a limitation of the current public AOSP program, not
 proof that no historical Sony source archive ever existed. Sources: [Sony
 unlock procedure and consequences](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader),
 [Sony supported Open Devices](https://opendevices.sony.net/supported-devices-and-functionality).
-No ROM image was flashed. The resulting bootloader state remains pending
-Service Menu verification after Android setup and USB debugging are restored.
+No ROM image was flashed. The owner has since confirmed
+`Bootloader unlocked: Yes` in the Service Menu.
 
 ### FarfarOS Experimental ROM v0.1 — offline system image built, 2026-10-15
 
