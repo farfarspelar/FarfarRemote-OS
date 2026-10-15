@@ -81,3 +81,16 @@ This confirms the working device already stores FarfarRemote's HOME choice in it
 With the owner authorizing continued experiments, the 8,445,952-byte Android boot-container POC (`1d71c03b172d23b7830922153559df37966321bd28fbb9a28666fd81268543dc`) was sent using `fastboot boot`, not `fastboot flash`. The host reported the image transfer as `OKAY` (8,248 KB), then the boot command ended with `FAILED (Status read failed (No such device))`. USB re-enumerated as Sony USB product `0fce:e1cb` with a mass-storage-only interface; neither ADB nor Fastboot became available during the observation window. Because the host could not observe Android boot completion or read a post-boot fingerprint, this is **INCONCLUSIVE**: it does not prove either boot success or boot failure. No partition was written, erased, unlocked, or wiped by the commands issued.
 
 To regain the normal diagnostic path, the phone may need a physical long-press power cycle; once ADB returns, verify the stock fingerprint and repeat read-only checks. Do not infer the temporary boot's outcome from USB re-enumeration alone. The exact contents of the running screen and system are **UNKNOWN** until a person inspects the handset or ADB returns.
+
+## Android sparse container experiment — 2026-10-15
+
+Added `tools/ext4_to_android_sparse.py` to package an existing raw image as a standard Android sparse v1 container without modifying the raw input. It refuses to overwrite an output, requires 4096-byte alignment, emits RAW and DONT_CARE chunks, and records the expanded-image CRC32. The tool routes no data to the phone.
+
+The sparse artifact is outside Git at `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system-post-storage.sparse.img`:
+
+| Artifact | Size | SHA-256 | Validation |
+|---|---:|---|---|
+| Raw ext4 input | 2,097,152,000 bytes | `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d` | Existing payload readback and `e2fsck -fn` pass |
+| Android sparse v1 | 1,729,989,020 bytes | `81b9e117d3832033e520059e8834f6084b4bef05b29025828646c5aa6c41dfb4` | Identified as Android sparse v1; expanded by the locally preserved MediaTek `simg2img`; byte-for-byte `cmp` and SHA-256 match the raw input |
+
+This reduces transfer size by about 17.5%, which is modest. It proves only that the container is structurally readable by the host-side converter and expands to the exact raw image. It does **not** prove the E2003 S1 bootloader accepts this container, that a Sony-valid signed image has been produced, or that the filesystem boots. The inspected MediaTek SignTool contains a sparse-image signing path, but it requires signing configuration and does not establish that this reconstructed `/system` is a valid Sony S1 payload. Do not infer flashability from this experiment.

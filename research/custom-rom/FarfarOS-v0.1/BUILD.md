@@ -52,6 +52,8 @@ research/custom-rom/FarfarOS-v0.1/tools/build_farfaros_v0.1_system.sh \
 
 The output is a raw ext4 `/system` partition image plus an adjacent SHA-256 file. **It is not directly flashable.** Do not put it in GitHub Releases.
 
+For offline packaging research only, `tools/ext4_to_android_sparse.py <raw.ext4> <new.sparse.img>` creates a standard Android sparse v1 container. It refuses to overwrite an existing destination and leaves the raw image unchanged. The current sparse output round-tripped byte-for-byte through the preserved MediaTek `simg2img` utility, but neither sparse nor raw format acceptance by this handset's bootloader has been established. This does not convert the image into a Sony-signed SIN or make it flashable; see `BUILD_REPORT.md`.
+
 ## Rebuild repeatability and provenance
 
 The build can be repeated only when the exact private R7A file tree and metadata capture, the pinned R10A ext4/tree pair, APK, and animation are available. Their hashes are written to the build log; the system image hash is emitted and recorded in the private sidecar. After timestamp pinning, two full builds from the same local inputs on 2026-10-15 produced byte-identical 2,097,152,000-byte output with SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`. Both runs passed payload readback validation and `e2fsck -fn`. This demonstrates reproducibility for this host/toolchain/input set; repeat on the intended build host before treating it as portable. Do not commit the proprietary inputs, live device dumps, or generated partition image.
