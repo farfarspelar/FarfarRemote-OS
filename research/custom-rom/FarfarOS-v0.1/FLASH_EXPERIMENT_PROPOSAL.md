@@ -20,10 +20,10 @@ If, and only if, separately authorized after preflight, the candidate operation 
 
 No boot, fotakernel, recovery, cache, userdata, loader, preloader, logo, TA, NVRAM, calibration, or security partition is in scope. No wipe or relock is part of this proposal.
 
-Candidate command, **shown for review only and not run**:
+Candidate command, **shown for review only and not run** (Linux Mint Fastboot 34.0.4 does not accept `-i`; the device is selected by requiring exactly one Fastboot target and verifying its product before any separate authorization):
 
 ```sh
-fastboot -i 0x0fce flash system \
+fastboot flash system \
   /mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system-post-storage.ext4
 ```
 
@@ -31,7 +31,7 @@ fastboot -i 0x0fce flash system \
 
 - **VERIFIED, historical read-only observations:** handset product E2003; bootloader string `1290-9780 S1_Boot_MT6732_TC9PRA_9`; Android build `25.0.A.2.31`; customization R7A; system alias mapped to `mmcblk0p19`; reported system capacity `2,097,152,000` bytes.
 - **REPORTED:** owner says the bootloader is unlocked.
-- **UNKNOWN:** current unlock state. Prior `getvar unlocked` returned no value; `secure: yes` was reported. Current `fastboot devices` is empty.
+- **UNKNOWN:** current unlock state. The fresh `getvar unlocked` returned no value; `secure: yes` was reported. Sony Service Menu says unlocking is allowed, which does not prove that the bootloader is already unlocked. The phone has been returned to Android and ADB is online.
 - **UNKNOWN:** whether this S1 bootloader accepts the `system` Fastboot partition alias and raw ext4 payload. Flashtool's public source has a generic `fastboot flash system <image>` operation, but does not establish E2003 bootloader acceptance. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
 - **UNKNOWN:** whether first boot will complete with the stock R7A boot/FOTA and this reconstructed system. No test of this system image has occurred on hardware.
 - **INCONCLUSIVE prior observation:** a separate `fastboot boot` Android-container POC transferred, then USB disconnected with `Status read failed`; no boot result was observable. That experiment did not write the system partition and does not validate this image.
@@ -45,6 +45,46 @@ fastboot -i 0x0fce flash system \
 - Therefore recovery from a failed system-only experiment is **not guaranteed**. A soft brick/boot loop may require a service repair route that is currently unverified.
 
 ## Required read-only preflight before considering authorization
+
+### Fresh Fastboot/image audit — 2026-10-15
+
+The attached handset was moved from Android to Fastboot for read-only queries,
+then returned to Android; ADB is online again. Fastboot 34.0.4-debian reports
+product `E2003`, bootloader
+`1290-9780 S1_Boot_MT6732_TC9PRA_9`, `secure: yes`, system partition size
+`0x7d000000` (2,097,152,000 bytes), and system type `ext4`. The `unlocked`
+getvar is empty, and `fastboot oem device-info` returns `unknown command`.
+Sony's Service Menu `Service info > Configuration > Rooting Status` reports
+`Bootloader unlock allowed: Yes`. This means the device is eligible for an
+unlock operation; it is **not** evidence that it has already been unlocked.
+Thus the owner's unlocked report is **REPORTED**, but current unlock state
+remains **UNKNOWN**. The official Sony procedure uses that menu to check
+whether unlocking is allowed, then separately runs the unlock command; see
+[Sony's Open Devices guide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader).
+
+The corrected read-only helper was then run against this live Fastboot session.
+Image size/hash/type, unique target, E2003 product, exact system partition
+capacity and bootloader identifier all passed; it stopped at the unlock check
+because the bootloader returns no value. It exited with `PREFLIGHT FAIL` and
+issued no write command. The phone was returned to Android and ADB was
+confirmed online.
+
+The proposed image's SHA-256 and ext4 check were revalidated. The APK extracted
+from it is byte-identical to the repository's v0.4.7 OS APK
+(`f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3a6aab0e7bc`). The
+currently installed phone app is 0.4.6-rc5 / versionCode 14; its APK and the
+image's v0.4.7 / versionCode 15 APK have valid JAR signatures with the same
+certificate SHA-256
+`63:F9:33:6D:00:38:B8:EB:E9:AC:82:24:F8:86:9E:1F:87:18:28:D8:1B:62:69:37:23:15:CE:05:5C:F6:07:FD`.
+This supports the update path but does not constitute an on-device system-app
+migration test. No userdata partition is part of the proposed write.
+
+The previous command example used `fastboot -i`, which this actual Linux
+Fastboot binary rejects as an invalid option. The reviewed command above and
+the preflight script now use standard Linux Fastboot syntax. The first
+physical run exposed a second parser assumption (partition size was reported
+as hexadecimal without a `0x` prefix); that is corrected and the actual helper
+now reaches the unlock-state check. No write command has been run.
 
 With the handset physically present and in Fastboot, record fresh output for:
 

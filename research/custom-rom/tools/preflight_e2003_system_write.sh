@@ -4,9 +4,7 @@ set -euo pipefail
 readonly expected_size=2097152000
 readonly expected_sha256=cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d
 readonly expected_product=E2003
-readonly expected_partition_size=0x7d000000
-readonly fastboot_vendor=0x0fce
-
+readonly expected_partition_size=7d000000
 fail() { printf 'PREFLIGHT FAIL: %s\n' "$*" >&2; exit 1; }
 
 if [[ $# -ne 1 ]]; then
@@ -27,13 +25,13 @@ printf 'Image: size=%s bytes, ext4, SHA-256=%s\n' "$size" "$actual_sha"
 
 fastboot_bin=${FASTBOOT_BIN:-fastboot}
 command -v "$fastboot_bin" >/dev/null 2>&1 || fail "fastboot executable not found: $fastboot_bin"
-devices=$($fastboot_bin -i "$fastboot_vendor" devices 2>&1) || fail "could not enumerate Fastboot devices"
+devices=$("$fastboot_bin" devices 2>&1) || fail "could not enumerate Fastboot devices"
 device_count=$(printf '%s\n' "$devices" | awk 'NF {count++} END {print count+0}')
 [[ "$device_count" == 1 ]] || fail "expected exactly one Fastboot device; found $device_count"
 
 getvar() {
   local variable=$1 output
-  output=$($fastboot_bin -i "$fastboot_vendor" getvar "$variable" 2>&1) || true
+  output=$("$fastboot_bin" getvar "$variable" 2>&1) || true
   printf '%s' "$output"
 }
 
@@ -43,7 +41,7 @@ product=$(printf '%s\n' "$product_output" | sed -nE 's/.*product:[[:space:]]*([^
 printf 'Fastboot product: %s\n' "$product"
 
 size_output=$(getvar partition-size:system)
-partition_size=$(printf '%s\n' "$size_output" | sed -nE 's/.*partition-size:system:[[:space:]]*(0x[[:xdigit:]]+).*/\1/ip' | head -n1 | tr '[:upper:]' '[:lower:]')
+partition_size=$(printf '%s\n' "$size_output" | sed -nE 's/.*partition-size:system:[[:space:]]*(0x)?([[:xdigit:]]+).*/\2/ip' | head -n1 | tr '[:upper:]' '[:lower:]')
 [[ "$partition_size" == "$expected_partition_size" ]] || fail "system partition size is '${partition_size:-unknown}', expected $expected_partition_size"
 printf 'Fastboot system partition size: %s\n' "$partition_size"
 
