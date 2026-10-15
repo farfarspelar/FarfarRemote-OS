@@ -65,6 +65,14 @@ The [Xperia bootloader checklist](https://docs.sailfishos.org/Support/Help_Artic
 describes `Bootloader unlock allowed: Yes` as the state where unlocking is
 still the next step. No unlock command or unlock-code workflow was run.
 
+Sony's [official unlock guide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader)
+says the unlock triggers a factory reset and that the DRM security keys cannot
+be restored afterward; it also says unlocking alone does not grant root. The
+owner has said user data need not be preserved, but the irreversible DRM-key
+loss and possible device-specific feature effects remain a separate
+consequence. The guide does not establish which E2003 functions depend on those
+keys.
+
 ## Backup and recovery status
 
 - **No raw `/system` backup exists.** A stock-tree reconstruction exists, but
