@@ -42,3 +42,14 @@ No standalone `recovery` label appeared. Sony's `fotakernel` convention is a pla
 ## Follow-up read-only capture — 2026-10-14
 
 A separate `adb shell` metadata capture reconfirmed `mmcblk0` as 7,634,944 1-KiB blocks, `system` as 2,048,000 blocks, `boot` and `fotakernel` as 32,768 blocks each, and `userdata` as 5,168,640 blocks. `/proc/cmdline` access was denied to shell UID 2000. No block data was read in this follow-up, and the phone remained in normal Android/ADB mode.
+
+## Fastboot identity/capacity recheck — 2026-10-15
+
+After an ordinary ADB reboot to Fastboot, read-only `getvar` queries returned
+product `E2003`, `partition-type:system=ext4`, and
+`partition-size:system=0x7d000000` (2,097,152,000 bytes), matching the local
+experimental system image size exactly. `getvar unlocked` returned an empty
+value; `secure` returned `yes`. Neither value independently confirms lock
+state. The device was returned with `fastboot reboot`; ADB reconnected and
+confirmed its original R7A fingerprint. No flash or other partition command
+was issued. See [the system-only trial proposal](FarfarOS-v0.1/SYSTEM_PARTITION_TRIAL_PROPOSAL.md).
