@@ -27,6 +27,17 @@ device partitions. At audit time both `adb devices` and `fastboot devices` had
 no attached target, so boot, Wi-Fi, touch, charging, HOME and Kodi behavior of
 these artifacts remain unverified on hardware.
 
+A fresh comparison against the private, device-captured R7A metadata manifest
+then checked all 4,447 original `/system` paths in the built image. Type, mode,
+UID, GID, SELinux label and symlink target all matched (zero mismatches). A
+full readback/hash comparison matched 4,192 of 4,193 original regular files;
+the sole difference was `/media/bootanimation.zip`, intentionally replaced
+with the supplied FarfarOS animation and separately verified byte-for-byte.
+The inserted `/app/FarfarRemote.apk` is an additional file outside that stock
+manifest and was separately verified against the original APK. This strengthens
+the local content-integrity result; it does not establish bootability or
+firmware-package compatibility.
+
 ## Status
 
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
