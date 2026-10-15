@@ -28,6 +28,17 @@ an exact, traceable R7A package plus a reviewed, narrowly scoped restore plan.
 The handset must remain in normal Android if there is any ambiguity about the
 button sequence or connection state.
 
+The passive helper [`tools/observe_sony_usb_mode.sh`](tools/observe_sony_usb_mode.sh)
+records only newly appearing Sony VID:PID values and exits. Run it before
+connecting the powered-off handset in Flashmode, for example:
+`research/custom-rom/tools/observe_sony_usb_mode.sh 120`. Sony's general
+[Flashmode key guide](https://developer.sony.com/open-source/aosp-on-xperia-open-devices/get-started/flash-tool/useful-key-combinations)
+says power off, hold Volume Down, then connect USB. That guide is for supported
+Open Devices Xperia models and is not an E2003-specific service guarantee; the
+observed USB ID must be recorded and interpreted as transport evidence only.
+The helper was syntax-checked and smoke-tested with a one-second timeout while
+the E2003 remained in Android. No mode transition was attempted.
+
 No Flashtool binary has been downloaded or executed as part of this update.
 Its published download page is a third-party origin and provides a SHA-1
 checksum for the listed Linux release, which is useful for corruption checks
