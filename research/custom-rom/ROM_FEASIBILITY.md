@@ -21,6 +21,42 @@ An unverified E2003 R10A Customized UK FTF has now yielded offline `boot`, `fota
 
 The public [GitLab mirror](https://gitlab.com/sobotkama/android_kernel_sony_e2003), commit `2a84825e8268393267e454e35a00f80d48c58949`, statically contains Linux 3.10.48, MT6752 platform code, `callass` project customization, and armeabi-v7a board settings. Its claimed Sony provenance remains unauthenticated. The checked-in platform config says Linux 3.10.35 and the generated `callass` `.config` is not established as the final R7A config; notably it enables `IKCONFIG_PROC` while the live phone has no `/proc/config.gz`. The `callass` recovery fstab uses MTD/YAFFS2, conflicting with live eMMC/ext4. The kernel now **does compile offline** using Python 2.7.18, Android NDK r10e GCC 4.8 and a host compatibility flag. That proves kernel-tree buildability only; it does not establish source/config identity, Android product integration, or safe boot/recovery. Reproduce with [`tools/build_e2003_kernel_poc.sh`](tools/build_e2003_kernel_poc.sh). Details and artifact hashes: [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md).
 
+### Source and transport confidence refresh — 2026-10-15
+
+The GitLab project README explicitly claims this kernel tree was taken from
+Sony's Open Source Archive for `25.0.A.2.31` / `25.0.B.2.31`. The cited Sony
+download URL currently redirects to Sony's general homepage, and the local
+GitLab clone has only one grafted commit, so the source archive and tree cannot
+be independently authenticated or compared at the commit-history level.
+However, its `mediatek/config/callass/ProjectConfig.mk` names MT6752, a 540×960
+panel, and HX8389B/C QHD panel drivers, which align with the live E2003's
+platform/display properties. This improves confidence that the source tree is
+for the right hardware family, while the stale MTD/YAFFS2 recovery fstab and
+unmatched final kernel config remain significant boot risks.
+
+An exact-model public search again found no reproducible E2003 Android/LineageOS
+device tree or ROM. The historical Oreo claim still traces to a binary-only
+port described as based on a Galaxy Note 8 ROM. The currently connected handset
+also entered Linux USB `0fce:adde` / `S1 Service` and returned to Android; see
+[RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md). This verifies the Linux service
+transport, but no image was transferred and bootloader image acceptance remains
+unknown.
+
+**Probability update:** conditional first boot of the narrow stock-derived
+Android 4.4 build remains **about 70–75% (low-to-moderate confidence)**. The
+source/config alignment and verified service transport are positive, but
+neither resolves the exact R7A boot parameters, boot-image acceptance, or final
+kernel configuration. Since the owner has said to set aside the restore-base
+question, this estimate excludes recovery probability; it still assumes the
+reported unlocked state is true and correct images can be written. No complete
+ROM image has been boot-tested, so a higher figure would overstate the evidence.
+
+An attempt to reproduce the R7A `/system` POC with the retained local inputs was
+stopped when host `debugfs` I/O stalled on the external workspace volume. The
+partial temporary copy was removed, no output image was produced, and no phone
+operation was involved. The prior successful R7A POC and its hashes above
+remain the validated result; the rebuild attempt does not alter the estimate.
+
 The extracted boot container is Sony ELF format rather than a standard Android `boot.img`. An offline tool now reconstructs a **container-format POC** using the stock kernel/ramdisk payloads and geometry from the historical E2003 recovery. This resolves the narrow header/packing question, but not whether the bootloader accepts the image, whether the R5A header geometry matches the live R7A firmware, or whether it boots. Magisk compatibility and a restore method therefore remain unverified.
 
 ### Stock-system image with FarfarRemote preinstalled — offline POC, 2026-10-14
