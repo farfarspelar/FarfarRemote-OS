@@ -75,6 +75,21 @@ exact R7A hardware configuration. The kernel version string is `3.10.48`,
 while the live kernel reports `3.10.48+`; source/config identity and hardware
 driver behavior remain unverified.
 
+To support offline experimentation without those specific automatic actions,
+`tools/make_e2003_boot_candidate_nonformatting.py` now creates a separate
+candidate from the pinned kernel container. The output
+`/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-callass-kernel-boot-candidate-no-protect-mounts-no-bootstrap-v0.1-rerun.img`
+is 8,957,952 bytes, SHA-256
+`fde40f857262b04a48d98662069c2e3e134ad6330cb288f6894df55a9f79cbfb`.
+It retains the kernel byte-for-byte, removes the two protect-partition fstab
+rows and empties the automatic wipe/reset/MiscTA-update action files. A full
+Android-header + MediaTek-wrapper + gzip/cpio parse passed; all non-target
+ramdisk files compare byte-for-byte, and a repeat build produced the same hash.
+The script also refused output in the repository and on `/tmp`. This is a
+**modified diagnostic artifact only**: skipping Sony bootstrap work and
+protect mounts may prevent Android startup or break required device behavior.
+It is not authorized or validated for a phone boot attempt and is not flashable.
+
 ## Status
 
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
