@@ -21,22 +21,31 @@ the expected `/data/local/bootanimation.zip` and
 fallback paths. This is static evidence only; Sony's exact runtime selection
 order and playback have not been observed on-device.
 
-## Local image-copy attempt
+## Local image POC
 
 The available ext4 preinstall POC is an R10A candidate, while the physical
-phone is R7A (`1293-7358`). It is not an exact firmware base. A separate copy
-was created outside Git at:
+phone is R7A (`1293-7358`). It is not an exact firmware base. A separate local
+copy was created outside Git at:
 
-`/mnt/data/FarfarRemote-E2003-R10A-system-bootanimation-POC.img`
+`/tmp/farfar-e2003-system-bootanimation-poc.img`
 
-The completed copy had the same SHA-256 as its source image,
-`35d8a29e1ac8b91e04c2975a832ef686166fc2d21b775669861234772fb8b731`.
-Subsequent read-only `debugfs` inspection of the copy stalled in host storage
-I/O. A termination signal was sent to the blocked inspection process; it was
-still in uninterruptible I/O wait at the time this note was written. No
-`debugfs -w` command ran, and no image modification was attempted. The source
-image was not modified. The copy is not a boot-animation POC and should be
-deleted after no process has it open; it must never be flashed.
+Source image SHA-256: `931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949`.
+Modified POC SHA-256: `06a9156bcbbbbffb60b3c8d7dcf44785e1b66def2b5ffe574709278388ebb6ef`.
+The source image hash remained unchanged.
+
+The POC replaces only `/system/media/bootanimation.zip`. The resulting inode
+was verified as a regular file, owner `root:root`, mode `0644`, and SELinux
+label `u:object_r:system_file:s0`. A readback from the image matched the
+committed asset SHA-256 exactly; `unzip -t` passed; and `e2fsck -fn` exited 0.
+This validates archive integration and ext4 metadata on the host. It is still
+only an R10A offline system partition—not an R7A image, complete ROM, Sony
+firmware package, boot-tested image, or flashable artifact.
+
+An earlier duplicate copy on `/mnt/data` triggered slow host-storage I/O during
+read-only inspection. That inspection received a termination signal and
+eventually exited; it did not write to the image. The duplicate is disposable
+and separate from the verified `/tmp` POC. The worktree input and phone were
+not modified.
 
 ## Device test status and safe next step
 
@@ -47,13 +56,10 @@ the bundle was not installed, no reboot was performed for this test, and
 playback remains unverified. Do not work around this by remounting `/system` or
 trying unrelated root tools.
 
-To continue the image experiment, first resolve the host storage latency and
-use an exact, verified R7A base or a newly reproducible R7A image. Operate on a
-new copy; replace only `/system/media/bootanimation.zip`; set owner `root:root`,
-mode `0644`, and SELinux label `u:object_r:system_file:s0`; read the file back
-and compare its SHA-256; then run a read-only filesystem check. The resulting
-ext4 image would still be an offline, non-flashable artifact until Sony
-packaging, boot-chain compatibility, and rollback are independently verified.
+To continue, repeat this proven edit against an exact, verified R7A base or a
+newly reproducible R7A system image, while keeping it separate from the source.
+Even then, the ext4 image remains an offline artifact until Sony packaging,
+boot-chain compatibility, and rollback are independently verified.
 
 ## Recovery and status
 
