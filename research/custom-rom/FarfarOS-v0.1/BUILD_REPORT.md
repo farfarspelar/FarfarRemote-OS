@@ -138,6 +138,27 @@ The audit used local retained artifacts and read-only host parsers only. It
 does not clear the boot test gate: the candidate is still based on an R10A
 ramdisk, and no exact R7A boot/fotakernel image or proven restore route exists.
 
+### apps_log-free diagnostic container
+
+To remove the newly identified `apps_log` filesystem operations from the
+static candidate, [`../tools/make_e2003_boot_candidate_skip_apps_log.py`](../tools/make_e2003_boot_candidate_skip_apps_log.py)
+now accepts only the pinned diagnostic input hash and removes the complete
+`#mount apps_log block` from `init.mt6752.rc`. It verifies the cpio round-trip,
+asserts no init `.rc` file retains `apps_log` or `/mnt/idd` references, and
+preserves the kernel payload byte-for-byte. The script was syntax-checked and
+run against the retained candidate; the output parses as an Android legacy
+boot-container and has SHA-256
+`c10a124cc63053046a7a24e1df69df30de597229d94ec2fca109b13417a49d76`.
+
+The 8,957,952-byte artifact is stored outside Git at
+`/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-callass-kernel-boot-candidate-no-apps-log-v0.1.img`.
+This removes the explicit `apps_log` check/tune/mount block, but can break Sony
+logging or other undocumented dependencies. It still uses the non-R7A R10A
+ramdisk, borrowed Android boot-image header geometry, and a rebuilt kernel
+whose config is not proven identical to R7A. It remains a **static diagnostic
+artifact only**, not a bootable/flashable image or permission to test on the
+phone.
+
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
 
 | Gate | Result |
