@@ -61,6 +61,7 @@ For a meaningful comparison:
 - Baseline endurance estimate from the project owner: approximately 12 hours, unverified.
 - Baseline battery session recorded by Phase 1 tooling: none. The measurement tool was run against the attached E2003 and correctly refused because USB charging was active.
 - Optimized battery session: none yet.
+- **Informal unplugged observation (2026-10-15):** the owner reported 97% at 20:19 and 96% at 21:31, with the phone unplugged for the entire 72-minute interval. This is a one-percentage-point change from rounded Android battery readings during an uncontrolled first-boot validation period. Screen state, Wi-Fi/playback activity, temperature and exact usage were not held constant or logged, so this is not a comparable scenario measurement and does not support a drain-rate or endurance projection.
 - 24-hour target: not assessable from current evidence. The present USB-powered point-in-time snapshot does not support an endurance estimate.
 
 Both App and OS flavors compile after the Phase 1 changes. Automated source-contract checks cover OS-only gating, profile intervals, backoff limits, screen receiver lifecycle, OS-only command/poll executor separation, retained preferences, and charging rejection. They are not runtime tests. The 0.4.5-rc1 OS APK was installed in place, but the Android Keyguard prevented UI and screen-receiver runtime verification. No Kodi host was used for an input round-trip.
