@@ -57,7 +57,7 @@ fastboot getvar unlocked
 fastboot getvar partition-size:system
 ```
 
-Confirm `product` is exactly `E2003`, the system size is exactly `0x7d000000` bytes, and the handset identity/bootloader match the target above. A missing or inconsistent value is a stop condition; do not infer an alias or proceed based on the old capture. Re-check the image size and SHA-256 immediately before any separately approved write.
+The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) checks the local image size/hash/type, exactly one Fastboot device, exact product, system partition size, bootloader identifier, and a positively reported unlocked state. It does not print the USB serial and never runs a write, boot, erase, or reboot command. Its output must say `READ-ONLY PREFLIGHT PASSED`; any unavailable or mismatched value stops the process. Re-check the image size and SHA-256 immediately before any separately approved write.
 
 ## Expected outcomes and failure modes
 

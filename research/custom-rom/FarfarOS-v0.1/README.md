@@ -27,6 +27,7 @@ See [BUILD.md](BUILD.md). Proprietary firmware, private ADB pulls, metadata, gen
 - [Known limitations](KNOWN_LIMITATIONS.md)
 - [Build report](BUILD_REPORT.md)
 - [System-only experiment proposal](FLASH_EXPERIMENT_PROPOSAL.md) — review document, not an authorization or flashing procedure.
+- [`preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) — read-only validation for the exact candidate image and a connected E2003 Fastboot target; never writes to the device.
 
 ## Status vocabulary
 

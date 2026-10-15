@@ -56,6 +56,8 @@ The preserved Flashtool source was inspected at commit `7529dce9a1ffb81e365ba1d7
 
 A separate system-only proposal is prepared in [`FLASH_EXPERIMENT_PROPOSAL.md`](FLASH_EXPERIMENT_PROPOSAL.md), including the exact artifact/hash, target/capacity evidence, read-only preflight, failure modes, and current recovery limitations. No flash command was issued. The handset is not presently visible to ADB or Fastboot, the reported unlock state is not independently confirmed, no raw live R7A system backup exists, and exact-R7A restoration is unverified. Any write still requires fresh preflight and separate explicit approval for this exact artifact and partition.
 
+The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) now checks the candidate image, one connected target, E2003 product, exact system size, expected S1 bootloader identifier, and a positive unlocked response. It discloses no device serial and contains no write/reboot subcommand. Mocked Fastboot tests passed for a valid result and refusals on model, capacity, bootloader, unlock, and multiple-device mismatches; physical-device behavior remains untested.
+
 The image length also exactly matches the live handset's reported `system` partition capacity: `2,097,152,000` bytes (`2,048,000` 1-KiB blocks). This closes only the raw size-fit check. It does not establish an accepted Sony image container, safe write path, boot-chain compatibility, or successful hardware boot; see [HARDWARE_COMPATIBILITY.md](HARDWARE_COMPATIBILITY.md) and [partition layout](../PARTITION_LAYOUT.md).
 
 ## Separate boot-container experiment
