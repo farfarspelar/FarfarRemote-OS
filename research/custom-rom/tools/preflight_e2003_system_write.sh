@@ -52,8 +52,22 @@ printf 'Fastboot bootloader: %s\n' "$bootloader"
 
 unlock_output=$(getvar unlocked)
 unlocked=$(printf '%s\n' "$unlock_output" | sed -nE 's/.*unlocked:[[:space:]]*([^[:space:]]+).*/\1/ip' | head -n1 | tr '[:upper:]' '[:lower:]')
-[[ "$unlocked" =~ ^(yes|true|1)$ ]] || fail "bootloader unlock state is not positively confirmed by Fastboot"
-printf 'Fastboot unlocked: %s\n' "$unlocked"
+if [[ "$unlocked" =~ ^(yes|true|1)$ ]]; then
+  unlock_evidence="Fastboot getvar unlocked=$unlocked"
+else
+  # This E2003 S1 bootloader has returned an empty `getvar unlocked` even
+  # after the owner confirmed the unlocked state in Sony's Service Menu.
+  # Keep the check fail-closed for non-interactive callers and require the
+  # operator to attest the exact on-device status before proceeding.
+  [[ -t 0 && -t 1 ]] || fail "Fastboot did not report unlocked; run interactively and confirm the Sony Service Menu status"
+  printf 'Fastboot did not report unlock state. On the phone, verify Service info > Configuration > Rooting Status says exactly:\n'
+  printf 'Bootloader unlocked: Yes\n\n'
+  printf 'Type exactly: E2003 SERVICE MENU SAYS BOOTLOADER UNLOCKED: YES\n> '
+  IFS= read -r confirmation
+  [[ "$confirmation" == "E2003 SERVICE MENU SAYS BOOTLOADER UNLOCKED: YES" ]] || fail "Service Menu unlock confirmation did not match"
+  unlock_evidence="owner-confirmed Sony Service Menu: Bootloader unlocked: Yes"
+fi
+printf 'Unlock evidence: %s\n' "$unlock_evidence"
 
 printf '\nREAD-ONLY PREFLIGHT PASSED. No device write or reboot was attempted.\n'
-printf 'This result is not authorization to flash; review the experiment proposal and obtain separate approval first.\n'
+printf 'This result is not authorization to flash; review the exact experiment proposal and obtain operation-specific approval first.\n'

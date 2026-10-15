@@ -1,4 +1,4 @@
-# Proposed FarfarOS v0.1 `/system` trial — not authorized or executed
+# FarfarOS v0.1 `/system` trial — reviewable operation proposal; not executed
 
 ## Scope
 
@@ -51,20 +51,17 @@ ADB reconnected and confirmed E2003 / Android 4.4.4 / API 19 /
 did not expose a usable `unlocked` value. `secure: yes` does not establish
 whether this bootloader is locked.
 
-The Android Service Menu was then checked read-only at Service info >
-Configuration > Rooting Status. It displayed `Bootloader unlock allowed: Yes`;
-it did not display `Bootloader unlocked: Yes`. These are distinct states:
-the former means unlocking is permitted, while the latter means it has already
-been done. Current evidence therefore does **not** verify an unlocked
-bootloader, despite the earlier owner report. Treat it as **not unlocked / not
-verified** until the Service Menu explicitly reports `Bootloader unlocked:
-Yes`. The UI hierarchy was inspected locally; temporary diagnostic output was
-removed and FarfarRemote was restored to the foreground.
+The pre-unlock Service Menu showed `Bootloader unlock allowed: Yes`, not
+`Bootloader unlocked: Yes`. After the separately authorized Sony unlock, the
+owner confirmed the Service Menu now says `Bootloader unlocked: Yes`. ADB has
+reconnected and confirms E2003 / Android 4.4.4 / API 19 / build
+`25.0.A.2.31` / CDA `1293-7358 R7A`. This is owner-confirmed unlock status;
+ordinary ADB remains UID 2000 and Android root is not present.
 
 The [Xperia bootloader checklist](https://docs.sailfishos.org/Support/Help_Articles/Managing_Sailfish_OS/Checklist_for_Sailfish_OS/#xperia-bootloader)
 describes `Bootloader unlock allowed: Yes` as the state where unlocking is
-still the next step. The owner later separately authorized the unlock; the
-result is recorded below.
+still the next step. The owner later separately authorized and completed the unlock; the
+status is recorded below.
 
 Sony's [official unlock guide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader)
 says the unlock triggers a factory reset and that the DRM security keys cannot
@@ -89,41 +86,51 @@ keys.
   system-only write. This reduces scope but does not guarantee recovery if the
   new system fails to boot or the bootloader refuses the image.
 
-**Recovery readiness: BLOCKED.** There is no validated way to restore the
-original system partition if this image is rejected, partially written, or
-fails during boot.
+**Restore status: NO VALIDATED RESTORE IMAGE OR PROCEDURE.** The owner has
+explicitly asked to proceed despite this gap and has accepted soft-brick risk.
+This is a material consequence, not a recovery capability: a rejected or
+partially written image, boot loop, or non-booting Android could require a
+repair path that is unavailable from the current Linux Mint setup.
 
 ## Potential operation, for review only
 
-The proposed system write is currently blocked even before considering the
-missing recovery path. Fastboot accepted the separately authorized unlock
-command, but the Service Menu has not yet confirmed `Bootloader unlocked:
-Yes`. A future system-only trial would still require (1) independent
-confirmation of the unlocked state, (2) a validated restoration path, and (3)
-separate explicit authorization for the exact system image hash and partition
-write. No ROM image has been flashed. Do not substitute a boot, recovery,
-FOTA, sparse image, or other partition. A transfer/write interruption may
-leave Android unable to start.
+The owner has confirmed `Bootloader unlocked: Yes`. The exact raw ext4 image
+remains untested on this S1 bootloader: acceptance of the `system` alias and
+raw ext4 payload is UNKNOWN. A read-only preflight is available at
+`research/custom-rom/tools/preflight_e2003_system_write.sh`; because this
+bootloader returns an empty `getvar unlocked`, it now fails closed unless the
+operator interactively confirms the exact Service Menu status. This helper
+never writes or reboots. No ROM image has been flashed. The proposed operation
+is limited to the `system` partition and the exact image/hash above. Do not
+substitute a boot, recovery, FOTA, sparse image, or other partition. An
+interrupted write or rejected format may leave Android unable to start.
 
 ## Decision
 
-The image is sufficiently validated for a **reviewable system-only trial
-proposal**, but it is not ready to flash. Post-unlock status confirmation and
-a validated restoration route are still missing. Bootloader unlocking was a
-separate, potentially data-wiping operation; it was authorized and executed
-separately.
-Even if those blockers are later resolved, the owner must separately
-authorize writing this exact SHA-256 to the `system` partition and accept the
-remaining risk. First-boot checks must use the stock boot chain and stop
-immediately on unexpected partition activity or device behavior.
+The image is ready for review as a narrowly scoped experimental system-only
+trial, not as a verified flashable ROM. The owner has confirmed the unlocked
+state and has accepted proceeding without a proven restore base. The exact
+write operation must still be explicitly authorized against the image path,
+SHA-256, and `system` partition before execution. First-boot checks would use
+the stock boot chain; stop on unexpected partition activity or device
+behavior. A successful offline build is not evidence of a successful device
+boot.
 
-### Bootloader unlock status addendum — 2026-10-15
+### Bootloader unlock status addendum — 2026-10-15 (superseded by confirmation below)
 
 The owner explicitly authorized the separate unlock operation. The guarded
 helper revalidated E2003 / `25.0.A.2.31` / `1293-7358 R7A` and one Fastboot
-target; Fastboot returned `OKAY` for the Sony unlock command. The phone was
-rebooted afterward and now enumerates as an Android USB device, but ADB has no
-authorized target. The unlocked state still needs verification in the Service
-Menu after Android setup and USB debugging/host authorization are restored.
-The system-image write described above remains **not authorized and not
-executed**.
+target; Fastboot returned `OKAY` for the Sony unlock command and reboot. The
+system-image write described above remains **not executed**.
+
+### Post-unlock artifact verification — 2026-10-15
+
+The owner confirmed Service Menu `Bootloader unlocked: Yes`. ADB identifies
+E2003 / Android 4.4.4 / API 19 / firmware `25.0.A.2.31`; shell UID is 2000.
+The raw system image remains 2,097,152,000 bytes, SHA-256
+`cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`;
+`e2fsck -fn` passed all five passes. The Android sparse image round-tripped
+byte-for-byte to raw ext4. Embedded FarfarRemote is `org.farfarremote`
+version `0.4.7`, min SDK 19, target SDK 28, signed by the Android Debug
+certificate (SHA-256 `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`).
+No device partition was written.

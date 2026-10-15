@@ -56,13 +56,11 @@ then returned to Android; ADB is online again. Fastboot 34.0.4-debian reports
 product `E2003`, bootloader
 `1290-9780 S1_Boot_MT6732_TC9PRA_9`, `secure: yes`, system partition size
 `0x7d000000` (2,097,152,000 bytes), and system type `ext4`. The `unlocked`
-getvar is empty, and `fastboot oem device-info` returns `unknown command`.
-Sony's Service Menu `Service info > Configuration > Rooting Status` reports
-`Bootloader unlock allowed: Yes`. This means the device is eligible for an
-unlock operation; it is **not** evidence that it has already been unlocked.
-Thus the owner's unlocked report is **REPORTED**, but current unlock state
-remains **UNKNOWN**. The official Sony procedure uses that menu to check
-whether unlocking is allowed, then separately runs the unlock command; see
+getvar is empty, and `fastboot oem device-info` returns `unknown command`. At
+that time the Service Menu showed `Bootloader unlock allowed: Yes`, which
+indicated eligibility only. The owner later authorized and completed the Sony
+unlock operation and confirmed `Bootloader unlocked: Yes` in the Service Menu.
+The official Sony procedure distinguishes eligibility from current state; see
 [Sony's Open Devices guide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader).
 
 The corrected read-only helper was then run against this live Fastboot session.
@@ -138,7 +136,7 @@ The `getvar all` output was filtered locally; no serial or device identity
 number was retained in the report. Neither `unlocked`, `locked`, nor
 `lockstate` was returned.
 
-The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) checks the local image size/hash/type, exactly one Fastboot device, exact product, system partition size, bootloader identifier, and a positively reported unlocked state. It does not print the USB serial and never runs a write, boot, erase, or reboot command. Its output must say `READ-ONLY PREFLIGHT PASSED`; any unavailable or mismatched value stops the process. Re-check the image size and SHA-256 immediately before any separately approved write.
+The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) checks the candidate image, one connected target, E2003 product, exact system size, and expected S1 bootloader identifier. This bootloader returns an empty `getvar unlocked` even though the owner confirmed the Service Menu says unlocked; the helper now requires an interactive exact-phrase confirmation in that case and fails closed for non-interactive calls. It discloses no device serial and contains no write/reboot subcommand. A mocked Fastboot run passed with the exact owner-confirmation phrase; a non-interactive run correctly failed closed. The subsequent physical preflight on the E2003 passed, as recorded below.
 
 ## Expected outcomes and failure modes
 
@@ -149,13 +147,26 @@ The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/prefl
 
 ## Authorization boundary
 
-No write command has been issued under this proposal. Running the candidate `fastboot flash system` command requires a separate explicit approval naming this exact image, SHA-256, and the `system` partition after the read-only preflight is available. Broad approval to continue ROM research is not treated as approval for this particular partition write.
+No write command has been issued under this proposal. Running the candidate `fastboot flash system` command requires separate explicit approval naming this exact image, SHA-256, and the `system` partition after review of the successful read-only preflight. Broad approval to continue ROM research is not treated as approval for this particular partition write.
 
 ## Bootloader unlock addendum — 2026-10-15
 
-The separate bootloader unlock was explicitly authorized and completed as a
-command attempt. Fastboot returned `OKAY` for one `oem unlock` command, then
-`fastboot reboot` returned `OKAY`. The phone enumerates as Android USB, but no
-authorized ADB device has appeared yet; verification of `Bootloader unlocked:
-Yes` remains pending. This does not alter the authorization boundary above:
-the proposed `system` partition write has not been authorized or executed.
+The separate bootloader unlock was explicitly authorized and completed.
+Fastboot returned `OKAY` for one `oem unlock` command, then `fastboot reboot`
+returned `OKAY`. ADB reconnected, and the owner confirmed Service Menu
+`Bootloader unlocked: Yes`. This does not alter the authorization boundary
+above: the proposed `system` partition write has not been executed.
+
+## Post-unlock physical read-only preflight — 2026-10-15
+
+The E2003 was rechecked over ADB for the exact model and stock build before a
+normal `adb reboot bootloader`. Fastboot identified one E2003 target, the
+expected S1 bootloader, and `system` size `0x7d000000`; `getvar unlocked`
+remained blank. After the operator confirmed the exact Sony Service Menu
+status, the updated helper reported `READ-ONLY PREFLIGHT PASSED`. The helper
+verified the local raw ext4 image's exact expected size, SHA-256 and file type.
+It issued no write or reboot command. The host then ran `fastboot reboot`, and
+ADB reconnected to E2003 / Android 4.4.4 / `25.0.A.2.31`. No partition was
+read or written. This validates preflight plumbing and identity/capacity only;
+it does not validate the bootloader's acceptance of `fastboot flash system`,
+image write integrity, or Android boot.

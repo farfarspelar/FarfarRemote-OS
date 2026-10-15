@@ -237,9 +237,9 @@ The build completed with payload readback and `e2fsck -fn` passing. It produced 
 
 The preserved Flashtool source was inspected at commit `7529dce9a1ffb81e365ba1d7e15f6773463ffd7a`. Its generic Fastboot utility constructs `fastboot flash system <image>`, which is a possible route for a raw ext4 system image. This is software-source evidence only; it does not prove that the E2003 S1 bootloader accepts the `system` alias or this payload. The Flashtool “Create SIN As” UI is restricted to SIN v1/YAFFS2 and cannot produce a valid Sony SIN v3 image for this ext4 system. No custom SIN was fabricated.
 
-A separate system-only proposal is prepared in [`FLASH_EXPERIMENT_PROPOSAL.md`](FLASH_EXPERIMENT_PROPOSAL.md), including the exact artifact/hash, target/capacity evidence, read-only preflight, failure modes, and current recovery limitations. No flash command was issued. The handset is not presently visible to ADB or Fastboot, the reported unlock state is not independently confirmed, no raw live R7A system backup exists, and exact-R7A restoration is unverified. Any write still requires fresh preflight and separate explicit approval for this exact artifact and partition.
+A separate system-only proposal is prepared in [`FLASH_EXPERIMENT_PROPOSAL.md`](FLASH_EXPERIMENT_PROPOSAL.md), including exact artifact/hash, target/capacity evidence, read-only preflight, failure modes, and recovery limitations. The owner-confirmed unlock status and physical read-only Fastboot preflight are now documented below. No raw live R7A system backup or validated restoration image exists. Any write still requires fresh preflight and separate explicit approval for this exact artifact and `system` partition.
 
-The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) now checks the candidate image, one connected target, E2003 product, exact system size, expected S1 bootloader identifier, and a positive unlocked response. It discloses no device serial and contains no write/reboot subcommand. Mocked Fastboot tests passed for a valid result and refusals on model, capacity, bootloader, unlock, and multiple-device mismatches; physical-device behavior remains untested.
+The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) checks image size/hash/type, one target, E2003 product, system capacity and S1 bootloader identity. Since this bootloader returns an empty `getvar unlocked`, it now requires an exact interactive confirmation of the Sony Service Menu status and fails closed without a TTY. It has no write/reboot command and prints no serial. A mocked run passed with the exact owner-confirmation phrase; non-interactive invocation failed closed as intended. The physical E2003 read-only preflight passed, as recorded below.
 
 The image length also exactly matches the live handset's reported `system` partition capacity: `2,097,152,000` bytes (`2,048,000` 1-KiB blocks). This closes only the raw size-fit check. It does not establish an accepted Sony image container, safe write path, boot-chain compatibility, or successful hardware boot; see [HARDWARE_COMPATIBILITY.md](HARDWARE_COMPATIBILITY.md) and [partition layout](../PARTITION_LAYOUT.md).
 
@@ -297,3 +297,29 @@ This reduces transfer size by about 17.5%, which is modest. It proves only that 
 KingRoot was skipped by owner decision; no rooting utility was acquired or run. The available handset is in normal Android mode and remains the unmodified R7A control device. The existing offline R7A system image was rechecked: SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`; `e2fsck -fn` completed all five passes. Its sparse companion hash is `81b9e117d3832033e520059e8834f6084b4bef05b29025828646c5aa6c41dfb4`. The diagnostic boot-container hash is `fde40f857262b04a48a98662069c2e3e134ad6330cb288f6894df55a9f79cbfb`; host `file` parses it as an Android boot image. These are offline integrity/format checks only. The system image is not a complete firmware package, and the boot container is not R7A-matched, boot-tested, or approved for installation.
 
 The pinned, clean MTKClient checkout and isolated PyUSB environment are ready for a narrowly scoped attempt to read the live `boot`/`fotakernel` partitions in BootROM mode. The read-only wrapper was not invoked because the phone is currently running Android rather than exposing the expected BootROM USB identity. Exact boot acquisition is now the nearest technical gate; a trustworthy recovery/restore route and a separately reviewed boot test remain unresolved.
+
+
+## Physical post-unlock system-image preflight — 2026-10-15
+
+ADB first confirmed exact model E2003 and fingerprint
+`Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`. The phone was
+rebooted normally into Fastboot for the read-only preflight. One target was
+present; Fastboot reported product `E2003`, bootloader
+`1290-9780 S1_Boot_MT6732_TC9PRA_9`, system size `0x7d000000`, and an empty
+`getvar unlocked`. The owner-confirmed Service Menu status was entered at the
+helper prompt; the helper verified image size `2,097,152,000`, ext4 type and
+SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`
+and ended with `READ-ONLY PREFLIGHT PASSED`. `fastboot reboot` returned
+`OKAY`; ADB reconnected to E2003 afterward. No image/partition was read,
+flashed, erased or otherwise written. This was a preflight test, not a flash or
+boot test.
+
+Additional host checks on the same artifact: both preserved raw system images
+passed `e2fsck -fn`; the sparse image decoded byte-for-byte to the raw image;
+the `.sha256` sidecars for the system ext4 and one boot-container candidate
+matched. The embedded APK was inspected with Android Build Tools 35.0.0:
+`org.farfarremote` 0.4.7, minSdk 19, targetSdk 28; signer certificate digest
+`63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`. The APK
+uses the Android Debug certificate. No claim of system signing, partition
+acceptance, first boot, UI, Wi-Fi, charging, or Kodi behavior is made from
+these offline checks.
