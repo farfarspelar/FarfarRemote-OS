@@ -332,3 +332,7 @@ A public XperiaStockROM page links a Google Drive archive whose central director
 ### Live ADB access recheck — 2026-10-15
 
 The read-only prerequisite collector again confirms E2003, `25.0.A.2.31`, CDA `1293-7358 R7A`, MT6752/callass and kernel `3.10.48+`. Shell remains UID 2000, with no standard `su` binary. Repeating the bounded four-byte probe again returned `Permission denied` for both boot p10 and fotakernel p9. The phone stayed in Android; no partition bytes were saved and no reboot or write was issued. This confirms the existing access blocker is still present; it does not prove that a separately authorized BootROM/service route cannot work.
+
+### E4g service-document search — 2026-10-15
+
+A repair-forum index exposes filenames for Sony E4g mechanical test instructions and troubleshooting documents, but the files require paid membership. The page's technical-package metadata describes one attachment as intended for an E2006 motherboard even though the thread title lists several E4g variants. No E2003 board-revision-specific test-point map or BootROM entry procedure was visible or verified. Treat this as a lead to request from a legitimate service source, not a basis for opening or shorting the handset. Source index: [VinaFix E4g service-document listing](https://vinafix.com/threads/sony-xperia-e4g-e4g-dual-2003-e2006-e2033-e2043-e2053-service-manual.33711/).
