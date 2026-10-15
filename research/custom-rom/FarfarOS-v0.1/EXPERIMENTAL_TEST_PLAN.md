@@ -28,13 +28,13 @@ Stop further changes if boot loops, ADB is unavailable beyond the agreed observa
 The owner reported seeing FarfarOS, then Android's lock screen, selecting
 FarfarRemote as Home, and observing FarfarRemote start. ADB subsequently
 identified E2003 / Android 4.4.4 / firmware `25.0.A.2.31` and FarfarRemote
-`0.4.7`. The owner confirmed the phone connected to Wi-Fi and Kodi and that
-Kodi control works. This verifies basic startup, HOME launch, network
-association and a Kodi control smoke test on the experimental system image.
+`0.4.7`. The owner confirmed Wi-Fi, Kodi connectivity and control. The owner
+then confirmed Audio/Subtitles, portrait/landscape rotation, Settings,
+Find My Kodi, and Wi-Fi reconnection after reboot. These are user-performed
+physical-device tests, not host-automated tests.
 
-Still to verify manually: full remote-control matrix, Audio/Subtitles,
-orientation, Settings, Find My Kodi, Wi-Fi reconnection after reboot,
-off-USB charging, sleep/wake behavior, extended stability and repeated cold
-boots. The earlier USB Mass Storage-only observation was transient and is
-superseded by this successful startup. Do not infer broad compatibility from
-the smoke test alone.
+Remaining checks: exhaustive remote-button coverage, off-USB charging,
+sleep/wake behavior, extended stability, repeated cold boots and detailed
+boot-animation timing. The earlier USB Mass Storage-only observation was
+transient and is superseded by the successful startup. Do not infer broad
+compatibility beyond the tested E2003 setup.

@@ -8,12 +8,14 @@ observed FarfarOS and Android's lock screen, selected FarfarRemote as Home,
 and confirmed the app launched, connected to Wi-Fi and controlled Kodi. ADB
 also reconnected and identified the expected E2003 / Android 4.4.4 / firmware
 combination. The exact `/system` image therefore passed a first boot and
-network/Kodi smoke test on the target. Full regression testing and a validated
-restore route remain outstanding.
+network/Kodi smoke test on the target. The owner subsequently also confirmed
+Audio/Subtitles, rotation, Settings, Find My Kodi and Wi-Fi reconnection after
+reboot. These are owner-reported device tests. Some exhaustive, long-duration
+checks and a validated restore route remain outstanding.
 
 ## Scope
 
-The owner approved the exact image, SHA-256 and `system` target after a read-only preflight. Fastboot reported the image transfer and `system` write as `OKAY`. The operation targeted only the E2003 `system` partition; `boot`, `fotakernel`, bootloader, `seccfg`, TA, NVRAM, calibration and userdata were not included. The current stock kernel and ramdisk remain in place. This record documents an experimental write, not a verified bootable ROM.
+The owner approved the exact image, SHA-256 and `system` target after a read-only preflight. Fastboot reported the image transfer and `system` write as `OKAY`. The operation targeted only the E2003 `system` partition; `boot`, `fotakernel`, bootloader, `seccfg`, TA, NVRAM, calibration and userdata were not included. The current stock kernel and ramdisk remain in place. Subsequent first-boot and feature-test results are recorded in the outcome update above; this remains an experimental system-only build, not a complete ROM package.
 
 ## Candidate
 
