@@ -2,6 +2,12 @@
 
 ## Linux Mint-only host route — 2026-10-15
 
+### Sony S1/Flashtool readback capability audit — 2026-10-15
+
+The locally retained Flashtool source at commit `7529dce9a1ffb81e365ba1d7e15f6773463ffd7a` was inspected to see whether E2003 S1 service mode can provide a root-free read of the live boot partitions. `S1Flasher.readTA()` issues Sony command `CMD12` for a TA unit; `openTA`/`closeTA` use `CMD09`/`CMD10`, and TA writes use `CMD13`. The bulk `CMD18` operation in the inspected code is used by `BackupTA()` to dump TA contents. The public S1Flasher implementation contains no general eMMC partition-read path for `boot`, `fotakernel`, or `system`.
+
+This closes Flashtool as a candidate for extracting the missing raw R7A boot/FOTA images. Its E2003 profile remains relevant to processing signed Sony firmware packages, but it does not provide a supported readback route from this handset. Do not invoke Flashtool TA dump/write or firmware-flash operations as a substitute. The only prepared root-free raw-read route remains the MTKClient BootROM wrapper, whose E2003 entry path is still unverified; the other viable route is an exact, traceable firmware package.
+
 ### Owner-assisted BootROM-entry probe — 2026-10-15
 
 The host-side MTKClient CLI environment was prepared outside the repository at
