@@ -6,6 +6,23 @@ Live device: E2003, Android 4.4.4/API 19, build `25.0.A.2.31`, Sony customizatio
 
 ## Sources and confidence
 
+### Follow-up exact-CDA search — 2026-10-15
+
+A further exact-string search for `1293-7358`, `1293-7358 R7A`, and
+`E2003_25.0.A.2.31_R7A` found no independently downloadable package for the
+installed customization. The current E2003 page at XperiaStockROM still names
+only `25.0.A.2.31_1293-9486_Customized_MEA`; this is the right model/build but
+the wrong CDA, and its mirror provides no independently trusted hash. AFH's
+E2003 directory exposes the `R3A` Customized DE archive (published MD5 checked
+locally in earlier research), not R7A. Search indexing also surfaced a 4PDA
+entry for `25.0.A.2.31 RU`, but the page is inaccessible to automated retrieval
+and the indexed entry gives no CDA, archive URL, or hash. These are comparison
+leads only; none changes the exact-R7A firmware status from **BLOCKED**.
+
+Sources checked: [XperiaStockROM E2003 listing](https://xperiastockrom.com/sony-xperia-e4g-e2003/),
+[AFH E4g firmware directory](https://androidfilehost.com/?flid=212192&w=files),
+[4PDA E4g firmware thread](https://4pda.to/forum/index.php?showtopic=668811).
+
 | Source | Finding | Status |
 |---|---|---|
 | Sony E4g user guide | Confirms the documented E2003/E2006/E2053 family and Sony Companion software repair procedure | **VERIFIED primary source**; does not promise a specific historical build remains downloadable |

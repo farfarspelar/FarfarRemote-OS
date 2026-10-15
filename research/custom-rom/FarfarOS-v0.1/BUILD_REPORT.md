@@ -113,6 +113,31 @@ It is not authorized or validated for a phone boot attempt and is not flashable.
 
 ## Status
 
+## Boot-startup side-effect audit — 2026-10-15
+
+The diagnostic Android boot-container candidate was parsed offline and its
+ramdisk `fstab` plus all init `.rc` files were scanned for block-device paths,
+format/wipe commands, and Sony bootstrap actions. The already documented
+`protect1`/`protect2` autoformat rows and named wipe/reset/MiscTA bootstrap
+actions are absent from this diagnostic variant. This narrows those specific
+known hazards; it does **not** prove the remaining init sequence is safe or
+will boot.
+
+The scan also confirms that the retained MediaTek init script runs `e2fsck`
+and `tune2fs -O has_journal` on the separate `apps_log` partition during its
+filesystem setup. That is an intentional on-device filesystem mutation and
+has not been tested with this image. The R7A system image does not contain
+`/system/etc/install-recovery.sh`, although the candidate's generic init
+script declares a `flash_recovery` service pointing to that path; the service
+therefore has no corresponding helper in this built system image. Static
+absence is not runtime proof that recovery will remain untouched, especially
+because the boot ramdisk and partition alias behavior are not matched to live
+R7A. No init rules, partitions, or phone state were changed during this audit.
+
+The audit used local retained artifacts and read-only host parsers only. It
+does not clear the boot test gate: the candidate is still based on an R10A
+ramdisk, and no exact R7A boot/fotakernel image or proven restore route exists.
+
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
 
 | Gate | Result |
