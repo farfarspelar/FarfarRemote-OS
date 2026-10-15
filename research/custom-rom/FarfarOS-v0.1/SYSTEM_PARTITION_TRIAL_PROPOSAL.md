@@ -1,4 +1,15 @@
-# FarfarOS v0.1 `/system` trial — write completed; startup inconclusive
+# FarfarOS v0.1 `/system` trial — write and first boot completed
+
+## Outcome update — 2026-10-15
+
+The initial post-write USB observation documented below was inconclusive at
+the time. It has since been superseded: the owner powered the phone on,
+observed FarfarOS and Android's lock screen, selected FarfarRemote as Home,
+and confirmed the app launched, connected to Wi-Fi and controlled Kodi. ADB
+also reconnected and identified the expected E2003 / Android 4.4.4 / firmware
+combination. The exact `/system` image therefore passed a first boot and
+network/Kodi smoke test on the target. Full regression testing and a validated
+restore route remain outstanding.
 
 ## Scope
 

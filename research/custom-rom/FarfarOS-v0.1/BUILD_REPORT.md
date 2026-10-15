@@ -1,5 +1,26 @@
 # FarfarOS Experimental v0.1 build report
 
+## Hardware boot and Kodi validation — 2026-10-15
+
+**Supersedes the earlier inconclusive startup observations below.** After the
+owner-approved write of the exact `/system` image recorded in this report,
+the owner powered on the E2003 and observed the FarfarOS boot animation,
+Android's lock screen, selected FarfarRemote as the Home app, and confirmed
+FarfarRemote launched. ADB then identified `E2003`, firmware `25.0.A.2.31`,
+Android `4.4.4`; package inspection reported `org.farfarremote` version
+`0.4.7` (versionCode 15). The owner subsequently confirmed the phone joined
+the network, connected to Kodi, and that control works.
+
+This is a successful first boot and a user-confirmed network/Kodi smoke test
+of the written system image on the target E2003. Wi-Fi and Kodi control are
+therefore **hardware-verified at smoke-test level**. ADB access also resumed.
+The host observed Wi-Fi enabled and Android battery service reporting 96%
+while USB-powered. Detailed regression checks remain outstanding: touch across
+all controls, Audio/Subtitles, orientation, Settings, Find My Kodi, automatic
+Wi-Fi reconnection after another reboot, charging behavior off USB, sleep,
+long-duration stability, and boot-animation playback itself. No claim is made
+that every Android component or battery target has been validated.
+
 ## Bootloader status addendum — 2026-10-15
 
 The Service Menu initially showed `Bootloader unlock allowed: Yes`, but not
@@ -326,6 +347,9 @@ these offline checks.
 
 
 ## Owner-approved system write and first-start result — 2026-10-15
+
+**Initial observation below was superseded by the successful boot and Kodi
+smoke-test section at the top of this report.**
 
 Following the separately approved exact operation, the E2003 read-only
 preflight passed and the host ran only:

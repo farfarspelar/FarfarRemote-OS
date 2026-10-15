@@ -14,11 +14,11 @@ Android 4.4 includes user-facing settings for choosing the default Home applicat
 
 ADB confirmed the connected device as E2003 / Android 4.4.4 / build `25.0.A.2.31` / CDA `1293-7358 R7A`. `dumpsys package` reports the current preferred HOME activity as `org.farfarremote/.MainActivity`, with `mAlways=true`; the selection record lists both Sony launchers as alternatives. The FarfarRemote package is currently installed from `/data/app` as version `0.4.6-rc5`. This is a direct observation of the live R7A user's state, not a test of the reconstructed system image.
 
-This improves the first-boot plan: preserving `/data` should preserve the existing HOME preference and app data, subject to Package Manager accepting the same package identity/signature when the system copy is introduced. That migration is **not verified**. Do not wipe `/data`; if a system-image experiment resets it, plan to reselect FarfarRemote as Home and re-enter or restore settings. The retained Sony launcher and USB debugging remain fallback access paths for early tests.
+The experimental system boot displayed Android's Home chooser; the owner selected FarfarRemote and confirmed it launched. This verifies the chooser and HOME launch on the current E2003 image. Preservation of all prior `/data` preferences/settings across other image updates remains unverified. Do not wipe `/data`; the retained Sony launcher and USB debugging remain fallback access paths for early tests.
 
 ## Limits
 
-The animation has not been played by a booted experimental image. Sony's path precedence and actual end-to-end timing are not verified. No bootloader splash/logo partition is altered. HOME registration is statically present in the APK, but the chooser/default-selection behavior has not been tested in this reconstructed image. Existing Sony startup services and phone warnings remain in this first image.
+The owner observed the FarfarOS logo during startup, confirming the supplied animation/branding is shown in the current boot flow; full playback timing and loop behavior have not been evaluated. No bootloader splash/logo partition is altered. HOME registration and chooser/default-selection behavior have been exercised on this image. Existing Sony startup services and phone warnings remain in this first image.
 
 ### Ramdisk candidate gate
 

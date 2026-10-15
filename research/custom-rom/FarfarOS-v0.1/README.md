@@ -1,8 +1,8 @@
 # FarfarOS Experimental ROM v0.1
 
-FarfarOS v0.1 is an offline, stock-derived **E2003 `/system` ext4 experiment**. It reconstructs the R7A system tree from the inspected E2003 R10A stock filesystem plus files captured read-only from the owner's R7A phone, then adds the existing FarfarRemote OS APK and the owner-supplied boot animation.
+FarfarOS v0.1 is a stock-derived **E2003 `/system` ext4 experiment**. It reconstructs the R7A system tree from the inspected E2003 R10A stock filesystem plus files captured read-only from the owner's R7A phone, then adds the existing FarfarRemote OS APK and the owner-supplied boot animation. The exact experimental image has now booted on the owner's E2003; the owner confirmed Wi-Fi and Kodi control work in a first smoke test. See [BUILD_REPORT.md](BUILD_REPORT.md) for tested scope and remaining checks.
 
-This is a development artifact, **not a complete ROM, not a Sony FTF/SIN package, not a recovery image, not boot-tested, and not approved for flashing**. It does not replace `boot`, `fotakernel`, `preloader`, NVRAM, TA, or any other partition. A successful host filesystem build does not prove that the phone can boot it.
+This remains a development artifact, **not a complete ROM, Sony FTF/SIN package, or recovery image**. It was installed to the E2003 `system` partition under the owner's explicit approval and has booted with a user-confirmed Wi-Fi/Kodi smoke test. It does not replace `boot`, `fotakernel`, `preloader`, NVRAM, TA, or any other partition. The experimental status and incomplete regression coverage mean it is not a general-purpose flash package.
 
 ## Current scope
 
@@ -38,4 +38,4 @@ See [BUILD.md](BUILD.md). Proprietary firmware, private ADB pulls, metadata, gen
 - **Boot-tested**: image started on hardware.
 - **Functionally tested**: Wi-Fi, touch, audio, charging, ADB, launcher, and Kodi behavior were exercised on hardware.
 
-The first combined v0.1 `/system` image has been built offline and passes the static filesystem and payload checks listed in `BUILD_REPORT.md`. It has not been boot-tested and must not be described as flashable.
+The combined v0.1 `/system` image passed offline filesystem and payload checks and has now booted on the target E2003. The owner confirmed FarfarRemote launch, network association and Kodi control. This is a successful device smoke test, not complete hardware qualification or validation of a reusable installer.

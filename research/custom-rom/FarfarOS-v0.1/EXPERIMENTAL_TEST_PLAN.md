@@ -11,7 +11,7 @@
 
 The operation and outcome are recorded in [`SYSTEM_PARTITION_TRIAL_PROPOSAL.md`](SYSTEM_PARTITION_TRIAL_PROPOSAL.md). Fastboot preflight confirmed E2003, `system` type `ext4`, and exact 2,097,152,000-byte capacity. Because `getvar unlocked` is blank, the operator supplied the exact Service Menu confirmation interactively. The write returned `OKAY`. No raw system backup or validated R7A restore route exists.
 
-## First startup observation (after the authorized system write)
+## First startup observation (historical; superseded)
 
 After the write, the phone enumerated as Sony USB Mass Storage (`0fce:e1cb`) and did not appear in ADB/Fastboot during the observation window. Android 4.4 supports this USB mode, so the USB identity alone does not establish failure. The screen was not observable from the host. On-device verification is still required: confirm whether Android/FarfarRemote UI appears; if it does, check build identity, touch/display, HOME selection, Settings/input, Wi-Fi, Kodi discovery/manual connection, remote navigation, Audio/Subtitles, timeout, USB/ADB, charging and battery status. Do not issue another write or recovery command based solely on the USB mode. touch/display, HOME selection, Settings and input, Wi-Fi association/reconnection, Kodi discovery/manual connection, navigation, Audio/Subtitles, screen timeout, USB/ADB, charging state, temperature and idle suspend/resume. Test reboot and power interruption only after basic boot is stable.
 
@@ -23,4 +23,18 @@ An owner-authorized `fastboot boot` attempt used the local boot-container POC (S
 
 Stop further changes if boot loops, ADB is unavailable beyond the agreed observation window, display/touch fails, Wi-Fi cannot recover, charging/battery reporting is abnormal, or the image writes outside the exact approved partition. Do not try unrelated partitions or generic images as recovery attempts.
 
-The v0.1 system image has been written, but Android startup and FarfarRemote behavior are not yet verified. Existing user verification on stock Android does not count as a v0.1 ROM test.
+## Owner-confirmed first boot and Kodi smoke test — 2026-10-15
+
+The owner reported seeing FarfarOS, then Android's lock screen, selecting
+FarfarRemote as Home, and observing FarfarRemote start. ADB subsequently
+identified E2003 / Android 4.4.4 / firmware `25.0.A.2.31` and FarfarRemote
+`0.4.7`. The owner confirmed the phone connected to Wi-Fi and Kodi and that
+Kodi control works. This verifies basic startup, HOME launch, network
+association and a Kodi control smoke test on the experimental system image.
+
+Still to verify manually: full remote-control matrix, Audio/Subtitles,
+orientation, Settings, Find My Kodi, Wi-Fi reconnection after reboot,
+off-USB charging, sleep/wake behavior, extended stability and repeated cold
+boots. The earlier USB Mass Storage-only observation was transient and is
+superseded by this successful startup. Do not infer broad compatibility from
+the smoke test alone.
