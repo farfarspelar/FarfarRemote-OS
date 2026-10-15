@@ -14,6 +14,7 @@
 | Android HOME / Kodi | FarfarRemote launched after owner selected it as Home; owner confirmed network/Kodi control works | **Owner-tested on target** |
 | Find My Kodi | Owner tested discovery on the experimental image | **Owner-tested on target** |
 | Cold boot / lock screen | Owner powered the phone off and on; FarfarRemote skipped the lock screen and Kodi auto-connected | **Owner-tested on target** |
+| Screen timeout / wake | Owner confirmed screen turns off and wakes without losing Kodi connection | **Owner-tested on target** |
 | Boot animation | ZIP format, CRC, frame geometry checked; installed in offline `/system` image; owner observed FarfarOS logo at startup | **Displayed at startup; full animation playback not separately evaluated** |
 
 An ext4 filesystem can be perfectly valid and still be rejected, mounted differently, or fail after boot due to image packaging, partition geometry, verity/signature policy, SELinux/runtime integration, or mismatched boot components.

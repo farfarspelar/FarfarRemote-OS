@@ -36,9 +36,11 @@ physical-device tests, not host-automated tests.
 In a subsequent full power-off/power-on test, the owner confirmed Android
 skipped the lock screen and FarfarRemote automatically reconnected to Kodi.
 This verifies the intended unattended startup path once on the target device.
+The owner also confirmed screen timeout and wake work without dropping the
+Kodi connection.
 
 Remaining checks: exhaustive remote-button coverage, off-USB charging,
-sleep/wake behavior, extended stability, repeated cold boots and detailed
-boot-animation timing. The earlier USB Mass Storage-only observation was
+extended stability, repeated cold boots and detailed boot-animation timing.
+The earlier USB Mass Storage-only observation was
 transient and is superseded by the successful startup. Do not infer broad
 compatibility beyond the tested E2003 setup.

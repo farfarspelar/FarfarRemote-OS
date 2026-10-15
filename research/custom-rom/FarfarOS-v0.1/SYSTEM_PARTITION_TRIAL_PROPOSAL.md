@@ -15,6 +15,8 @@ checks and a validated restore route remain outstanding.
 
 The owner then performed a full power cycle and confirmed startup skipped the
 lock screen and FarfarRemote automatically reconnected to Kodi.
+The owner also confirmed screen timeout and wake do not interrupt the Kodi
+connection.
 
 ## Scope
 
