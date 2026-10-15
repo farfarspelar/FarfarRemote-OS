@@ -78,6 +78,21 @@ a successful return from that menu to Android without a factory reset. It
 does not test Flashmode, Fastboot writes, recovery image behavior, or restore
 capability. No device command was sent while it was in recovery.
 
+### Passive Linux Flashmode enumeration — 2026-10-15
+
+After the owner attempted the non-writing USB check, the host observed a
+disconnect followed by Sony USB `0fce:adde`, product string `S1 Service`, with
+no ADB or Fastboot device. This is the expected Sony S1 service/Flashmode USB
+transport. The prior normal-mode connection on the same USB port had been
+read-only identified as E2003 / `25.0.A.2.31` / `1293-7358 R7A`, so this is
+strong evidence that the handset reached S1 service mode. No Flashtool session,
+loader transfer, Fastboot command, or partition operation was started.
+
+**Readiness effect:** Linux Mint can enumerate the handset in service mode.
+This confirms transport only; it does not establish a usable exact-R7A restore
+package, safe partition selection, or successful repair. The phone must not be
+treated as recoverable until those independent gates are closed.
+
 Sony's [current E4g support page](https://www.sony.com.au/electronics/support/mobile-phones-tablets-mobile-phones/xperia-e4g)
 still lists Xperia Companion (release date 2022-05-15), and the Sony E2003
 family user guide documents Companion's Software repair function. This proves
