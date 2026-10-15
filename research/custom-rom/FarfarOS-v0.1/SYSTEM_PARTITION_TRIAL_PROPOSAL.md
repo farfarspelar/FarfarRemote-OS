@@ -1,12 +1,8 @@
-# FarfarOS v0.1 `/system` trial — reviewable operation proposal; not executed
+# FarfarOS v0.1 `/system` trial — write completed; startup inconclusive
 
 ## Scope
 
-This proposal evaluates a first trial that writes **only** the E2003 `system`
-partition. It would leave the installed `boot`, `fotakernel`, bootloader,
-`seccfg`, TA, NVRAM, calibration, and user-data partitions untouched. The
-current stock kernel and ramdisk would therefore remain in place. This is a
-proposal, not a flash instruction or authorization.
+The owner approved the exact image, SHA-256 and `system` target after a read-only preflight. Fastboot reported the image transfer and `system` write as `OKAY`. The operation targeted only the E2003 `system` partition; `boot`, `fotakernel`, bootloader, `seccfg`, TA, NVRAM, calibration and userdata were not included. The current stock kernel and ramdisk remain in place. This record documents an experimental write, not a verified bootable ROM.
 
 ## Candidate
 
@@ -94,14 +90,14 @@ repair path that is unavailable from the current Linux Mint setup.
 
 ## Potential operation, for review only
 
-The owner has confirmed `Bootloader unlocked: Yes`. The exact raw ext4 image
-remains untested on this S1 bootloader: acceptance of the `system` alias and
-raw ext4 payload is UNKNOWN. A read-only preflight is available at
+The owner has confirmed `Bootloader unlocked: Yes`. Fastboot subsequently
+accepted the `system` alias and reported the raw ext4 transfer/write as
+`OKAY`. The actual on-device filesystem contents and Android boot remain
+unverified. A read-only preflight is available at
 `research/custom-rom/tools/preflight_e2003_system_write.sh`; because this
 bootloader returns an empty `getvar unlocked`, it now fails closed unless the
 operator interactively confirms the exact Service Menu status. This helper
-never writes or reboots. No ROM image has been flashed. The proposed operation
-is limited to the `system` partition and the exact image/hash above. Do not
+never writes or reboots. The approved image was written to `system`; no other partition was written. Do not
 substitute a boot, recovery, FOTA, sparse image, or other partition. An
 interrupted write or rejected format may leave Android unable to start.
 
@@ -109,19 +105,19 @@ interrupted write or rejected format may leave Android unable to start.
 
 The image is ready for review as a narrowly scoped experimental system-only
 trial, not as a verified flashable ROM. The owner has confirmed the unlocked
-state and has accepted proceeding without a proven restore base. The exact
-write operation must still be explicitly authorized against the image path,
-SHA-256, and `system` partition before execution. First-boot checks would use
-the stock boot chain; stop on unexpected partition activity or device
-behavior. A successful offline build is not evidence of a successful device
-boot.
+state and has accepted proceeding without a proven restore base. The exact write was separately authorized and reported `OKAY`. First boot
+was not confirmed: after `fastboot reboot`, USB exposed a Sony Mass Storage
+interface (`0fce:e1cb`) and neither ADB nor Fastboot became available during
+approximately 45 seconds. Screen state is unknown. No recovery attempt or
+additional write was made. A successful write does not establish a successful
+Android boot.
 
 ### Bootloader unlock status addendum — 2026-10-15 (superseded by confirmation below)
 
 The owner explicitly authorized the separate unlock operation. The guarded
 helper revalidated E2003 / `25.0.A.2.31` / `1293-7358 R7A` and one Fastboot
 target; Fastboot returned `OKAY` for the Sony unlock command and reboot. The
-system-image write described above remains **not executed**.
+system-image write described above had not yet been executed at that historical checkpoint; the later write is recorded above.
 
 ### Post-unlock artifact verification — 2026-10-15
 
@@ -133,4 +129,15 @@ The raw system image remains 2,097,152,000 bytes, SHA-256
 byte-for-byte to raw ext4. Embedded FarfarRemote is `org.farfarremote`
 version `0.4.7`, min SDK 19, target SDK 28, signed by the Android Debug
 certificate (SHA-256 `63f9336d0038b8ebe9ac8224f8869e1f871828d81b6269372315ce055cf607fd`).
-No device partition was written.
+The `system` partition was written under the owner’s separate approval; no other partition was written.
+
+### First startup observation — 2026-10-15
+
+Fastboot reported transfer and write success for the reviewed `system` image.
+After normal reboot, USB enumerated as `0fce:e1cb` with a Mass Storage
+interface. ADB and Fastboot remained unavailable during the observation
+window. Android 4.4 supports USB Mass Storage mode, so this USB identity alone
+does not establish whether Android boot completed. The screen was not
+observable; startup is **inconclusive and not verified**. No additional device
+commands that write data were issued. Sony documents MSC selection for Android
+4.2–5.1 in its [USB connection-mode support article](https://www.sony.com/electronics/support/articles/SX187901).

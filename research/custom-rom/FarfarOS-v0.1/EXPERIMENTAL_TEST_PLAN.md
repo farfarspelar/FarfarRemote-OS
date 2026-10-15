@@ -1,21 +1,21 @@
 # Experimental test plan
 
-## Offline gates (before any device write)
+## Offline gates (completed before the authorized system write)
 
 1. Confirm source image, APK signer/package/min API and animation hashes.
 2. Build a new output image only; retain its SHA-256 and full build log.
 3. Run `e2fsck -fn`, verify APK/animation by debugfs readback, and inspect owner/mode/SELinux metadata.
 4. Independently inspect filesystem size, free blocks, `/build.prop`, launcher intent and boot-animation path.
 5. Audit the exact boot ramdisk/init scripts for every mount, automatic format action and Sony bootstrap side effect. The existing R10A ramdisk marks `protect1`/`protect2` `autoformat`, invokes `wipedata`/`mr`, and starts `updatemiscta` (whose matching system binary references TA-write APIs). It is excluded from another boot attempt until runtime guards are understood and an acceptable ramdisk candidate is reviewed. A local variant that removes these actions exists for offline analysis only; omitting Sony bootstrap work may prevent startup, so that variant is also not ready for device testing.
-6. Create a specific operation proposal with exact partition mapping, image hash, current backup state, failure modes and recovery method. Stop for separate explicit authorization before any write.
+6. Prepare the exact operation proposal with partition, image hash, backup state and failure modes. The owner separately authorized the exact `/system` write after the preflight passed.
 
-The proposed first system-only operation is documented in [`SYSTEM_PARTITION_TRIAL_PROPOSAL.md`](SYSTEM_PARTITION_TRIAL_PROPOSAL.md). Fastboot has now independently confirmed E2003, `system` type `ext4`, and exact 2,097,152,000-byte capacity. Its `unlocked` variable was empty, so the owner's unlocked report remains unconfirmed. The proposal is **not authorized**: there is no raw system backup or validated R7A restore route.
+The operation and outcome are recorded in [`SYSTEM_PARTITION_TRIAL_PROPOSAL.md`](SYSTEM_PARTITION_TRIAL_PROPOSAL.md). Fastboot preflight confirmed E2003, `system` type `ext4`, and exact 2,097,152,000-byte capacity. Because `getvar unlocked` is blank, the operator supplied the exact Service Menu confirmation interactively. The write returned `OKAY`. No raw system backup or validated R7A restore route exists.
 
-## First boot checks (only after an authorized write plan)
+## First startup observation (after the authorized system write)
 
-Observe boot completion and ADB availability. The live R7A user data currently records FarfarRemote (`org.farfarremote/.MainActivity`) as preferred HOME; preserve `/data` for the first system-image trial and confirm this preference survives Package Manager's system-app scan. If it does not, use the Sony launcher/Settings or ADB to select FarfarRemote. Check boot logs and verify: touch/display, HOME selection, Settings and input, Wi-Fi association/reconnection, Kodi discovery/manual connection, navigation, Audio/Subtitles, screen timeout, USB/ADB, charging state, temperature and idle suspend/resume. Test reboot and power interruption only after basic boot is stable.
+After the write, the phone enumerated as Sony USB Mass Storage (`0fce:e1cb`) and did not appear in ADB/Fastboot during the observation window. Android 4.4 supports this USB mode, so the USB identity alone does not establish failure. The screen was not observable from the host. On-device verification is still required: confirm whether Android/FarfarRemote UI appears; if it does, check build identity, touch/display, HOME selection, Settings/input, Wi-Fi, Kodi discovery/manual connection, remote navigation, Audio/Subtitles, timeout, USB/ADB, charging and battery status. Do not issue another write or recovery command based solely on the USB mode. touch/display, HOME selection, Settings and input, Wi-Fi association/reconnection, Kodi discovery/manual connection, navigation, Audio/Subtitles, screen timeout, USB/ADB, charging state, temperature and idle suspend/resume. Test reboot and power interruption only after basic boot is stable.
 
-### Attempt log — 2026-10-15
+### Earlier temporary-boot attempt — 2026-10-15
 
 An owner-authorized `fastboot boot` attempt used the local boot-container POC (SHA-256 `1d71c03b172d23b7830922153559df37966321bd28fbb9a28666fd81268543dc`). Fastboot acknowledged transfer, then reported a USB status-read failure as the phone re-enumerated with a mass-storage-only USB function. No ADB/Fastboot return was observed during the test window, so boot result is **INCONCLUSIVE**. No flash/erase/unlock/wipe command was used. This did not test the custom `/system` image; the installed system partition remained untouched.
 
@@ -23,4 +23,4 @@ An owner-authorized `fastboot boot` attempt used the local boot-container POC (S
 
 Stop further changes if boot loops, ADB is unavailable beyond the agreed observation window, display/touch fails, Wi-Fi cannot recover, charging/battery reporting is abnormal, or the image writes outside the exact approved partition. Do not try unrelated partitions or generic images as recovery attempts.
 
-No hardware test has been performed with the v0.1 system image. Existing user verification on stock Android does not count as a v0.1 ROM test.
+The v0.1 system image has been written, but Android startup and FarfarRemote behavior are not yet verified. Existing user verification on stock Android does not count as a v0.1 ROM test.

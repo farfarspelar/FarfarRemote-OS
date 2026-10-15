@@ -323,3 +323,27 @@ matched. The embedded APK was inspected with Android Build Tools 35.0.0:
 uses the Android Debug certificate. No claim of system signing, partition
 acceptance, first boot, UI, Wi-Fi, charging, or Kodi behavior is made from
 these offline checks.
+
+
+## Owner-approved system write and first-start result — 2026-10-15
+
+Following the separately approved exact operation, the E2003 read-only
+preflight passed and the host ran only:
+
+```sh
+fastboot flash system /mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system-post-storage.ext4
+```
+
+Fastboot reported `Sending 'system' (2048000 KB) OKAY` in 319.875 seconds and
+`Writing 'system' OKAY`; total command time was 319.890 seconds. `fastboot
+reboot` returned `OKAY`. This verifies Fastboot reported the write successful;
+it does not verify partition contents or a successful OS boot.
+
+After reboot, the handset appeared as USB product `0fce:e1cb`, exposing a USB
+Mass Storage interface. It did not appear in ADB or Fastboot during roughly 45
+seconds of observation. Android 4.4 supports USB Mass Storage mode, so this
+USB identity alone does not prove a boot failure. The screen was not observable
+from the host, so the exact startup state is UNKNOWN. Sony documents this mode
+for Android 4.2–5.1 in its [USB connection-mode support article](https://www.sony.com/electronics/support/articles/SX187901). No second flash, erase, wipe, or recovery write
+was attempted. The known restore route remains unverified. Stop and obtain the
+owner's on-device status before any further device action.

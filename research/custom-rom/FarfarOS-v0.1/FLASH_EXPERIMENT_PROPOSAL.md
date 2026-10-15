@@ -1,8 +1,8 @@
-# FarfarOS v0.1 system-only experiment proposal
+# FarfarOS v0.1 system-only experiment record
 
-**Status: PREPARED — NOT AUTHORIZED OR EXECUTED**
+**Status: SYSTEM WRITE REPORTED OKAY; ANDROID STARTUP NOT OBSERVED**
 
-This proposal covers one possible write experiment after read-only preflight. It is not a recovery plan. The FarfarOS system image is an offline ext4 POC and has not been boot-tested.
+This record documents the owner-approved write to the E2003 `system` partition and the first startup observation. It is not a recovery plan. The FarfarOS system image remains an experimental ext4 POC and has not reached a verified Android boot on hardware.
 
 ## Candidate artifact
 
@@ -14,13 +14,11 @@ This proposal covers one possible write experiment after read-only preflight. It
 
 The image was reconstructed from the captured E2003 R7A `/system` file tree and metadata, using the inspected R10A ext4 image only as a filesystem container. The build preserves the captured R7A tree and injects FarfarRemote OS. It is not a Sony-signed SIN or a complete firmware package.
 
-## Proposed scope
+## Scope performed
 
-If, and only if, separately authorized after preflight, the candidate operation would write **only** the `system` partition, expected from the historical read-only E2003 map to be `/dev/block/mmcblk0p19`. The raw image size exactly matches the last observed system partition capacity of 2,097,152,000 bytes.
+After the read-only preflight and the owner’s explicit approval of this exact image/hash/partition, the operation wrote **only** the Fastboot `system` target, mapped by prior read-only evidence to `/dev/block/mmcblk0p19`. No boot, fotakernel, recovery, cache, userdata, loader, preloader, logo, TA, NVRAM, calibration, or security partition was in scope. No wipe or relock was run.
 
-No boot, fotakernel, recovery, cache, userdata, loader, preloader, logo, TA, NVRAM, calibration, or security partition is in scope. No wipe or relock is part of this proposal.
-
-Candidate command, **shown for review only and not run** (Linux Mint Fastboot 34.0.4 does not accept `-i`; the device is selected by requiring exactly one Fastboot target and verifying its product before any separate authorization):
+The command that was run (Linux Mint Fastboot 34.0.4; no `-i` option):
 
 ```sh
 fastboot flash system \
@@ -31,10 +29,10 @@ fastboot flash system \
 
 - **VERIFIED, historical read-only observations:** handset product E2003; bootloader string `1290-9780 S1_Boot_MT6732_TC9PRA_9`; Android build `25.0.A.2.31`; customization R7A; system alias mapped to `mmcblk0p19`; reported system capacity `2,097,152,000` bytes.
 - **REPORTED, superseded:** owner previously said the bootloader is unlocked.
-- **VERIFIED, pre-unlock Service Menu:** `Bootloader unlock allowed: Yes`, but not `Bootloader unlocked: Yes`; Fastboot `getvar unlocked` returned no value. `secure: yes` does not prove lock state. The owner later authorized the unlock command and subsequently confirmed `Bootloader unlocked: Yes` in the Service Menu. ADB is available again. No ROM image was flashed.
+- **VERIFIED, pre-unlock Service Menu:** `Bootloader unlock allowed: Yes`, but not `Bootloader unlocked: Yes`; Fastboot `getvar unlocked` returned no value. `secure: yes` does not prove lock state. The owner later authorized the unlock command and subsequently confirmed `Bootloader unlocked: Yes` in the Service Menu. ADB was available again before the system trial. No ROM image had been flashed at that checkpoint.
 - **Interpretation of `secure`:** AOSP Fastboot protocol documentation defines `secure` as whether the bootloader requires signed images for install/boot; it is not, by itself, a locked/unlocked state field. Therefore `secure: yes` is recorded but is not used to infer the current lock state. See the [AOSP Fastboot protocol](https://android.googlesource.com/platform/system/core/+/09fe163be2a3f59dfcc34d473b898e777c0f4514/fastboot/README.md).
-- **UNKNOWN:** whether this S1 bootloader accepts the `system` Fastboot partition alias and raw ext4 payload. Flashtool's public source has a generic `fastboot flash system <image>` operation, but does not establish E2003 bootloader acceptance. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
-- **UNKNOWN:** whether first boot will complete with the stock R7A boot/FOTA and this reconstructed system. No test of this system image has occurred on hardware.
+- **VERIFIED, operation result:** the S1 bootloader accepted the `system` alias and raw ext4 payload for transfer/write and returned `OKAY`. **UNKNOWN:** whether all bytes persisted as intended, since no raw partition readback was performed. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
+- **UNKNOWN:** whether Android will complete startup with the stock R7A boot/FOTA and this reconstructed system. The first post-write boot test did not produce ADB/Fastboot; USB exposed only a Sony Mass Storage interface. The screen state was not observed.
 - **INCONCLUSIVE prior observation:** a separate `fastboot boot` Android-container POC transferred, then USB disconnected with `Status read failed`; no boot result was observable. That experiment did not write the system partition and does not validate this image.
 
 ## Backup and recovery position
@@ -47,7 +45,7 @@ fastboot flash system \
 - Therefore recovery from a failed system-only experiment is **not guaranteed**. A soft brick/boot loop may require a service repair route that is currently unverified.
 - **Host-side limitation:** the `/mnt/data` ext4 volume's `jbd2/mmcblk0p1` journal thread is in long-running uninterruptible sleep, and a write attempt there stalled. The validated fallback currently resides on `/tmp` on the separate SSD. Treat the stalled `/mnt/data` output as incomplete and unusable unless it later passes independent checks. See [`RESTORE_RECONSTRUCTION.md`](RESTORE_RECONSTRUCTION.md).
 
-## Required read-only preflight before considering authorization
+## Read-only Fastboot preflight history
 
 ### Fresh Fastboot/image audit — 2026-10-15
 
@@ -66,7 +64,7 @@ The official Sony procedure distinguishes eligibility from current state; see
 The corrected read-only helper was then run against this live Fastboot session.
 Image size/hash/type, unique target, E2003 product, exact system partition
 capacity and bootloader identifier all passed; it stopped at the unlock check
-because the bootloader returns no value. It exited with `PREFLIGHT FAIL` and
+because the bootloader returns no value. At that earlier checkpoint it exited with `PREFLIGHT FAIL` and
 issued no write command. The phone was returned to Android and ADB was
 confirmed online.
 
@@ -117,7 +115,7 @@ Fastboot binary rejects as an invalid option. The reviewed command above and
 the preflight script now use standard Linux Fastboot syntax. The first
 physical run exposed a second parser assumption (partition size was reported
 as hexadecimal without a `0x` prefix); that is corrected and the actual helper
-now reaches the unlock-state check. No write command has been run.
+reached the unlock-state check at that historical checkpoint. No write command had been run yet.
 
 With the handset physically present and in Fastboot, the following read-only
 queries have now been run:
@@ -147,15 +145,14 @@ The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/prefl
 
 ## Authorization boundary
 
-No write command has been issued under this proposal. Running the candidate `fastboot flash system` command requires separate explicit approval naming this exact image, SHA-256, and the `system` partition after review of the successful read-only preflight. Broad approval to continue ROM research is not treated as approval for this particular partition write.
+The system write was explicitly approved by the owner for the exact image path, SHA-256, and `system` partition. Fastboot reported both image transfer and partition write as `OKAY`. No other partition write was authorized or performed.
 
-## Bootloader unlock addendum — 2026-10-15
+## Bootloader unlock record — 2026-10-15
 
 The separate bootloader unlock was explicitly authorized and completed.
 Fastboot returned `OKAY` for one `oem unlock` command, then `fastboot reboot`
 returned `OKAY`. ADB reconnected, and the owner confirmed Service Menu
-`Bootloader unlocked: Yes`. This does not alter the authorization boundary
-above: the proposed `system` partition write has not been executed.
+`Bootloader unlocked: Yes`. The owner later separately approved the exact `system` partition operation documented above.
 
 ## Post-unlock physical read-only preflight — 2026-10-15
 
@@ -170,3 +167,20 @@ ADB reconnected to E2003 / Android 4.4.4 / `25.0.A.2.31`. No partition was
 read or written. This validates preflight plumbing and identity/capacity only;
 it does not validate the bootloader's acceptance of `fastboot flash system`,
 image write integrity, or Android boot.
+
+
+## Flash and startup observation — 2026-10-15
+
+Immediately before the write, the helper revalidated image size/hash/type,
+Fastboot target count, product E2003, system capacity `0x7d000000`, and S1
+bootloader identifier. Fastboot returned `Sending 'system' (2048000 KB) OKAY`
+after 319.875 seconds and `Writing 'system' OKAY`; command total was 319.890
+seconds. No other flash command was run. `fastboot reboot` returned `OKAY`.
+
+After reboot the handset enumerated as Sony USB product `0fce:e1cb`, whose
+interface is USB Mass Storage. It did not appear in `adb devices` or
+`fastboot devices` during the observation window (about 45 seconds). Android
+4.4 supports USB Mass Storage mode, so this USB identity alone does not prove
+a boot failure. The phone's screen was not observable from the host; whether
+Android reached its UI is **UNKNOWN**. No recovery or additional write attempt
+was made. See Sony's [USB connection-mode support article](https://www.sony.com/electronics/support/articles/SX187901).
