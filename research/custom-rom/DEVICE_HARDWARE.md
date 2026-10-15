@@ -2,6 +2,8 @@
 
 Research date: 2026-10-14. This document is specific to the connected single-SIM E2003 running firmware 25.0.A.2.31.
 
+Read-only prerequisite snapshot refreshed 2026-10-15; see the dated note below. No device-specific output file or serial number was added to the repository.
+
 ## Evidence labels
 
 - **VERIFIED**: read directly from the connected phone or an official Sony product document.
@@ -31,6 +33,17 @@ Research date: 2026-10-14. This document is specific to the connected single-SIM
 | Wi-Fi | Live interface is `wlan0`; sysfs binds it to platform driver `mt-wifi`. Firmware/configuration assets are present in `/system/lib/hw` and `/system/etc/firmware` | **VERIFIED** runtime interface/driver name and file presence. Exact chipset revision, source and blob set are **UNKNOWN**. Preserve the stock driver/firmware path for any stock-based OS. |
 | Bluetooth/audio hardware modules | `/system/lib/hw` contains `bluetooth.default.so` and audio HAL modules | **VERIFIED** file presence only. This does not by itself prove Bluetooth operation or all audio paths in a new ROM. |
 | Input devices | `/proc/bus/input/devices` reports `mtk-tpd` (touch, handlers `mouse0`/`event7`) and `mtk-kpd` (keys, `event0`); Android density property is `240` dpi | **VERIFIED**, read-only ADB. Calibration, key layout and external controller behavior remain **UNKNOWN** for a new image. |
+
+### Read-only runtime snapshot — 2026-10-15
+
+The guarded `tools/collect_e2003_prerequisites.sh` script was run against exactly one authorized USB device. It verified E2003 / Android 4.4.4 API 19 / build `25.0.A.2.31` / CDA `1293-7358 R7A`; no reboot, root operation, raw partition read, device write or output-file capture occurred. In addition to the table above, it observed:
+
+- Kernel build string: Linux `3.10.48+`, GCC 4.8, dated 2015-09-08.
+- Four CPUs are possible/present (`0-3`), but at that sample only CPU0 was online (`online=0`, `offline=1-3`). Treat this as a transient runtime snapshot, not a kernel/hardware limitation.
+- CPU0 uses `mt-cpufreq` with the `interactive` governor. Advertised governors were `ondemand`, `userspace`, `powersave`, `interactive`, `performance`; advertised frequencies ranged from 468 MHz to 1.495 GHz. The instantaneous reading was 1.170 GHz. No governor or frequency setting was changed, and this single powered snapshot is not a battery or performance benchmark.
+- Partition labels and sizes remained consistent with prior observations: `boot` p10 and `fotakernel` p9, each 32 MiB; `system` p19; `userdata` p21. Only `/proc/partitions` and by-name symlink metadata were read, not partition contents.
+
+This refresh does not change ROM readiness. It provides another current identity/runtime check and confirms that any kernel replacement must preserve the MTK cpufreq/hotplug behavior unless a controlled test demonstrates a safe alternative.
 
 ### Fresh connectivity dependency inspection — 2026-10-14
 
