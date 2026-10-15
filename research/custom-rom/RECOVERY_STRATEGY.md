@@ -44,6 +44,24 @@ Sony E2003. That generic guidance is not sufficient grounds to repeat button
 experiments on this handset, particularly because the previous observed
 volume-button attempt exposed Sony Fastboot rather than MediaTek BootROM.
 
+The pinned checkout's USB table labels Sony `0fce:f200` as a Sony BROM ID, and
+its chip configuration includes hwcode `0x6752` as MT6752. Both expected
+identifiers therefore exist in the reviewed tool version, but neither has
+been observed from this handset in BootROM. Even a matching USB ID and chip
+profile would only permit proceeding to a guarded read attempt; the read could
+still fail due to security/authentication, protocol, or board-specific setup.
+
+The same pinned checkout's `mtkclient/config/brom_config.py` contains a
+`Chipconfig` entry for hardware code `0x6752` (`name="MT6752"`) and a shared
+efuse register profile covering `0x6752`. The phone's Android property reports
+platform `MT6752`, so this is a chipset-family match in the tool's static
+configuration. **It is not a confirmed BootROM hardware code from this phone**:
+the actual BROM handshake has never occurred, and the profile does not prove
+that this handset's security state permits a DA session or raw partition
+reads. The local MTKClient checkout is pinned at
+`7cb40e727727dfe3faa065eefb29b16ed29bbdf1`; no command was sent to the phone
+for this source audit.
+
 A subsequent 180-second passive USB observation found no new Sony or MediaTek
 service-mode VID:PID; ordinary ADB remained connected throughout. The handset
 was therefore not captured in BootROM/preloader mode, and no partition dump
