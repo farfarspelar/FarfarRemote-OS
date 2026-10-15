@@ -17,7 +17,7 @@ The build wrapper defaults to:
 - Output: `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/`
 - Temporary files: `/mnt/data/FarfarRemote-Research-POC/tmp/`
 
-It exports `TMPDIR`, `TEMP` and `TMP` to the temporary directory and refuses to write the system image outside the data-backed build directory or inside the Git repository. To use another data volume, set `FARFAR_DATA_ROOT` and optionally `FARFAR_TMPDIR` before invoking it. The Python builder stages its ext4 image alongside the requested output, so keep the output on `/mnt/data` as well.
+It verifies that the data root is on a filesystem separate from `/` and has at least 5 GiB free before creating build directories. It also verifies that the temporary directory is on that same data filesystem, exports `TMPDIR`, `TEMP` and `TMP`, and refuses output outside the data-backed build directory or inside the Git repository. This prevents a missing `/mnt/data` mount from silently filling `/`. To use another data volume, set `FARFAR_DATA_ROOT` and optionally `FARFAR_TMPDIR` before invoking it. The Python builder stages its ext4 image alongside the requested output, so keep the output on the data filesystem as well.
 
 The current build uses the pinned R10A `system.ext4` only as a filesystem container, then applies captured R7A file contents and metadata. The builder checks the R10A input SHA-256 and the installed OS APK signer. It also validates the owner-supplied animation archive, writes the two payloads, reads them back, and runs `e2fsck -fn`.
 

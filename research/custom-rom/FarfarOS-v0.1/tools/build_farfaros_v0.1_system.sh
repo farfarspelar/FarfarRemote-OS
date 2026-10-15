@@ -10,9 +10,9 @@ fi
 
 repo=$(git rev-parse --show-toplevel)
 builder="$repo/research/custom-rom/tools/create_r7a_system_image_poc.py"
-data_root=${FARFAR_DATA_ROOT:-/mnt/data/FarfarRemote-Research-POC}
+data_root=$(realpath -m -- "${FARFAR_DATA_ROOT:-/mnt/data/FarfarRemote-Research-POC}")
 build_root="$data_root/builds/FarfarOS-v0.1"
-tmp_root=${FARFAR_TMPDIR:-"$data_root/tmp"}
+tmp_root=$(realpath -m -- "${FARFAR_TMPDIR:-"$data_root/tmp"}")
 source=$1
 stock_tree=$2
 r7a_tree=$3
@@ -20,6 +20,34 @@ metadata=$4
 apk=$5
 animation=$6
 output=$(realpath -m -- "$7")
+
+# Refuse to fall back to `/` if the data volume is not mounted.
+probe=$data_root
+while [[ ! -e "$probe" ]]; do
+  parent=$(dirname -- "$probe")
+  [[ "$parent" != "$probe" ]] || { echo "Cannot find a mounted filesystem for $data_root" >&2; exit 2; }
+  probe=$parent
+done
+root_fs=$(stat -f -c '%d' /)
+data_fs=$(stat -f -c '%d' "$probe")
+[[ "$root_fs" != "$data_fs" ]] || {
+  echo "Data root is on the system filesystem; refusing to build: $data_root" >&2; exit 2;
+}
+
+tmp_probe=$tmp_root
+while [[ ! -e "$tmp_probe" ]]; do
+  parent=$(dirname -- "$tmp_probe")
+  [[ "$parent" != "$tmp_probe" ]] || { echo "Cannot find a mounted filesystem for temporary path $tmp_root" >&2; exit 2; }
+  tmp_probe=$parent
+done
+tmp_fs=$(stat -f -c '%d' "$tmp_probe")
+[[ "$tmp_fs" == "$data_fs" ]] || {
+  echo "Temporary path must be on the same data filesystem: $tmp_root" >&2; exit 2;
+}
+free_bytes=$(df -PB1 "$probe" | awk 'END {print $4}')
+(( free_bytes >= 5 * 1024 * 1024 * 1024 )) || {
+  echo "Data filesystem needs at least 5 GiB free; currently ${free_bytes:-unknown} bytes: $probe" >&2; exit 2;
+}
 
 # Keep large images, staging data and helper-tool temporary files off `/`.
 mkdir -p "$build_root" "$tmp_root"
