@@ -51,16 +51,18 @@ been observed from this handset in BootROM. Even a matching USB ID and chip
 profile would only permit proceeding to a guarded read attempt; the read could
 still fail due to security/authentication, protocol, or board-specific setup.
 
-The same pinned checkout's `mtkclient/config/brom_config.py` contains a
-`Chipconfig` entry for hardware code `0x6752` (`name="MT6752"`) and a shared
-efuse register profile covering `0x6752`. The phone's Android property reports
-platform `MT6752`, so this is a chipset-family match in the tool's static
-configuration. **It is not a confirmed BootROM hardware code from this phone**:
-the actual BROM handshake has never occurred, and the profile does not prove
-that this handset's security state permits a DA session or raw partition
-reads. The local MTKClient checkout is pinned at
-`7cb40e727727dfe3faa065eefb29b16ed29bbdf1`; no command was sent to the phone
-for this source audit.
+The chipset naming is itself inconsistent. Sony's official [E4g white paper](https://www-support-downloads.sonymobile.com/e2033/whitepaper_EN_e2003_e2006_e2053_xperia_E4g.pdf)
+specifies MT6732. The live firmware reports `ro.hardware=mt6752` and
+`ro.mediatek.platform=MT6752`; the retained `callass` kernel `ProjectConfig.mk`
+also says `MTK_PLATFORM = MT6752`, while its MediaTek security `CHIP_CONFIG.ini`
+labels the platform MT6732. This may be a vendor naming/configuration reuse,
+but it does not identify the BootROM hardware code. The pinned MTKClient source
+contains a profile for hwcode `0x6752`, but no `0x6732` entry. **Therefore its
+MT6752 profile is a conditional lead, not verified E2003 chip support.** Only a
+real BROM handshake reporting a supported hardware code can resolve this; no
+such handshake has occurred. This uncertainty weakens the prepared MTKClient
+read route: do not run the partition-read wrapper until the returned hwcode is
+positively matched to the pinned profile and the path is re-reviewed.
 
 A subsequent 180-second passive USB observation found no new Sony or MediaTek
 service-mode VID:PID; ordinary ADB remained connected throughout. The handset
