@@ -33,7 +33,7 @@ based on an E2003 R10A image, then populated with the captured R7A tree and
 metadata. Exact size and file-level comparison are encouraging but do not
 prove S1 Fastboot accepts it or that Android will boot it.
 
-## Read-only Fastboot check — 2026-10-15
+## Read-only bootloader status checks — 2026-10-15
 
 The device was rebooted from Android into Fastboot and returned to Android
 using ordinary reboot commands only. Read-only results:
@@ -47,10 +47,23 @@ using ordinary reboot commands only. Read-only results:
 | `partition-type:system` | `ext4` |
 
 ADB reconnected and confirmed E2003 / Android 4.4.4 / API 19 /
-`25.0.A.2.31` / CDA `1293-7358 R7A`. No partition command was sent. The owner
-reports the bootloader unlocked, but the Fastboot response still does not
-independently establish that state. `secure: yes` must not be interpreted as
-proof that the bootloader is locked or unlocked.
+`25.0.A.2.31` / CDA `1293-7358 R7A`. No partition command was sent. Fastboot
+did not expose a usable `unlocked` value. `secure: yes` does not establish
+whether this bootloader is locked.
+
+The Android Service Menu was then checked read-only at Service info >
+Configuration > Rooting Status. It displayed `Bootloader unlock allowed: Yes`;
+it did not display `Bootloader unlocked: Yes`. These are distinct states:
+the former means unlocking is permitted, while the latter means it has already
+been done. Current evidence therefore does **not** verify an unlocked
+bootloader, despite the earlier owner report. Treat it as **not unlocked / not
+verified** until the Service Menu explicitly reports `Bootloader unlocked:
+Yes`. The UI hierarchy was inspected locally; temporary diagnostic output was
+removed and FarfarRemote was restored to the foreground.
+
+The [Xperia bootloader checklist](https://docs.sailfishos.org/Support/Help_Articles/Managing_Sailfish_OS/Checklist_for_Sailfish_OS/#xperia-bootloader)
+describes `Bootloader unlock allowed: Yes` as the state where unlocking is
+still the next step. No unlock command or unlock-code workflow was run.
 
 ## Backup and recovery status
 
@@ -73,17 +86,23 @@ fails during boot.
 
 ## Potential operation, for review only
 
-If a future decision explicitly authorizes this exact operation, the candidate
-command would be `fastboot flash system <verified-image-path>` after repeating
-the identity, unlock-state, partition-size, and hash checks. This command has
-not been run. Do not substitute a boot, recovery, FOTA, sparse image, or other
-partition. A transfer/write interruption may leave Android unable to start.
+The proposed system write is currently blocked even before considering the
+missing recovery path: the bootloader's unlocked state is not verified. A
+future system-only trial would require (1) a separately authorized and
+successfully completed bootloader-unlock operation if the phone is still
+locked, (2) independent confirmation that it now reports `Bootloader
+unlocked: Yes`, and (3) separate explicit authorization for the exact system
+image hash and partition write. No unlock or flash command has been run. Do
+not substitute a boot, recovery, FOTA, sparse image, or other partition. A
+transfer/write interruption may leave Android unable to start.
 
 ## Decision
 
 The image is sufficiently validated for a **reviewable system-only trial
-proposal**, but not for a “ready to flash” claim. Before execution, the owner
-must separately authorize writing this exact SHA-256 to the `system` partition
-and accept that no verified restoration path currently exists. First-boot
-checks must use the stock boot chain and stop immediately on unexpected
-partition activity or device behavior.
+proposal**, but it is not ready to flash. Both the unlocked state and a
+validated restoration route are missing. Bootloader unlocking is a separate,
+potentially data-wiping operation and is not authorized by this proposal.
+Even if those blockers are later resolved, the owner must separately
+authorize writing this exact SHA-256 to the `system` partition and accept the
+remaining risk. First-boot checks must use the stock boot chain and stop
+immediately on unexpected partition activity or device behavior.

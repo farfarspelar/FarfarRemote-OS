@@ -330,7 +330,21 @@ A targeted public search for the historical recovery filename, its `N_S218` head
 
 The connected device was checked without rebooting Android. `adb shell` reports UID 2000 (`shell`); `/dev/block/mmcblk0p10` (`boot`) is `root:system` mode `0640`, while `/dev/block/mmcblk0p9` (`fotakernel`) is `root:root` mode `0600`. The shell is not in group `system`; the system exposes no `su` binary at `/system/bin/su` or `/system/xbin/su`. Android boot-lock properties were empty. These metadata checks explain why ordinary ADB cannot produce exact boot/FOTA backups; they do not prove root impossible or independently determine bootloader unlock status. No partition bytes were read.
 
-After the preceding update, the phone was deliberately rebooted into Fastboot solely for read-only `getvar` checks, then returned with `fastboot reboot`. Fastboot enumerated product `E2003`, `secure: yes`, `partition-size:boot=0x2000000`, and `partition-size:fotakernel=0x2000000`; `getvar unlocked` and `partition-size:recovery` were empty. Android came back with the same `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys` fingerprint. No image was transferred and no write/erase/unlock command was issued. The empty unlock field still leaves the owner's unlocked report **unconfirmed**.
+After the preceding update, the phone was deliberately rebooted into Fastboot solely for read-only `getvar` checks, then returned with `fastboot reboot`. Fastboot enumerated product `E2003`, `secure: yes`, `partition-size:boot=0x2000000`, and `partition-size:fotakernel=0x2000000`; `getvar unlocked` and `partition-size:recovery` were empty. Android came back with the same `Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys` fingerprint. No image was transferred and no write/erase/unlock command was issued. At that point the owner's unlocked report remained **unconfirmed**.
+
+### Service Menu unlock-state check — 2026-10-15
+
+The Android Service Menu's `Service info > Configuration > Rooting Status`
+was inspected without changing settings. It showed `Bootloader unlock
+allowed: Yes`; it did not show `Bootloader unlocked: Yes`. These indicate
+different states: permission to unlock versus already unlocked. Thus the
+previous owner-reported unlocked state is not supported by the current
+read-only evidence. Record the handset as **unlock allowed, actual unlock not
+verified**. The distinction is also described in the
+[Xperia bootloader checklist](https://docs.sailfishos.org/Support/Help_Articles/Managing_Sailfish_OS/Checklist_for_Sailfish_OS/#xperia-bootloader).
+No unlock code was requested or used, and no unlock/flash command was sent.
+Temporary UI diagnostic output was removed and FarfarRemote was restored to
+the foreground.
 
 **Readiness effect:** no recovery path was verified. Keep the first-boot estimate conditional and the safe end-to-end estimate below 50%; do not count the R10A/E2006 firmware leads, the binary-only recovery, or empty lock properties as rollback evidence. The next material gate still requires a supported-host Xperia Companion preflight that shows a repair offer for this exact handset, or another exact and traceable recovery/restore base.
 
