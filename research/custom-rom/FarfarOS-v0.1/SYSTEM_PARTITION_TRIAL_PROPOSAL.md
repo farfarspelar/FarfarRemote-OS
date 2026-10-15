@@ -13,6 +13,9 @@ Audio/Subtitles, rotation, Settings, Find My Kodi and Wi-Fi reconnection after
 reboot. These are owner-reported device tests. Some exhaustive, long-duration
 checks and a validated restore route remain outstanding.
 
+The owner then performed a full power cycle and confirmed startup skipped the
+lock screen and FarfarRemote automatically reconnected to Kodi.
+
 ## Scope
 
 The owner approved the exact image, SHA-256 and `system` target after a read-only preflight. Fastboot reported the image transfer and `system` write as `OKAY`. The operation targeted only the E2003 `system` partition; `boot`, `fotakernel`, bootloader, `seccfg`, TA, NVRAM, calibration and userdata were not included. The current stock kernel and ramdisk remain in place. Subsequent first-boot and feature-test results are recorded in the outcome update above; this remains an experimental system-only build, not a complete ROM package.

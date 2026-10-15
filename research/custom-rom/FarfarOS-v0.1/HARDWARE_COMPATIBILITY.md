@@ -7,12 +7,13 @@
 | `/system` image geometry | The built ext4 image is 2,097,152,000 bytes; live `/proc/partitions` reports `system` as 2,048,000 × 1,024-byte blocks, also 2,097,152,000 bytes; exact image was written and the phone subsequently booted | **Exact size, Fastboot write, and boot smoke test verified on E2003** |
 | Kernel/boot chain | R10A/R3A E2003 25.0.A.2.31 Sony ELF boot payloads cross-match. A callass-source zImage was compiled and repacked with the R10A ramdisk using legacy geometry from an E2003 R5A recovery; the container parses and reproduces byte-for-byte. An earlier separate stock-payload container was sent with `fastboot boot`, but USB was lost during handoff and no boot-completion signal was observed. | **Static candidates only; prior RAM-boot observation is INCONCLUSIVE. No partition write; exact live-R7A boot artifact and hardware bootability remain unknown.** |
 | Display/touch | Owner used touch to unlock Android and select FarfarRemote Home; owner reports Settings and rotation work | **Basic touch, Settings and orientation owner-tested** |
-| Wi-Fi/reconnect | Owner confirmed network connection and reconnection after reboot on experimental image | **Owner-tested on target** |
+| Wi-Fi/reconnect | Owner confirmed network connection and automatic Kodi reconnection after a full power cycle | **Cold-start reconnection owner-tested on target** |
 | Audio | Owner tested Audio/Subtitles selection on experimental image | **Owner-tested on target** |
 | USB/ADB | Host identified E2003 over ADB after experimental boot | **ADB verified** |
 | Charging/battery | Host read Android battery service: 96%, USB-powered; owner reported 96% after wall charging | **Reporting verified; off-USB charging/discharging behavior pending** |
 | Android HOME / Kodi | FarfarRemote launched after owner selected it as Home; owner confirmed network/Kodi control works | **Owner-tested on target** |
 | Find My Kodi | Owner tested discovery on the experimental image | **Owner-tested on target** |
+| Cold boot / lock screen | Owner powered the phone off and on; FarfarRemote skipped the lock screen and Kodi auto-connected | **Owner-tested on target** |
 | Boot animation | ZIP format, CRC, frame geometry checked; installed in offline `/system` image; owner observed FarfarOS logo at startup | **Displayed at startup; full animation playback not separately evaluated** |
 
 An ext4 filesystem can be perfectly valid and still be rejected, mounted differently, or fail after boot due to image packaging, partition geometry, verity/signature policy, SELinux/runtime integration, or mismatched boot components.

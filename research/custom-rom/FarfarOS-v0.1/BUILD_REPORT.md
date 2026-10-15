@@ -22,6 +22,8 @@ The owner additionally tested and confirmed Audio/Subtitles, portrait /
 landscape rotation, Settings, Find My Kodi, and Wi-Fi reconnection after a
 reboot on this FarfarOS installation. Along with app launch and Kodi control,
 these are owner-performed physical-device tests, not host-automated tests.
+In a further power-cycle test, the owner confirmed the phone booted directly
+past the lock screen, automatically reconnected to Kodi, and was ready to use.
 Remaining unreported checks are off-USB charging behavior, sleep/wake timing,
 extended stability, exhaustive button coverage, and boot-animation timing.
 No claim is made that every Android component or battery target is validated.

@@ -33,6 +33,10 @@ then confirmed Audio/Subtitles, portrait/landscape rotation, Settings,
 Find My Kodi, and Wi-Fi reconnection after reboot. These are user-performed
 physical-device tests, not host-automated tests.
 
+In a subsequent full power-off/power-on test, the owner confirmed Android
+skipped the lock screen and FarfarRemote automatically reconnected to Kodi.
+This verifies the intended unattended startup path once on the target device.
+
 Remaining checks: exhaustive remote-button coverage, off-USB charging,
 sleep/wake behavior, extended stability, repeated cold boots and detailed
 boot-animation timing. The earlier USB Mass Storage-only observation was
