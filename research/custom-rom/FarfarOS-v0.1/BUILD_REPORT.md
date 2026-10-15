@@ -30,6 +30,12 @@ charging behavior, extended stability, exhaustive button coverage, and
 boot-animation timing. No claim is made that every Android component or
 battery target is validated.
 
+During subsequent battery troubleshooting, the owner also started the phone
+after it had charged to a displayed 6%. FarfarRemote opened directly and
+connected to Kodi without user interaction. This is another successful
+startup/connectivity observation; the contradictory 6%/96% readings concern
+battery telemetry and do not negate the verified OS behavior.
+
 ### First-boot video review
 
 The owner-provided 62.28-second, 1280×720 recording `20261015_201516.mp4`

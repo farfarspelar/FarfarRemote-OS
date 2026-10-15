@@ -39,6 +39,12 @@ This verifies the intended unattended startup path once on the target device.
 The owner also confirmed screen timeout and wake work without dropping the
 Kodi connection.
 
+During subsequent battery troubleshooting, the owner started the phone after
+it had charged to a displayed 6%; FarfarRemote launched directly and
+connected to Kodi without interaction. This confirms startup/connectivity at
+that displayed reading, but does not validate actual remaining battery
+capacity or percentage accuracy.
+
 Remaining checks: exhaustive remote-button coverage, off-USB charging,
 extended stability, repeated cold boots and detailed boot-animation timing.
 The earlier USB Mass Storage-only observation was
