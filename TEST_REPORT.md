@@ -1,3 +1,49 @@
+# FarfarOS v0.1 — First Boot Hardware Test (video review)
+
+**Source:** owner-recorded `20261015_201516.mp4`, reviewed from outside the Git
+working tree. The 62.28-second H.264 clip is 1280×720. SHA-256:
+`742a51f59543ee240130ee785a616fbd6e6c322da64d1a379916297ff6fdd6c6`.
+The original video and extracted review frames remain outside Git. The Settings
+scene contains a private LAN address; it is intentionally omitted here.
+
+## Visually verified in the recording
+
+- **Startup:** the handset shows the Sony/Xperia startup mark, followed by the
+  FarfarOS logo and its “Remote Control System” subtitle. FarfarRemote's main
+  interface appears afterward. The video confirms the visible sequence, not
+  internal Android boot timing or service initialization.
+- **HOME interface:** FarfarRemote's portrait remote screen is visible, with
+  its Kodi connection indicator, Now Playing panel, progress, track controls,
+  D-pad and transport controls.
+- **Kodi state:** Now Playing metadata, artwork, playback status/progress and
+  audio/subtitle labels are rendered in the app. This visually confirms the
+  app is displaying Kodi data; the video alone cannot establish the JSON-RPC
+  exchange or network reliability.
+- **Library interaction:** a media list is opened and touched/scrolled, then
+  the remote screen is shown again. Long entry labels are truncated on the
+  phone display. The camera recording is not clear enough to establish the
+  exact selected path or prove which list entries are distinct; visually
+  similar/repeated episode labels appear in the list.
+- **Settings:** the Kodi Connection screen is opened and its controls are
+  visible. The password appears masked in the sampled frame. The local address
+  is not transcribed or included in project assets.
+
+## Visual observations and limits
+
+The filmed display has noticeable reflections/glare, some soft focus and
+camera movement. Those affect video readability; no app crash or clearly
+clipped main screen is visible in the sampled frames. No unambiguous layout
+failure is established by this clip. It does not independently verify audio
+output, all remote commands, Wi-Fi reconnection after reboot, screen
+timeout/wake, long-term stability, or Android services beyond what is visible.
+The owner separately reported successful hardware tests for those relevant
+functions in the FarfarOS build report.
+
+This is **video-based visual evidence**, distinct from ADB/build checks and
+from the owner's hands-on functional confirmations. See
+[`research/custom-rom/FarfarOS-v0.1/BUILD_REPORT.md`](research/custom-rom/FarfarOS-v0.1/BUILD_REPORT.md)
+for the broader first-boot and device-test record.
+
 # FarfarRemote 0.4.7 — stable release build
 
 - **OWNER-REPORTED PHYSICAL VERIFICATION:** After release, the owner confirmed all features work in both the App and OS editions. This updates the earlier release-pass list of runtime checks that had not been independently observed in this workspace. It remains a user-reported result; no Samsung or Kodi hardware was connected for this release build.

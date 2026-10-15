@@ -30,6 +30,22 @@ charging behavior, extended stability, exhaustive button coverage, and
 boot-animation timing. No claim is made that every Android component or
 battery target is validated.
 
+### First-boot video review
+
+The owner-provided 62.28-second, 1280×720 recording `20261015_201516.mp4`
+visually shows the Sony/Xperia startup mark, FarfarOS animation, FarfarRemote
+portrait home screen, Kodi-connected/Now Playing information, a touched and
+scrolled library list, return to the remote, and the Kodi Connection Settings
+screen. The clip supports visible UI/startup claims only; it does not prove
+JSON-RPC internals, audio output, or network reliability. Glare, soft focus and
+camera motion reduce legibility. Long library labels are truncated and
+visually similar repeated episode labels appear; the footage cannot establish
+whether these are duplicate Kodi entries. The Settings frame contains a
+private LAN address, so neither it nor extracted frames are included in Git
+or transcribed in this report. The original video remains outside the repo.
+Full observations and limits are in the repository
+[`TEST_REPORT.md`](../../../TEST_REPORT.md).
+
 ## Bootloader status addendum — 2026-10-15
 
 The Service Menu initially showed `Bootloader unlock allowed: Yes`, but not
