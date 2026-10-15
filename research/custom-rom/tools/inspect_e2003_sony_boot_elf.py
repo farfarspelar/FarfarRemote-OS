@@ -2,8 +2,9 @@
 """Statically inspect an extracted E2003 Sony boot/FOTA ELF (no device I/O).
 
 The tool validates the observed 32-bit ARM ELF/PT_LOAD structure and the
-MediaTek 512-byte KERNEL/ROOTFS wrappers, checks their gzip payloads, and
-prints hashes and small identifying strings. It does not emit firmware bytes.
+MediaTek 512-byte KERNEL/ROOTFS wrappers, checks the ROOTFS gzip payload, and
+prints hashes and small identifying strings. The KERNEL wrapper is raw. It
+does not emit firmware bytes.
 Use only on locally obtained, E2003-labelled firmware candidates; the result
 does not establish that a candidate matches a handset's customization.
 """
