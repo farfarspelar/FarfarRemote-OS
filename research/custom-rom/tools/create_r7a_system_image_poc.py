@@ -14,9 +14,11 @@ import hashlib
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 SOURCE_SHA256 = "931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949"
@@ -132,6 +134,31 @@ def validate_apk(apk: Path, aapt2: str) -> None:
     subprocess.run(["jarsigner", "-verify", str(apk)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
 
 
+def validate_bootanimation(path: Path) -> None:
+    """Validate the supplied E2003-sized intro + loop animation archive."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            if archive.testzip() is not None:
+                raise ValueError("bootanimation ZIP CRC validation failed")
+            names = set(archive.namelist())
+            if "desc.txt" not in names:
+                raise ValueError("bootanimation archive has no root desc.txt")
+            required = {f"part0/{i:04d}.png" for i in range(8)} | {f"part1/{i:04d}.png" for i in range(6)}
+            if not required <= names:
+                raise ValueError("bootanimation archive is missing expected intro/loop frames")
+            desc = archive.read("desc.txt").decode("ascii").splitlines()
+            if desc != ["540 960 18", "p 1 0 part0", "p 0 0 part1"]:
+                raise ValueError("bootanimation desc.txt differs from the inspected E2003 animation")
+            for name in sorted(n for n in names if n.endswith(".png")):
+                data = archive.read(name)
+                if len(data) < 24 or data[:8] != b"\x89PNG\r\n\x1a\n":
+                    raise ValueError(f"invalid PNG frame: {name}")
+                if struct.unpack(">II", data[16:24]) != (540, 960):
+                    raise ValueError(f"unexpected bootanimation frame dimensions: {name}")
+    except (zipfile.BadZipFile, UnicodeDecodeError) as exc:
+        raise ValueError(f"invalid bootanimation archive: {exc}") from exc
+
+
 def run_debugfs(image: Path, commands: list[str], work: Path) -> str:
     command_file = work / "debugfs.commands"
     command_file.write_text("\n".join(commands) + "\n")
@@ -156,14 +183,15 @@ def read_debugfs(image: Path, commands: list[str], work: Path) -> str:
 
 
 def main() -> int:
-    if len(sys.argv) != 7:
-        print(f"Usage: {Path(sys.argv[0]).name} <R10A-system.ext4> <R10A-extracted-tree> <R7A-system-tree> <R7A-metadata.txt> <FarfarRemote-OS.apk> <output.ext4>", file=sys.stderr)
+    if len(sys.argv) not in (7, 8):
+        print(f"Usage: {Path(sys.argv[0]).name} <R10A-system.ext4> <R10A-extracted-tree> <R7A-system-tree> <R7A-metadata.txt> <FarfarRemote-OS.apk> <output.ext4> [bootanimation.zip]", file=sys.stderr)
         return 2
-    source, stock_root, live_root, metadata, apk, output = map(Path, sys.argv[1:])
+    source, stock_root, live_root, metadata, apk, output = map(Path, sys.argv[1:7])
+    bootanimation = Path(sys.argv[7]) if len(sys.argv) == 8 else None
     aapt2 = os.environ.get("AAPT2_BIN", "")
     try:
         ensure_tools(aapt2)
-        if any(not path.exists() for path in (source, stock_root, live_root, metadata, apk)):
+        if any(not path.exists() for path in (source, stock_root, live_root, metadata, apk)) or (bootanimation is not None and not bootanimation.is_file()):
             raise ValueError("One or more input paths do not exist")
         repo = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
         if str(output.resolve(strict=False)).startswith(repo + os.sep):
@@ -200,6 +228,12 @@ def main() -> int:
                 raise ValueError(f"No local file contents for changed path: {path}")
         apk_sha = digest(apk)
         validate_apk(apk, aapt2)
+        bootanimation_sha = None
+        if bootanimation is not None:
+            validate_bootanimation(bootanimation)
+            bootanimation_sha = digest(bootanimation)
+            if live.get("/media/bootanimation.zip", {}).get("type") != "-":
+                raise ValueError("R7A manifest lacks regular /media/bootanimation.zip")
         if "/app/FarfarRemote.apk" in stock_files or "/app/FarfarRemote.apk" in live_files:
             raise ValueError("FarfarRemote system APK path already exists; refusing to overwrite")
 
@@ -216,6 +250,9 @@ def main() -> int:
                     payloads[path] = staged
             apk_stage = work / "FarfarRemote.apk"
             shutil.copyfile(apk, apk_stage)
+            boot_stage = work / "bootanimation.zip" if bootanimation is not None else None
+            if bootanimation is not None:
+                shutil.copyfile(bootanimation, boot_stage)
 
             # Confirm that every source-tree payload being removed/replaced is
             # actually present byte-for-byte in the pinned R10A ext4 input.
@@ -275,6 +312,14 @@ def main() -> int:
             commands.extend(("sif /app/FarfarRemote.apk uid 0", "sif /app/FarfarRemote.apk gid 0",
                              "sif /app/FarfarRemote.apk mode 0100644",
                              "ea_set /app/FarfarRemote.apk security.selinux u:object_r:system_file:s0"))
+            if boot_stage is not None:
+                boot_entry = live["/media/bootanimation.zip"]
+                commands.extend(("rm /media/bootanimation.zip",
+                                 f"write {boot_stage} /media/bootanimation.zip",
+                                 f"sif /media/bootanimation.zip uid {boot_entry['uid']}",
+                                 f"sif /media/bootanimation.zip gid {boot_entry['gid']}",
+                                 f"sif /media/bootanimation.zip mode {0o100000 | int(boot_entry['mode']):07o}",
+                                 f"ea_set /media/bootanimation.zip security.selinux {boot_entry['label']}"))
             run_debugfs(temp_image, commands, work)
 
             # Verify changed/deleted file operations by readback before publishing output.
@@ -287,12 +332,17 @@ def main() -> int:
                     expected[path] = destination
             apk_readback = work / "apk-readback.apk"
             verify.append(f"dump /app/FarfarRemote.apk {apk_readback}")
+            boot_readback = work / "bootanimation-readback.zip"
+            if boot_stage is not None:
+                verify.append(f"dump /media/bootanimation.zip {boot_readback}")
             run_debugfs(temp_image, verify, work)
             for path in expected:
                 if digest(expected[path]) != digest(Path(live_files[path]["host"])):
                     raise RuntimeError(f"Readback hash mismatch after update: {path}")
             if digest(apk_readback) != apk_sha:
                 raise RuntimeError("FarfarRemote APK readback hash mismatch")
+            if boot_stage is not None and digest(boot_readback) != bootanimation_sha:
+                raise RuntimeError("bootanimation ZIP readback hash mismatch")
             for path in delete:
                 check = subprocess.run(["debugfs", "-R", f"stat {path}", str(temp_image)],
                                        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -308,6 +358,8 @@ def main() -> int:
         print(f"output_sha256={digest(output)}")
         print(f"source_sha256={SOURCE_SHA256}")
         print(f"apk_sha256={apk_sha}")
+        if bootanimation_sha:
+            print(f"bootanimation_sha256={bootanimation_sha}")
         print(f"r7a_files_added={len(add)} r10a_only_files_removed={len(delete)} files_replaced={len(replace)}")
         print("e2fsck passed; this is an offline ext4 POC, not a flashable/boot-tested firmware image")
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as exc:
