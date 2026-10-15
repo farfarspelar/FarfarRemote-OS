@@ -1,5 +1,32 @@
 # FarfarOS Experimental v0.1 build report
 
+## Follow-up artifact audit — 2026-10-15
+
+The retained data-volume image was independently rechecked after the later
+kernel/boot-container work. The raw image
+`/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system-post-storage.ext4`
+is 2,097,152,000 bytes and has SHA-256
+`cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`.
+`file` identifies it as ext4 and a fresh read-only `e2fsck -fn` completed all
+five passes successfully. `debugfs` readback confirmed `/app/FarfarRemote.apk`
+is a root-owned `0644` regular file with `u:object_r:system_file:s0`; its
+readback hash `f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3a6aab0e7bc`
+matches the retained v0.4.7 OS APK byte-for-byte. Its signer certificate SHA-256
+matches the certificate pinned by the builder. The boot-animation readback also
+matches the project asset hash `543682f34508e7031c5da63898285f86cf72bbcd98b572c859204f4502131eef`,
+and `unzip -t` passes.
+
+The sparse companion remains a packaging experiment only; its SHA-256 is
+`81b9e117d3832033e520059e8834f6084b4bef05b290258286c5aa6c41dfb4`. The separate
+callass kernel boot-container candidate remains
+`80d51e07d4f5d7151cc7899833aed246539c23ab306412169c622390509d8182` and parses
+as an Android boot image, but combines the rebuilt kernel with a non-R7A-matched
+community ramdisk. Neither container is proven acceptable to this bootloader or
+compatible with the live device. This audit did not build a new ROM or access
+device partitions. At audit time both `adb devices` and `fastboot devices` had
+no attached target, so boot, Wi-Fi, touch, charging, HOME and Kodi behavior of
+these artifacts remain unverified on hardware.
+
 ## Status
 
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
