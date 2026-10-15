@@ -79,9 +79,11 @@ echo, validates the exact Android and Fastboot identities, requires exactly
 one Fastboot target, and asks for the full consequence-specific authorization
 phrase. It enters Fastboot with ADB, performs read-only Fastboot identity
 queries, and issues no partition-write command other than Sony's `oem unlock`.
-It contains no key and does not flash any image. The owner must obtain the unlock code directly from
-Sony and run the helper in a local terminal; do not send the IMEI or code in
-chat or commit it to the repository.
+It contains no key and does not flash any image. The owner must obtain the
+unlock code directly from Sony and run the helper in a local terminal; do not
+send the IMEI or code in chat or commit it to the repository. Fastboot requires
+the code as a command-line argument, so it may be briefly visible to processes
+running as the same local user while the unlock command is executing.
 
 ## Decision required before execution
 
