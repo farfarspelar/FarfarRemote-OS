@@ -72,6 +72,13 @@ because the bootloader returns no value. It exited with `PREFLIGHT FAIL` and
 issued no write command. The phone was returned to Android and ADB was
 confirmed online.
 
+A final standard Fastboot check also tried `fastboot flashing get_unlock_ability`.
+This S1 bootloader replied `unknown command`; `getvar unlocked` remained empty
+and `getvar secure` returned `yes`. The handset was rebooted back to Android
+and ADB returned to `device`. No OEM unlock or write command was sent. This
+adds no current unlock-state evidence; Sony's Service Menu still proves only
+unlock eligibility.
+
 A final `fastboot getvar all` query was also captured locally and filtered so
 that device-specific serial/identity fields were not displayed or recorded.
 It returned the same product, bootloader, `secure: yes`, system size and
