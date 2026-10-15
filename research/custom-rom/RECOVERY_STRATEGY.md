@@ -2,6 +2,40 @@
 
 ## Linux Mint-only host route — 2026-10-15
 
+### Owner-assisted BootROM-entry probe — 2026-10-15
+
+The host-side MTKClient CLI environment was prepared outside the repository at
+the reviewed source commit `7cb40e727727dfe3faa065eefb29b16ed29bbdf1`. An
+isolated Python 3.12 venv reuses installed system Python packages and adds only
+PyUSB, pySerial, Keystone and Capstone; the CLI starts and USB enumeration works.
+The shell wrapper remains pinned to the same source commit and will accept only
+Sony USB ID `0fce:f200`, an empty output directory outside Git, and reads of
+`boot` and `fotakernel` only.
+
+During an owner-assisted attempt to prepare the handset, Linux observed
+`0fce:0dde`, identified by the USB descriptors as **S1boot Fastboot**, rather
+than the required `0fce:f200` BootROM device. No MTKClient session or partition
+read was started. Read-only Fastboot queries reconfirmed product `E2003`,
+bootloader `1290-9780 S1_Boot_MT6732_TC9PRA_9`, `secure: yes`, and sizes of
+32 MiB each for `boot` and `fotakernel`, with `system` at 2,097,152,000 bytes.
+`unlocked` returned an empty value, so the owner's unlock report remains
+**REPORTED, not independently verified**. The non-writing `fastboot reboot`
+command returned the phone to Android; read-only ADB properties again matched
+E2003 / `25.0.A.2.31` / `1293-7358 R7A`.
+
+The volume-button attempt is not evidence of a BootROM key sequence. No
+E2003-specific BootROM-entry procedure has been verified. Do not keep trying
+generic MediaTek button combinations or use a testpoint based on assumptions.
+The exact live boot/FOTA contents remain inaccessible over ordinary ADB and
+uncaptured. A successful Sony Fastboot connection is useful transport evidence
+but does not establish `fastboot boot`, flash permission, unlock state, or a
+safe route to install the experimental system image.
+
+A subsequent 180-second passive USB observation found no new Sony or MediaTek
+service-mode VID:PID; ordinary ADB remained connected throughout. The handset
+was therefore not captured in BootROM/preloader mode, and no partition dump
+was produced.
+
 The owner has confirmed Linux Mint is the only available host OS, so the
 Windows/macOS Xperia Companion preflight is not currently actionable. Sony's
 current Companion documentation lists Windows and macOS, not Linux
