@@ -32,6 +32,7 @@ fastboot flash system \
 - **VERIFIED, historical read-only observations:** handset product E2003; bootloader string `1290-9780 S1_Boot_MT6732_TC9PRA_9`; Android build `25.0.A.2.31`; customization R7A; system alias mapped to `mmcblk0p19`; reported system capacity `2,097,152,000` bytes.
 - **REPORTED:** owner says the bootloader is unlocked.
 - **UNKNOWN:** current unlock state. The fresh `getvar unlocked` returned no value; `secure: yes` was reported. Sony Service Menu says unlocking is allowed, which does not prove that the bootloader is already unlocked. The phone has been returned to Android and ADB is online.
+- **Interpretation of `secure`:** AOSP Fastboot protocol documentation defines `secure` as whether the bootloader requires signed images for install/boot; it is not, by itself, a locked/unlocked state field. Therefore `secure: yes` is recorded but is not used to infer the current lock state. See the [AOSP Fastboot protocol](https://android.googlesource.com/platform/system/core/+/09fe163be2a3f59dfcc34d473b898e777c0f4514/fastboot/README.md).
 - **UNKNOWN:** whether this S1 bootloader accepts the `system` Fastboot partition alias and raw ext4 payload. Flashtool's public source has a generic `fastboot flash system <image>` operation, but does not establish E2003 bootloader acceptance. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
 - **UNKNOWN:** whether first boot will complete with the stock R7A boot/FOTA and this reconstructed system. No test of this system image has occurred on hardware.
 - **INCONCLUSIVE prior observation:** a separate `fastboot boot` Android-container POC transferred, then USB disconnected with `Status read failed`; no boot result was observable. That experiment did not write the system partition and does not validate this image.
@@ -86,6 +87,13 @@ found no validated, non-mutating E2003-specific procedure that uses it to
 confirm the current Fastboot unlock state. It is therefore not used as a
 substitute for the missing Fastboot state, and no Flashtool session was opened
 for this check.
+
+An additional firmware-source check found a similarly named
+`25.0.A.2.31-R7A-Nextel-PE` package listed under **E2006** on the source page,
+not E2003. It is explicitly excluded as a restore candidate. The same page's
+E2003 list offers R10A/R3A/R5A/R1A examples, but no exact E2003 R7A package.
+This reinforces that the matching CDA restore path is still unavailable; see
+the [source index](https://azrom.net/rom-sony-xperia-e4g-e2003-e2006-e2053-ftf-firmware-lock-remove-file/).
 
 The proposed image's SHA-256 and ext4 check were revalidated. The APK extracted
 from it is byte-identical to the repository's v0.4.7 OS APK
