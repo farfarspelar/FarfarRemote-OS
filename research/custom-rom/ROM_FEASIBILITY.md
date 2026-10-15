@@ -9,6 +9,26 @@
 - **Stock-derived FarfarRemote system image: technically plausible to build offline; device success remains unproven.** The candidate `system.sin` reconstructs as a 2,097,152,000-byte ext4 image whose `/build.prop` identifies `E2003`, API 19, Android 4.4.4, firmware `25.0.A.2.31`, and customization `1293-7276 R10A`. The phone runs `1293-7358 R7A`, so this is not a matching system image. A historical TWRP image explicitly built for E2003 has now been retrieved and statically inspected. Its kernel is byte-identical to the R10A candidate's stock kernel and its fstab maps recovery to the live p9 partition. This is substantially stronger recovery/boot-stack evidence, but its R5A customization, unaudited provenance and untested behavior on live R7A still prevent calling it a safe restore path.
 - **Option C — FarfarRemote dedicated system experience: ALREADY FEASIBLE as a launcher configuration, not a ROM. VERIFIED:** the existing OS flavor registers HOME, starts FarfarRemote and retains normal Android system services, Wi-Fi settings, USB/ADB and recovery routes. Direct Android bootanimation/init/service changes require root and a matching image and are **BLOCKED** for now.
 
+### Bootloader status correction — 2026-10-15
+
+The conditional first-boot estimate below assumed the owner's report that the
+bootloader was already unlocked. A later read-only check of this handset's
+Android Service Menu showed `Bootloader unlock allowed: Yes`, but not
+`Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` was also blank. The
+live E2003 must therefore be treated as **unlockable, not verified unlocked**.
+The former 70–75% estimate applies only conditionally after a successful
+unlock and assumes image acceptance; it is not the chance from the device's
+current measured state.
+
+Sony's official documentation says unlocking performs a factory reset, does
+not itself grant root, and permanently removes DRM security keys that Sony
+says cannot be restored. Sony's current Open Devices target list does not
+include E2003. That is a limitation of the current public AOSP program, not
+proof that no historical Sony source archive ever existed. Sources: [Sony
+unlock procedure and consequences](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader),
+[Sony supported Open Devices](https://opendevices.sony.net/supported-devices-and-functionality).
+No unlock operation was performed.
+
 ### FarfarOS Experimental ROM v0.1 — offline system image built, 2026-10-15
 
 The first combined stock-derived image was built with the reproducible workflow in [`FarfarOS-v0.1/`](FarfarOS-v0.1/). It reconstructs the live R7A `/system` file state over the inspected, hash-pinned E2003 R10A ext4 container, adds the existing signed FarfarRemote OS 0.4.7 APK and integrates the owner-provided boot animation at `/system/media/bootanimation.zip`. The output is a **2,097,152,000-byte ext4 `/system` partition image** at `/tmp/FarfarOS-E2003-R7A-v0.1-system.ext4`, SHA-256 `98a7461bc9374c90016e82ce01702454b57f4c5a46795a99bfbcccd9a72e8651`. `e2fsck -fn` passed, and debugfs readback hashes matched the APK and animation inputs. Static inspection reports E2003 / Android 4.4.4 / API 19 / `25.0.A.2.31`; the APK manifest retains MAIN + HOME + DEFAULT. The image remains a local, proprietary-derived artifact and is not committed.
@@ -41,21 +61,24 @@ for the right hardware family, while the stale MTD/YAFFS2 recovery fstab and
 unmatched final kernel config remain significant boot risks.
 
 An exact-model public search again found no reproducible E2003 Android/LineageOS
-device tree or ROM. The historical Oreo claim still traces to a binary-only
+device tree or ROM. Sony's current Open Devices page also does not list E2003;
+our ROM remains a stock-derived KitKat system-image experiment rather than a
+supported AOSP product. The historical Oreo claim still traces to a binary-only
 port described as based on a Galaxy Note 8 ROM. The currently connected handset
 also entered Linux USB `0fce:adde` / `S1 Service` and returned to Android; see
 [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md). This verifies the Linux service
 transport, but no image was transferred and bootloader image acceptance remains
 unknown.
 
-**Probability update:** conditional first boot of the narrow stock-derived
-Android 4.4 build remains **about 70–75% (low-to-moderate confidence)**. The
-source/config alignment and verified service transport are positive, but
-neither resolves the exact R7A boot parameters, boot-image acceptance, or final
-kernel configuration. Since the owner has said to set aside the restore-base
-question, this estimate excludes recovery probability; it still assumes the
-reported unlocked state is true and correct images can be written. No complete
-ROM image has been boot-tested, so a higher figure would overstate the evidence.
+**Probability update (historical, conditional):** conditional first boot of
+the narrow stock-derived Android 4.4 build was estimated at **about 70–75%
+(low-to-moderate confidence)**, assuming the bootloader was already unlocked
+and correct images could be written. The subsequent Service Menu check shows
+that assumption was unsupported: only unlock eligibility is verified. The
+70–75% figure must not be presented as the current end-to-end probability. It
+excludes obtaining/executing the official unlock path and recovery. Exact R7A
+boot parameters, boot-image acceptance, final kernel configuration and
+restoration remain unresolved. No complete ROM has been boot-tested.
 
 An attempt to reproduce the R7A `/system` POC with the retained local inputs was
 stopped when host `debugfs` I/O stalled on the external workspace volume. The
