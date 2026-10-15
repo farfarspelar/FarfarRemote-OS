@@ -6,7 +6,7 @@
 2. Build a new output image only; retain its SHA-256 and full build log.
 3. Run `e2fsck -fn`, verify APK/animation by debugfs readback, and inspect owner/mode/SELinux metadata.
 4. Independently inspect filesystem size, free blocks, `/build.prop`, launcher intent and boot-animation path.
-5. Audit the exact boot ramdisk/fstab for every mount and automatic format action. The existing R10A ramdisk candidate marks `protect1` and `protect2` `autoformat`; it is excluded from another boot attempt until that path is understood and an acceptable ramdisk candidate is reviewed.
+5. Audit the exact boot ramdisk/init scripts for every mount, automatic format action and Sony bootstrap side effect. The existing R10A ramdisk marks `protect1`/`protect2` `autoformat`, invokes `wipedata`/`mr`, and starts `updatemiscta` (whose matching system binary references TA-write APIs). It is excluded from another boot attempt until runtime guards are understood and an acceptable ramdisk candidate is reviewed.
 6. Create a specific operation proposal with exact partition mapping, image hash, current backup state, failure modes and recovery method. Stop for separate explicit authorization before any write.
 
 ## First boot checks (only after an authorized write plan)

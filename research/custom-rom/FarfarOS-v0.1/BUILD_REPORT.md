@@ -53,6 +53,20 @@ that its startup path cannot format `protect1`/`protect2`, NVRAM, calibration,
 or other unrelated partitions. This is a boot-candidate gate, not a problem in
 the already-built `/system` filesystem image.
 
+The init imports add further unverified side effects: Sony bootstrap imports
+`init.sony-bootstrap-wipedata.rc` and `init.sony-bootstrap-mr.rc` on `fs`, and
+starts `updatemiscta` on `early-boot`. Static inspection of the matching R7A
+system binaries shows that `wipedata` contains filesystem-format/reset
+functions, `mr` recognizes wipe-data/cache and modem-format commands, and
+`updatemiscta` references TA write APIs. Their runtime guards and behavior on
+this phone are not established by static strings. Because this ramdisk is not
+the live R7A boot capture, none of those side effects can be assumed to be
+benign for an experiment. In particular, avoid booting this candidate until a
+ramdisk is prepared whose startup actions are reviewed against the project rule
+to leave TA and protected/calibration partitions untouched. The required Sony
+bootstrap behavior must be understood before deciding which services can be
+omitted safely.
+
 The rebuilt callass kernel configuration has `CONFIG_MODULES=y`, but its saved
 build output contains zero `.ko` files. The R7A capture lists an empty
 `/system/lib/modules` directory. This is consistent with a build where the
