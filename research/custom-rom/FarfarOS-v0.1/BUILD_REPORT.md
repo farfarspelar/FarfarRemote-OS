@@ -56,16 +56,19 @@ the already-built `/system` filesystem image.
 The init imports add further unverified side effects: Sony bootstrap imports
 `init.sony-bootstrap-wipedata.rc` and `init.sony-bootstrap-mr.rc` on `fs`, and
 starts `updatemiscta` on `early-boot`. Static inspection of the matching R7A
-system binaries shows that `wipedata` contains filesystem-format/reset
-functions, `mr` recognizes wipe-data/cache and modem-format commands, and
-`updatemiscta` references TA write APIs. Their runtime guards and behavior on
-this phone are not established by static strings. Because this ramdisk is not
-the live R7A boot capture, none of those side effects can be assumed to be
-benign for an experiment. In particular, avoid booting this candidate until a
-ramdisk is prepared whose startup actions are reviewed against the project rule
-to leave TA and protected/calibration partitions untouched. The required Sony
-bootstrap behavior must be understood before deciding which services can be
-omitted safely.
+system binaries found `miscta_write_unit` plus `TA_WIPE_DATA` strings in
+`wipedata` (SHA-256 `0cb41a043e06e3b2dd8aaa1084e0f29ebd22b09d3293521181c459b722d3363e`),
+`miscta_write_unit_critical` plus `TA_MASTER_RESET` and wipe/format strings in
+`mr` (SHA-256 `def38b1624bdec041ad8788495d648d585c3004ae81b812e14a5417f941d7221`),
+and TA write API references in `updatemiscta` (SHA-256
+`611646c579c537001d8fcc592f44bb2f4428a0f6c754f2d4dd0793a10b35eda4`). The
+functions' exact runtime guards and behavior on this phone are not established
+by static strings. Because this ramdisk is not the live R7A boot capture, none
+of those side effects can be assumed benign. The offline diagnostic variant
+omits those explicit init actions and both protect-partition fstab rows; its
+static scan verifies no other `.rc` file starts or execs those named actions.
+It still is not safe or validated to boot: other platform services may depend
+on the omitted Sony setup, and runtime behavior is unknown.
 
 The rebuilt callass kernel configuration has `CONFIG_MODULES=y`, but its saved
 build output contains zero `.ko` files. The R7A capture lists an empty

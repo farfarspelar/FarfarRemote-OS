@@ -19,3 +19,15 @@ This improves the first-boot plan: preserving `/data` should preserve the existi
 ## Limits
 
 The animation has not been played by a booted experimental image. Sony's path precedence and actual end-to-end timing are not verified. No bootloader splash/logo partition is altered. HOME registration is statically present in the APK, but the chooser/default-selection behavior has not been tested in this reconstructed image. Existing Sony startup services and phone warnings remain in this first image.
+
+### Ramdisk candidate gate
+
+The currently available boot candidate is assembled with an R10A ramdisk, not
+the live R7A boot capture. Its normal Sony bootstrap path runs wipe/reset tools
+and starts a MiscTA update utility; static inspection shows TA write APIs in
+those corresponding system binaries. Its fstab also mounts protected
+partitions with automatic-format flags. The separate offline diagnostic
+variant removes those explicit init actions and protect-partition fstab rows,
+but may omit setup required by Sony services. Neither boot container is
+approved as a device test image; a correct R7A boot chain and reviewed startup
+semantics are still required.

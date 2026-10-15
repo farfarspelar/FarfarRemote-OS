@@ -13,6 +13,7 @@ import argparse
 import gzip
 import hashlib
 import os
+import re
 import struct
 import sys
 from pathlib import Path
@@ -26,6 +27,10 @@ DISABLED_FILES = {
     "init.sony-bootstrap-mr.rc": b"# FarfarOS offline experiment: automatic master-reset action omitted.\n",
     "init.sony-bootstrap-updatemiscta.rc": b"# FarfarOS offline experiment: automatic MiscTA update service omitted.\n",
 }
+REMOVED_ACTION = re.compile(
+    rb"^\s*(?:start\s+(?:mr|wipedata|updatemiscta)\b|"
+    rb"exec\s+/system/bin/(?:mr|wipedata)\b)", re.MULTILINE
+)
 
 
 def sha(data: bytes) -> str:
@@ -175,6 +180,9 @@ def main() -> int:
         for name in DISABLED_FILES:
             if b"exec /system/bin/" in verify_files[name] or b"start updatemiscta" in verify_files[name]:
                 raise ValueError(f"automatic action remains in {name}")
+        for name, payload in verify_files.items():
+            if name.endswith(".rc") and name not in DISABLED_FILES and REMOVED_ACTION.search(payload):
+                raise ValueError(f"another ramdisk init script invokes a removed action: {name}")
         output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("xb") as stream:
             stream.write(rebuilt)
