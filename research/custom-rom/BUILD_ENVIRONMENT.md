@@ -70,6 +70,19 @@ R7A boot partition is also unreadable to ADB shell, so this route is blocked
 until an exact config/build artifact or an independently authorized elevated
 read is available.
 
+### Current host capacity check — 2026-10-15
+
+`tools/host_check.sh` reports Linux x86_64, 4 CPU threads, 15 GiB RAM, and Java
+21. `repo`, `ndk-build`, and the Android emulator are not installed. The
+workspace volume has about 92 GiB free; `/tmp` had 3 GiB free before moving the
+2 GiB verified animation POC to `/mnt/data/FarfarRemote-Research-POC/`, and
+returned to 4.6 GiB free afterwards. The host can continue the pinned legacy
+kernel build and bounded image POCs, but it is not currently provisioned for a
+reproducible full AOSP/ROM build. The device tree and exact R7A boot inputs are
+missing independently of host capacity. Do not start a large `repo sync` into
+the nearly full root filesystem; first provision a dedicated build volume and
+an era-compatible isolated Java/toolchain environment.
+
 The non-destructive build wrapper is [`tools/build_e2003_kernel_poc.sh`](tools/build_e2003_kernel_poc.sh). It refuses an unexpected source commit/origin, checks for Python 2.7 and NDK GCC 4.8, and requires 3 GiB free before invoking the vendor build. The host inventory helper now reports both the workspace and `/tmp` filesystems and checks for common Android build tools (`repo`, `ndk-build`, `emulator`, `lunch`) so a nearly full root volume is visible before starting a large build. Example:
 
 ```sh

@@ -27,7 +27,7 @@ The available ext4 preinstall POC is an R10A candidate, while the physical
 phone is R7A (`1293-7358`). It is not an exact firmware base. A separate local
 copy was created outside Git at:
 
-`/tmp/farfar-e2003-system-bootanimation-poc.img`
+`/mnt/data/FarfarRemote-Research-POC/E2003-R10A-system-bootanimation-POC.img`
 
 Source image SHA-256: `931878c1f851ee55db08eb6cc6bd39a49b28d9e56d57067a85e64415f9c1a949`.
 Modified POC SHA-256: `06a9156bcbbbbffb60b3c8d7dcf44785e1b66def2b5ffe574709278388ebb6ef`.
