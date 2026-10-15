@@ -82,6 +82,14 @@ With the owner authorizing continued experiments, the 8,445,952-byte Android boo
 
 To regain the normal diagnostic path, the phone may need a physical long-press power cycle; once ADB returns, verify the stock fingerprint and repeat read-only checks. Do not infer the temporary boot's outcome from USB re-enumeration alone. The exact contents of the running screen and system are **UNKNOWN** until a person inspects the handset or ADB returns.
 
+## Existing callass kernel build audit — 2026-10-15
+
+The preserved offline build output was checked against the source mirror at commit `2a84825e8268393267e454e35a00f80d48c58949`. Its build log ends with `Successfully built kernel`; the ELF identifies as 32-bit ARM EABI5 and reports Linux `3.10.48`, matching the live kernel's reported `3.10.48+` version string. The built zImage is 6,839,512 bytes, SHA-256 `640b20b8dc0e74482a9752d473f179030e48ee9efa1512968c5c374481144a45`. It is retained outside Git in the private kernel-source workspace.
+
+Static output confirms `CONFIG_ARCH_MT6752=y`; the generated `callass` project config selects `CUSTOM_KERNEL_TOUCHPANEL = ektf2k S3202`, and the build produced the EKT touch-driver object. The three configured HX8389 LCM candidate objects were also compiled. This corrects the earlier interpretation of live input name `mtk-tpd`: that is the generic MediaTek TPD framework label and does not establish a controller mismatch. The live controller/firmware and which LCM candidate is active are still unknown. Source build success and matching kernel version do not prove that this mirror's configuration is the exact R7A kernel or that its zImage boots on the handset.
+
+At the time of this audit the workstation sees USB VID:PID `0fce:e1cb` with a mass-storage-only interface. `adb devices` and `fastboot devices` return no target. This is a host-side observation only; the phone's screen/boot state is unknown, and no USB storage was mounted or written.
+
 ## Android sparse container experiment — 2026-10-15
 
 Added `tools/ext4_to_android_sparse.py` to package an existing raw image as a standard Android sparse v1 container without modifying the raw input. It refuses to overwrite an output, requires 4096-byte alignment, emits RAW and DONT_CARE chunks, and records the expanded-image CRC32. The tool routes no data to the phone.
