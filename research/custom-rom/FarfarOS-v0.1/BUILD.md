@@ -35,8 +35,8 @@ research/custom-rom/FarfarOS-v0.1/tools/build_farfaros_v0.1_system.sh \
 
 The output is a raw ext4 `/system` partition image plus an adjacent SHA-256 file. **It is not directly flashable.** Do not put it in GitHub Releases.
 
-## Reproducibility and provenance
+## Rebuild repeatability and provenance
 
-The image is reproducible only when the exact private R7A file tree and metadata capture, the pinned R10A ext4/tree pair, APK, and animation are available. Their hashes are written to the build log; the system image hash is emitted and recorded in the private sidecar. Do not commit the proprietary inputs, live device dumps, or generated partition image.
+The build can be repeated only when the exact private R7A file tree and metadata capture, the pinned R10A ext4/tree pair, APK, and animation are available. Their hashes are written to the build log; the system image hash is emitted and recorded in the private sidecar. The current ext4 output is **not byte-for-byte deterministic**: the filesystem superblock write timestamp changes between runs. The 2026-10-15 repeat build had the same ext4 UUID, geometry, feature set and free-space counts as the previous image, passed filesystem validation, and revalidated APK/animation readbacks, but its overall hash differed. Do not treat matching payload hashes or a clean filesystem check as proof of identical full-image metadata. Do not commit the proprietary inputs, live device dumps, or generated partition image.
 
 The root build script invokes `research/custom-rom/tools/create_r7a_system_image_poc.py`; the optional final argument enables boot-animation integration. Omitting it retains the earlier APK-only system POC behavior.

@@ -209,6 +209,14 @@ ADB currently sees one authorized E2003 with build `25.0.A.2.31`, customization 
 
 The complete accessible R7A/R10A tree comparison (4,248/4,263 common paths identical) improves confidence in userspace relevance. The retrieved historical E2003 TWRP image adds boot-stack and p9 mapping evidence, but does not validate recovery or restore on R7A. The exact restore/recovery gate remains **BLOCKED**.
 
+### ADB boot-partition read permission check — 2026-10-15
+
+The handset was connected in normal Android mode and identified as the expected Sony E2003 / Android `25.0.A.2.31` (API 19). `adb shell id` returned `uid=2000(shell)`; no `su` executable was found in `/system/bin` or `/system/xbin`. The live by-name links resolve `boot` to `/dev/block/mmcblk0p10` and `fotakernel` to `/dev/block/mmcblk0p9`. A bounded read-only probe attempted to read at most four bytes from each device node and discard them on-device; both returned `Permission denied`. No partition bytes were copied and no phone state was changed.
+
+This confirms ordinary ADB shell cannot supply the missing matching boot/FOTA images. It does not prove root is impossible; it confirms root is not currently available through the installed shell. The earlier key-combination attempt enumerated Sony S1boot Fastboot (`0fce:0dde`), not MTKClient's expected Sony BootROM USB ID (`0fce:f200`). MTKClient's general README gives generic MediaTek button sequences, but no E2003-specific evidence establishes that they enter a usable BootROM state on this S1 boot chain. Do not repeat generic button combinations or attempt a testpoint based on guesswork. Source: [MTKClient upstream README](https://github.com/bkerler/mtkclient).
+
+**Next read-only gate:** obtain a model-specific, reproducible E2003 BootROM entry procedure or an authorized service-mode procedure that exposes readback, then verify the USB identity before invoking the pinned, read-only capture wrapper. Until then, the R7A `boot` and `fotakernel` contents, root access, and a complete exact-firmware capture remain **BLOCKED**. Fastboot's `secure: yes`, blank `getvar unlocked`, and unknown `oem device-info` response do not independently confirm the owner-reported unlock state.
+
 An additional retrieval attempt used the two download links and the page's “mirror” link. The page identifies filenames `unsigned_twrp_sony-xperia-e4g_temp.zip` and `signed_twrp_sony-xperia-e4g.zip`, but all three redirects returned HTTP 403 through the available fetch route. Exact bytes, hashes, signing identity, install scripts, target partition and supported E2003 firmware therefore remain unavailable for audit. The article's own procedure installs a temporary package through stock recovery and then permanently installs recovery; that is a modifying procedure, not a read-only check, and is not suitable to test without a separately established restore path and explicit approval.
 
 ## Protected areas and constraints
