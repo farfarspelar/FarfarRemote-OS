@@ -4,6 +4,10 @@
 
 Target: Sony Xperia E4g E2003, Android 4.4.4/API 19, firmware 25.0.A.2.31, customization 1293-7358 R7A.
 
+## Owner decision — 2026-10-15
+
+**VERIFIED:** The owner chose to skip KingRoot and continue with the stock-derived ROM plan. No KingRoot or KingoRoot package has been acquired or executed. Keep the historical reports below as research context only; they are not an approved or reproducible rooting procedure. The ROM build path does not require rooting to reconstruct and validate the `/system` filesystem. Exact boot/FOTA acquisition remains blocked through the current ordinary ADB shell, so pursue traceable firmware or a separately reviewed read-only acquisition path instead.
+
 ## Current state
 
 - **VERIFIED:** Live ADB shell is UID 2000 (`shell`), SELinux `u:r:shell:s0`; `/system` is read-only; `su` was not found on the standard shell PATH in the prior readiness check; reading the boot block is denied.

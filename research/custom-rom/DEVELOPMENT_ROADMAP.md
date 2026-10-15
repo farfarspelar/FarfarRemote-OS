@@ -2,6 +2,14 @@
 
 **Status key:** VERIFIED = directly observed/documented; REPORTED = owner statement; UNKNOWN = insufficient evidence; BLOCKED = cannot continue until named evidence is available.
 
+## Continuation checkpoint — 2026-10-15
+
+- **VERIFIED:** The owner chose to skip KingRoot. No KingRoot/KingoRoot APK has been downloaded or run. Root is not needed for the current offline `/system` image work.
+- **VERIFIED:** The attached handset is available over ADB in normal Android mode and reports E2003 / Android 4.4.4 API 19 / build `25.0.A.2.31` / CDA `1293-7358 R7A`. Ordinary ADB remains unprivileged; boot and FOTA partition reads are denied. No restart or device write was performed in this continuation.
+- **VERIFIED:** Existing local R7A system-image artifact and boot-container candidates remain on `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/`, outside Git. The system image has already passed offline payload/metadata comparison and `e2fsck -fn`; the boot containers remain unbooted and are not established as flashable.
+- **UNKNOWN / BLOCKED:** A targeted local filename search found no exact `1293-7358 R7A` FTF, boot SIN, or R7A kernel artifact. The retained R3A/R10A packages and the historical R5A recovery are different customizations and remain leads only. Public search results likewise did not establish a verified exact-R7A package.
+- **NEXT:** Continue seeking an exact, traceable R7A boot/recovery source and inspect the existing images offline. Do not use KingRoot as a substitute for that source, and do not attempt device boot/write until the exact artifact and operation have been reviewed separately.
+
 ## Immediate decision
 
 Continue the currently working Android 4.4.4 stock launcher track. Treat FarfarRemote OS today as a dedicated Android configuration, not a ROM. **REPORTED by owner, 2026-10-14:** all current FarfarRemote features have now been tested and work on both App and OS editions. **VERIFIED** in a separate physical E2003 check: the active stream folder browser opened and restored the episode directory. Keep this working software as the control baseline.
