@@ -1,5 +1,36 @@
 # Recovery and restore strategy
 
+## Fresh read-only ADB access check — 2026-10-15
+
+The currently attached handset was re-identified without exposing its USB
+serial in the report: `E2003`, Android 4.4.4/API 19, build `25.0.A.2.31`, CDA
+`1293-7358 R7A`. ADB reports the shell as UID 2000 in SELinux domain
+`u:r:shell:s0`; `ro.secure=1`, `ro.debuggable=0`, and `su` is not on PATH.
+The `/data/local/bootanimation.zip` override is absent.
+
+The read-only partition alias listing reconfirmed `boot -> mmcblk0p10`,
+`fotakernel -> mmcblk0p9`, and `system -> mmcblk0p19`. ADB shell can stat the
+boot block node (`root:system`, mode `0640`) but a one-block read to `/dev/null`
+returns `Permission denied`; `fotakernel` is `root:root` mode `0600` and its
+read is also denied. No raw partition data was obtained. No root command, reboot,
+Fastboot transition, or write command was issued. Fastboot currently has no
+connected device; this says nothing about what its bootloader would permit.
+
+**Readiness effect:** this closes the safe ADB route to an exact R7A boot/FOTA
+dump. An exact R7A firmware package with traceable origin, or a separately
+reviewed read-only bootloader/BootROM extraction method, is still needed before
+root-image work can be made firmware-exact. The R10A offline animation POC does
+not substitute for that input.
+
+Sony's [current E4g support page](https://www.sony.com.au/electronics/support/mobile-phones-tablets-mobile-phones/xperia-e4g)
+still lists Xperia Companion (release date 2022-05-15), and the Sony E2003
+family user guide documents Companion's Software repair function. This proves
+the vendor utility was associated with this model family; it does **not** prove
+that the current utility still offers firmware for CDA `1293-7358 R7A`, that
+the unlocked handset is accepted, or that a resulting download can be retained
+as an exact restore package. The repair workflow remains a lead to check on a
+supported Windows/macOS host, stopping before any final repair confirmation.
+
 ## Fresh read-only prerequisite refresh — 2026-10-14
 
 The repository's `tools/collect_e2003_prerequisites.sh` was run against the single authorized ADB device. It confirmed model/device `E2003`, board `callass`, Android 4.4.4/API 19, build `25.0.A.2.31`, CDA `1293-7358 R7A`, MT6752 platform string, and Linux `3.10.48+`. The live partition aliases report `boot -> mmcblk0p10`, `fotakernel -> mmcblk0p9` (32 MiB), and `system -> mmcblk0p19`; only partition metadata was read. `/proc/config.gz` is absent and ordinary ADB cannot read the boot command line. This refresh did not inspect raw partition contents or verify the owner-reported unlocked state. Temporary output was kept outside Git.
