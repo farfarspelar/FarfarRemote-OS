@@ -38,6 +38,29 @@ manifest and was separately verified against the original APK. This strengthens
 the local content-integrity result; it does not establish bootability or
 firmware-package compatibility.
 
+## Boot ramdisk and kernel-module gate — 2026-10-15
+
+An offline review of the R10A ROOTFS ramdisk used by the Android boot-container
+candidate found `/dev/block/platform/mtk-msdc.0/by-name` mounts for `system`,
+`userdata`, `cache`, `protect1` and `protect2`. Its fstab marks both `protect1`
+and `protect2` `wait,check,autoformat`. These are separate device partitions
+that the project partition map identifies as protected. The exact trigger
+conditions and consequences of `autoformat` have not been experimentally
+established; therefore this boot candidate must not be used for another
+start-attempt as-is. A same-build, R7A-matched ramdisk is still unavailable.
+Any locally prepared alternative must first be statically reviewed to prove
+that its startup path cannot format `protect1`/`protect2`, NVRAM, calibration,
+or other unrelated partitions. This is a boot-candidate gate, not a problem in
+the already-built `/system` filesystem image.
+
+The rebuilt callass kernel configuration has `CONFIG_MODULES=y`, but its saved
+build output contains zero `.ko` files. The R7A capture lists an empty
+`/system/lib/modules` directory. This is consistent with a build where the
+needed drivers are built in, but does not prove that the rebuilt kernel has the
+exact R7A hardware configuration. The kernel version string is `3.10.48`,
+while the live kernel reports `3.10.48+`; source/config identity and hardware
+driver behavior remain unverified.
+
 ## Status
 
 The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
