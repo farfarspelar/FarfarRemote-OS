@@ -1,5 +1,38 @@
 # Recovery and restore strategy
 
+## Linux Mint-only host route — 2026-10-15
+
+The owner has confirmed Linux Mint is the only available host OS, so the
+Windows/macOS Xperia Companion preflight is not currently actionable. Sony's
+current Companion documentation lists Windows and macOS, not Linux
+([Sony Companion requirements](https://www.sony.com/electronics/support/mobile-phones-tablets-tablets/articles/00236877)).
+Do not treat Wine as an equivalent supported environment; prior Wine
+enumeration did not verify repair availability or a retained firmware package.
+
+There is a Linux-capable third-party path worth validating at the USB transport
+level: [Sony Mobile Flasher / Flashtool](https://flashtool.net/download.html)
+publishes a Linux release, and the pinned `Androxyde/devices` database has an
+`E20XX` profile that recognizes E2003. These facts establish host/tool and
+model-profile availability only. The profile includes broad Flashmode actions,
+including boot, fotakernel and TA operations; it is **not** a safe restore
+recipe. The currently available FTF candidate has CDA R10A/R3A mismatch, so it
+must not be used as an R7A restore image.
+
+**Safe Linux next step:** when the owner has the handset physically available,
+enter Sony Flashmode using the model's documented hardware sequence and
+observe only USB enumeration (`lsusb`/kernel log). Do not start Flashtool's
+flash workflow, select partitions, or send a command. This would verify that
+Linux sees the handset in Flashmode, not that it can restore the exact R7A
+firmware. After transport verification, inspect Flashtool offline and establish
+an exact, traceable R7A package plus a reviewed, narrowly scoped restore plan.
+The handset must remain in normal Android if there is any ambiguity about the
+button sequence or connection state.
+
+No Flashtool binary has been downloaded or executed as part of this update.
+Its published download page is a third-party origin and provides a SHA-1
+checksum for the listed Linux release, which is useful for corruption checks
+but is not a publisher signature or an independent authenticity proof.
+
 ## Fresh read-only ADB access check — 2026-10-15
 
 The currently attached handset was re-identified without exposing its USB
