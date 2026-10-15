@@ -107,6 +107,10 @@ A focused public search using the historical TWRP filename, its header marker an
 
 Repeated exact-string searches for E2003 CDA `1293-7358 R7A` did not surface a matching firmware package, boot/recovery image, or a documented `fastboot boot` path for `S1_Boot_MT6732_TC9PRA_9`. The historical E2003 TWRP post supports only a recovery *flash* procedure, and Sony's public Fastboot guide does not document temporary boot support for this model. Both questions remain unknown; absence from public search is not proof of nonexistence. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md) and [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md).
 
+### Live access/kernel-config refresh — 2026-10-15
+
+A new ADB identity check again matched E2003 / Android 4.4.4 / `25.0.A.2.31` / `1293-7358 R7A`; shell is UID 2000, secure and non-debuggable, with no `su` on PATH. The checked-in read-only probe reproduced `Permission denied` reading both boot p10 and fotakernel p9 (four bytes are discarded on-device; no dump saved). The R10A stock-kernel segment also contains no embedded config detectable by the pinned kernel source's `extract-ikconfig`. This removes two possible non-destructive ways to obtain exact R7A boot inputs. No reboot or Fastboot transition was made.
+
 **Readiness effect: unchanged.** No new file, restore method, or independently verified boot path was obtained. Keep safe end-to-end ROM success below 50% until one of the recovery gates is actually closed; do not inflate the estimate based on repeated negative searches.
 
 ### Magisk v18.1 format check — 2026-10-14

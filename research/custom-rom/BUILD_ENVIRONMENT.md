@@ -57,6 +57,19 @@ The official vendor build wrapper `./makeMtk callass n k` was run only in the te
 
 The build log contains numerous legacy warnings, including incompatible pointer types, return-type issues, and redefinitions; no warning-clean or runtime test is claimed. The generated `.config` contains `CONFIG_IKCONFIG_PROC=y`, inconsistent with the observed absence of `/proc/config.gz` on the live device. Therefore the artifact is a **kernel build proof of concept**, not a R7A-matched kernel, boot image or flashable file. Artifacts, source mirror and logs remain outside Git under `/tmp`; do not commit proprietary source or binaries or infer device compatibility from successful compilation. No phone operation occurred.
 
+### Stock kernel config extraction check — 2026-10-15
+
+The kernel segment extracted from the E2003 `25.0.A.2.31_R10A` candidate was
+checked with the pinned source tree's `scripts/extract-ikconfig`. It reported
+`Cannot find kernel config` and produced no config. This means the final
+configuration cannot currently be recovered from this candidate kernel by
+that standard embedded-config method. The source mirror's generated config
+must not be treated as the phone's config; it still conflicts with runtime
+evidence (`/proc/config.gz` absent despite `CONFIG_IKCONFIG_PROC=y`). The live
+R7A boot partition is also unreadable to ADB shell, so this route is blocked
+until an exact config/build artifact or an independently authorized elevated
+read is available.
+
 The non-destructive build wrapper is [`tools/build_e2003_kernel_poc.sh`](tools/build_e2003_kernel_poc.sh). It refuses an unexpected source commit/origin, checks for Python 2.7 and NDK GCC 4.8, and requires 3 GiB free before invoking the vendor build. The host inventory helper now reports both the workspace and `/tmp` filesystems and checks for common Android build tools (`repo`, `ndk-build`, `emulator`, `lunch`) so a nearly full root volume is visible before starting a large build. Example:
 
 ```sh

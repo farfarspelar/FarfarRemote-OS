@@ -15,6 +15,7 @@ This directory is a research record for the exact E2003 / Android 4.4.4 / firmwa
 - [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md) — host constraints and non-destructive helper tooling.
 - [RECOVERY_STRATEGY.md](RECOVERY_STRATEGY.md) — recovery blockers and prerequisites.
 - [DEVELOPMENT_ROADMAP.md](DEVELOPMENT_ROADMAP.md) — staged gates and exact remaining blockers.
+- [BOOTANIMATION_POC.md](BOOTANIMATION_POC.md) — asset validation, offline ext4 integration results, and device-test blocker.
 
 ## Status meanings
 
