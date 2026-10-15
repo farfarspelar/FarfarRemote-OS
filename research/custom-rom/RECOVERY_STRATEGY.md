@@ -251,6 +251,7 @@ The verifier was also checked against a deliberately mismatched kernel (exit 1 /
 
 The connected handset was checked again without rebooting. It identifies as E2003 / `25.0.A.2.31`; `adb shell id` reports UID 2000 (`shell`). A bounded probe attempted to read four bytes each from the `boot` (p10) and `fotakernel` (p9) block devices and immediately discard those bytes to `/dev/null`. Both returned `Permission denied`; no block image was created. The reproducible helper is [`tools/probe_e2003_boot_read_access.sh`](tools/probe_e2003_boot_read_access.sh). This removes ordinary ADB as a way to obtain exact live boot/FOTA backups under the current access level. It neither establishes that root is impossible nor tests Fastboot read/write behavior. **Recovery/rollback remains unverified.**
 
+
 ### Fresh ROM-source catalog review — 2026-10-14
 
 **Update:** a public [E2003 kernel-source mirror](https://gitlab.com/sobotkama/android_kernel_sony_e2003), pinned at `2a84825e8268393267e454e35a00f80d48c58949`, contains Linux 3.10.48 and `callass`/MT6752 source configuration. Its Sony provenance is not independently authenticated; the final R7A config is unknown, the bundled recovery fstab uses stale MTD/YAFFS2, and the candidate kernel has only been compiled offline. It is a kernel source lead, not a recovery image or complete ROM tree. See [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md).
@@ -327,3 +328,7 @@ The development host has Wine 9.0; its existing Wine prefix contains `wineusb.sy
 A public XperiaStockROM page links a Google Drive archive whose central directory names an E2003 `25.0.A.2.31` FTF with CDA `1293-9486` / revision R3A. We verified the outer archive's ZIP metadata by byte range only; the 1.296-GB inner FTF payload has not been retrieved, its CRC has not been checked, and it is not the handset's `1293-7358 R7A` CDA. It is a more closely matched candidate than an E2006 package, but remains a third-party mirror and cannot yet serve as a verified restore route. See [FIRMWARE_SOURCES.md](FIRMWARE_SOURCES.md).
 
 **Readiness effect: still unchanged.** We have a credible same-model/same-build-family firmware lead that could become a fallback stock source after full hash/metadata review, but it provides no current rollback guarantee and no verified exact-CDA base. No bulk payload download or flash was attempted.
+
+### Live ADB access recheck — 2026-10-15
+
+The read-only prerequisite collector again confirms E2003, `25.0.A.2.31`, CDA `1293-7358 R7A`, MT6752/callass and kernel `3.10.48+`. Shell remains UID 2000, with no standard `su` binary. Repeating the bounded four-byte probe again returned `Permission denied` for both boot p10 and fotakernel p9. The phone stayed in Android; no partition bytes were saved and no reboot or write was issued. This confirms the existing access blocker is still present; it does not prove that a separately authorized BootROM/service route cannot work.
