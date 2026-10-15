@@ -37,6 +37,13 @@ uncaptured. A successful Sony Fastboot connection is useful transport evidence
 but does not establish `fastboot boot`, flash permission, unlock state, or a
 safe route to install the experimental system image.
 
+The pinned upstream [MTKClient README](https://github.com/bkerler/mtkclient/blob/7cb40e727727dfe3faa065eefb29b16ed29bbdf1/README.md)
+describes generic BootROM entry attempts using volume/power buttons while
+connecting USB, but does not identify a validated button sequence for the
+Sony E2003. That generic guidance is not sufficient grounds to repeat button
+experiments on this handset, particularly because the previous observed
+volume-button attempt exposed Sony Fastboot rather than MediaTek BootROM.
+
 A subsequent 180-second passive USB observation found no new Sony or MediaTek
 service-mode VID:PID; ordinary ADB remained connected throughout. The handset
 was therefore not captured in BootROM/preloader mode, and no partition dump
