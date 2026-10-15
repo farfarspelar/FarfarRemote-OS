@@ -1,5 +1,18 @@
 # FarfarOS Experimental v0.1 build report
 
+## Bootloader status addendum — 2026-10-15
+
+The Service Menu on the exact E2003 later showed `Bootloader unlock allowed:
+Yes`, but not `Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` remains
+blank. Thus previous build-report statements that merely say the owner-reported
+unlocked status was unconfirmed are superseded: current read-only evidence
+verifies eligibility to unlock, not that unlocking has occurred. The offline
+system-image build results below are unaffected; no image was flashed and no
+partition was written. A flash trial remains blocked pending separately
+authorized unlock if needed and a validated restore path. Sony's official
+unlock guide states unlocking factory-resets user data, does not grant root,
+and prevents restoration of DRM keys: [Sony Open Devices — unlock bootloader](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader).
+
 ## Follow-up artifact audit — 2026-10-15
 
 The retained data-volume image was independently rechecked after the later

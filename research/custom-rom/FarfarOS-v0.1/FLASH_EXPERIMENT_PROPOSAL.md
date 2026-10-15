@@ -30,8 +30,8 @@ fastboot flash system \
 ## Evidence and unknowns
 
 - **VERIFIED, historical read-only observations:** handset product E2003; bootloader string `1290-9780 S1_Boot_MT6732_TC9PRA_9`; Android build `25.0.A.2.31`; customization R7A; system alias mapped to `mmcblk0p19`; reported system capacity `2,097,152,000` bytes.
-- **REPORTED:** owner says the bootloader is unlocked.
-- **UNKNOWN:** current unlock state. The fresh `getvar unlocked` returned no value; `secure: yes` was reported. Sony Service Menu says unlocking is allowed, which does not prove that the bootloader is already unlocked. The phone has been returned to Android and ADB is online.
+- **REPORTED, superseded:** owner previously said the bootloader is unlocked.
+- **VERIFIED, read-only Service Menu:** `Bootloader unlock allowed: Yes`, but not `Bootloader unlocked: Yes`; Fastboot `getvar unlocked` returned no value. Actual unlocked state is not verified. `secure: yes` does not prove lock state. The phone has been returned to Android and ADB is online.
 - **Interpretation of `secure`:** AOSP Fastboot protocol documentation defines `secure` as whether the bootloader requires signed images for install/boot; it is not, by itself, a locked/unlocked state field. Therefore `secure: yes` is recorded but is not used to infer the current lock state. See the [AOSP Fastboot protocol](https://android.googlesource.com/platform/system/core/+/09fe163be2a3f59dfcc34d473b898e777c0f4514/fastboot/README.md).
 - **UNKNOWN:** whether this S1 bootloader accepts the `system` Fastboot partition alias and raw ext4 payload. Flashtool's public source has a generic `fastboot flash system <image>` operation, but does not establish E2003 bootloader acceptance. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
 - **UNKNOWN:** whether first boot will complete with the stock R7A boot/FOTA and this reconstructed system. No test of this system image has occurred on hardware.
