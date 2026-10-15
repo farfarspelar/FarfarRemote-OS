@@ -93,6 +93,12 @@ This confirms transport only; it does not establish a usable exact-R7A restore
 package, safe partition selection, or successful repair. The phone must not be
 treated as recoverable until those independent gates are closed.
 
+The owner subsequently reported the phone had started. Read-only host checks
+confirmed Sony USB `0fce:51cb`, ADB state `device`, and E2003 / `25.0.A.2.31` /
+R7A properties again. Thus the handset returned from S1 service mode to its
+stock Android installation without a host-side flash command; the exact
+physical exit action was not recorded.
+
 Sony's [current E4g support page](https://www.sony.com.au/electronics/support/mobile-phones-tablets-mobile-phones/xperia-e4g)
 still lists Xperia Companion (release date 2022-05-15), and the Sony E2003
 family user guide documents Companion's Software repair function. This proves
