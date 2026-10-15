@@ -69,6 +69,24 @@ because the bootloader returns no value. It exited with `PREFLIGHT FAIL` and
 issued no write command. The phone was returned to Android and ADB was
 confirmed online.
 
+A final `fastboot getvar all` query was also captured locally and filtered so
+that device-specific serial/identity fields were not displayed or recorded.
+It returned the same product, bootloader, `secure: yes`, system size and
+system type, but no `unlocked`, `locked`, or `lockstate` variable. The device
+was returned to Android and ADB was confirmed online. This closes the
+available standard Fastboot read-only variable check; it does not prove that
+the bootloader is locked, only that its state remains unknown through this
+interface.
+
+The locally inspected Flashtool source contains a loader `CMD01` property
+query that can report `ROOTING_STATUS` after establishing a Sony S1 loader
+session. That is a service/loader protocol operation, not a documented
+standalone status query for this exact E2003 firmware. The repository audit
+found no validated, non-mutating E2003-specific procedure that uses it to
+confirm the current Fastboot unlock state. It is therefore not used as a
+substitute for the missing Fastboot state, and no Flashtool session was opened
+for this check.
+
 The proposed image's SHA-256 and ext4 check were revalidated. The APK extracted
 from it is byte-identical to the repository's v0.4.7 OS APK
 (`f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3a6aab0e7bc`). The
@@ -86,7 +104,8 @@ physical run exposed a second parser assumption (partition size was reported
 as hexadecimal without a `0x` prefix); that is corrected and the actual helper
 now reaches the unlock-state check. No write command has been run.
 
-With the handset physically present and in Fastboot, record fresh output for:
+With the handset physically present and in Fastboot, the following read-only
+queries have now been run:
 
 ```sh
 fastboot devices
@@ -95,7 +114,12 @@ fastboot getvar version-bootloader
 fastboot getvar secure
 fastboot getvar unlocked
 fastboot getvar partition-size:system
+fastboot getvar all
 ```
+
+The `getvar all` output was filtered locally; no serial or device identity
+number was retained in the report. Neither `unlocked`, `locked`, nor
+`lockstate` was returned.
 
 The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/preflight_e2003_system_write.sh) checks the local image size/hash/type, exactly one Fastboot device, exact product, system partition size, bootloader identifier, and a positively reported unlocked state. It does not print the USB serial and never runs a write, boot, erase, or reboot command. Its output must say `READ-ONLY PREFLIGHT PASSED`; any unavailable or mismatched value stops the process. Re-check the image size and SHA-256 immediately before any separately approved write.
 
