@@ -352,3 +352,30 @@ This gives us a root-free way to try to obtain exact live R7A boot and recovery 
 An additional public-source search found no exact local/public `E2003 / 1293-7358 R7A` firmware filename or matching boot SIN. Sony's [E4g user guide](https://www-support-downloads.sonymobile.com/e2003/userguide_BS_E2003-E2006-E2053_2_Android4.4.4.pdf) documents Xperia Companion's Software Repair flow, and Sony's [Companion feature page](https://www.sony.jp/xperia/support/software/xperia-companion/) lists software repair generally. Neither source proves that this retired E2003/R7A handset is eligible today or identifies the CDA it would offer. A supported Windows/macOS host is still needed for a read-only eligibility preflight; Linux Mint remains the available host and has no verified official Sony repair workflow.
 
 **Readiness effect:** offline ext4 validation remains complete, but no exact boot image has been acquired. The MTKClient path is prepared, not tested against this handset. No root, reboot, BootROM entry, partition read, or write occurred in this checkpoint.
+
+### Additional source audit — Flashtool status path (2026-10-15)
+
+The pinned local Flashtool source was followed through `GetULCodeJob` and
+`S1Flasher`. `GetULCodeJob.run()` calls `flash.open()`, `flash.sendLoader()`,
+then reads `ROOTING_STATUS` and IMEI, and for non-legacy devices also calls
+`readTA(2, 2226)` before deriving its `alreadyUnlocked` flag. `sendLoader()`
+uploads a loader SIN and sends S1 command CMD01 to read loader properties;
+the session is then closed with CMD04. This is not equivalent to a standard
+Fastboot variable query: it executes a service-loader exchange, accesses TA
+unit 2:2226, and handles device identifiers. The source does not establish
+that this sequence is side-effect-free on this exact E2003 bootloader/firmware.
+Consequently, no Flashtool status/UL-code/TA workflow should be run merely to
+resolve the unknown unlock state. Do not record or publish its serial/IMEI/TA
+output. This finding is from source inspection only; no Flashtool session was
+opened against the device.
+
+### Restore-file reconstruction recheck — 2026-10-15
+
+The local stock-file-content fallback at
+`/tmp/FarfarOS-E2003-R7A-stock-tree-reconstruction-v0.1.ext4` was rehashed and
+checked again: SHA-256
+`9942db8cdc048ff7ba9522160c1bf8aba3dcb6e6ce5e1c910f444bbed53880dd`, with
+`e2fsck -fn` completing all five passes. This confirms the local artifact's
+current readability and ext4 consistency only. It remains a reconstructed
+file tree, not a raw partition dump, signed firmware package, or proven
+device restore route; it does not close the recovery gate.

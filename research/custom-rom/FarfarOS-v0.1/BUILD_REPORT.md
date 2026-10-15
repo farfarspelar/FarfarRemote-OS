@@ -138,6 +138,19 @@ The audit used local retained artifacts and read-only host parsers only. It
 does not clear the boot test gate: the candidate is still based on an R10A
 ramdisk, and no exact R7A boot/fotakernel image or proven restore route exists.
 
+## Read-only artifact recheck — 2026-10-15
+
+The primary R7A-derived `/system` image was rehashed from the data volume and
+again passed all five passes of `e2fsck -fn`: SHA-256
+`cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`.
+The separate stock-file-content fallback on the host SSD was also rehashed and
+passed `e2fsck -fn`: SHA-256
+`9942db8cdc048ff7ba9522160c1bf8aba3dcb6e6ce5e1c910f444bbed53880dd`.
+This is repeatable host-side file integrity evidence only. The stock-file
+fallback is not a raw partition backup, and neither image has been accepted
+or boot-tested by the E2003 S1 bootloader. No device partition was read or
+written during this recheck.
+
 ### apps_log-free diagnostic container
 
 To remove the newly identified `apps_log` filesystem operations from the
