@@ -2,7 +2,7 @@
 
 ## Status
 
-The first combined offline build completed on 2026-10-15. The generated image stays under `/tmp` because it is proprietary-derived and must not be published or committed.
+The first combined offline build completed on 2026-10-15. Proprietary-derived images are stored outside Git on `/mnt/data`; legacy `/tmp` paths are symlinks to the retained artifacts.
 
 | Gate | Result |
 |---|---|
@@ -29,7 +29,7 @@ The APK input SHA-256 is `f412e2047daa411270d253b2e6cd8ce7097291e6deccb7e096eef3
 
 The checked-in build script was rerun from the same local input set and the published v0.4.7 OS APK. The rebuild completed, `e2fsck -fn` passed, and the builder again verified the R10A input, APK, animation, and payload readbacks. The resulting image was 2,097,152,000 bytes with SHA-256 `558f52709d3839d883296cdd70d8032c44ae7af50d79893948e101d4084af021`, so it is **not byte-identical** to the earlier image (`98a7461b…`). Both images report the same ext4 UUID, feature set, inode/block counts, and free-block/inode counts; the observed superblock `Last write time` differs (`11:24:00` vs `11:53:54` UTC). This confirms the current builder is repeatable in filesystem/payload validation, but not byte-for-byte deterministic. It does not establish that every filesystem metadata byte is identical.
 
-The rebuild remains under `/tmp`; its firmware-derived image and checksum are not committed. It is not flashable or boot-tested. On the live device, ordinary ADB shell also failed the bounded read probe for both boot and fotakernel due to permissions; see [recovery notes](../RECOVERY_STRATEGY.md).
+The historical rebuild path was `/tmp`; its firmware-derived image and checksum were retained during the disk migration and are not committed. It is not flashable or boot-tested. On the live device, ordinary ADB shell also failed the bounded read probe for both boot and fotakernel due to permissions; see [recovery notes](../RECOVERY_STRATEGY.md).
 
 ## Reproducible rebuild check — 2026-10-15
 
@@ -41,6 +41,14 @@ The builder now pins ext4 timestamps using `SOURCE_DATE_EPOCH` (default `1704067
 | `FarfarOS-R7A-repro-2.ext4` | 2,097,152,000 bytes | `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d` | Payload readback and `e2fsck -fn` passed |
 
 Both outputs are stored outside the repository under `/mnt/data/FarfarRemote-Research-POC/`; no proprietary-derived image was added to Git. This proves byte-for-byte repeatability for the tested local inputs and e2fsprogs 1.47.0 host, not portability to every host. The result remains an ext4 `/system` POC only: it is not a complete Sony firmware package and has not been booted.
+
+## Data-volume rebuild after disk migration — 2026-10-15
+
+The root filesystem was full before the storage work (507 MiB available, 100% used). We moved 151 FarfarOS-related `/tmp` entries (about 25 GiB) and the 962 MiB Gradle cache to `/mnt/data`. No files were deleted; old `/tmp` names remain as symlinks to the preserved targets. Root now has about 26 GiB available (77% used). Unrelated caches were left untouched. A name manifest is stored beside the migrated files.
+
+The updated wrapper was used to build a separate output at `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system-post-storage.ext4`. The wrapper directed `TMPDIR`, `TEMP`, and `TMP` to the data volume and rejected an attempted output path under `/tmp` before invoking the builder.
+
+The build completed with payload readback and `e2fsck -fn` passing. It produced a 2,097,152,000-byte ext4 image with SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`, byte-identical to both prior reproducible outputs. This confirms the new storage path for this build and input set. It remains an offline partition-image POC: not a complete or flashable Sony ROM, and not hardware-booted. The output and all proprietary inputs remain outside Git.
 
 The image length also exactly matches the live handset's reported `system` partition capacity: `2,097,152,000` bytes (`2,048,000` 1-KiB blocks). This closes only the raw size-fit check. It does not establish an accepted Sony image container, safe write path, boot-chain compatibility, or successful hardware boot; see [HARDWARE_COMPATIBILITY.md](HARDWARE_COMPATIBILITY.md) and [partition layout](../PARTITION_LAYOUT.md).
 

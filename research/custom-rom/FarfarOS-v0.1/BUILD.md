@@ -2,7 +2,22 @@
 
 ## Host requirements
 
-Linux Mint or a compatible Linux host, Python 3, `debugfs`, `e2fsck`, `file`, `keytool`, `jarsigner`, `sha256sum`, Android SDK `aapt2`, and at least 5 GB free space on the temporary/output filesystem. Keep all proprietary inputs and outputs out of Git.
+Linux Mint or a compatible Linux host, Python 3, `debugfs`, `e2fsck`, `file`, `keytool`, `jarsigner`, `sha256sum`, Android SDK `aapt2`, and at least 5 GB free space on the data filesystem. Keep all proprietary inputs and outputs out of Git.
+
+## Disk layout
+
+Large local research inputs migrated from `/tmp` are preserved at:
+
+`/mnt/data/FarfarRemote-Research-POC/workspaces/tmp-migration-2026-10-15/`
+
+The original `/tmp/<name>` paths are symlinks to those retained files, so existing local references continue to work. Do not remove the symlink targets while a build or investigation is using them. The Gradle cache is also stored on the data filesystem at `/mnt/data/FarfarRemote-Research-POC/build-cache/gradle` and linked from `~/.gradle`.
+
+The build wrapper defaults to:
+
+- Output: `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/`
+- Temporary files: `/mnt/data/FarfarRemote-Research-POC/tmp/`
+
+It exports `TMPDIR`, `TEMP` and `TMP` to the temporary directory and refuses to write the system image outside the data-backed build directory or inside the Git repository. To use another data volume, set `FARFAR_DATA_ROOT` and optionally `FARFAR_TMPDIR` before invoking it. The Python builder stages its ext4 image alongside the requested output, so keep the output on `/mnt/data` as well.
 
 The current build uses the pinned R10A `system.ext4` only as a filesystem container, then applies captured R7A file contents and metadata. The builder checks the R10A input SHA-256 and the installed OS APK signer. It also validates the owner-supplied animation archive, writes the two payloads, reads them back, and runs `e2fsck -fn`.
 
@@ -32,7 +47,7 @@ research/custom-rom/FarfarOS-v0.1/tools/build_farfaros_v0.1_system.sh \
   /private/path/farfar-e2003-r7a-metadata-verified.txt \
   dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk \
   graphics/bootanimation/bootanimation.zip \
-  /private/output/FarfarOS-E2003-R7A-v0.1-system.ext4
+  /mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/FarfarOS-E2003-R7A-v0.1-system.ext4
 ```
 
 The output is a raw ext4 `/system` partition image plus an adjacent SHA-256 file. **It is not directly flashable.** Do not put it in GitHub Releases.
