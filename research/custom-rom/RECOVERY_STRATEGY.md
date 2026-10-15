@@ -66,6 +66,18 @@ reviewed read-only bootloader/BootROM extraction method, is still needed before
 root-image work can be made firmware-exact. The R10A offline animation POC does
 not substitute for that input.
 
+### Owner-operated recovery-menu exit — 2026-10-15
+
+The owner reported the handset was showing the Sony System Recovery menu with
+`Continue Power Up`, `Safe Mode`, `Factory Reset`, and `Power Down`. They chose
+`Continue Power Up`. Before that selection, Linux saw Sony USB `0fce:0c01` and
+ADB reported the device as offline; Fastboot saw no device. Afterward, read-only
+checks showed ADB `device`, Sony USB `0fce:51cb`, and properties matching
+E2003 / Android 4.4.4 / `25.0.A.2.31` / CDA `1293-7358 R7A`. This demonstrates
+a successful return from that menu to Android without a factory reset. It
+does not test Flashmode, Fastboot writes, recovery image behavior, or restore
+capability. No device command was sent while it was in recovery.
+
 Sony's [current E4g support page](https://www.sony.com.au/electronics/support/mobile-phones-tablets-mobile-phones/xperia-e4g)
 still lists Xperia Companion (release date 2022-05-15), and the Sony E2003
 family user guide documents Companion's Software repair function. This proves
