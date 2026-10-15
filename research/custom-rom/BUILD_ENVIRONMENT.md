@@ -108,3 +108,11 @@ References: [Magisk build instructions](https://github.com/topjohnwu/Magisk/blob
 - `research/custom-rom/tools/repack_e2003_stock_boot_poc.py`: creates an experimental Android legacy boot-image **container only** from already extracted local E2003 kernel/ramdisk payloads. It checks the recovery-reference kernel hash and ramdisk structure, refuses repository output, and has no ADB/Fastboot code. It has not produced a boot-tested image and must not be used as a flash instruction.
 
 Do not treat checksums from an untrusted mirror as proof of authenticity. Record provenance and a cryptographic SHA-256 from an independent trusted source when possible. Never commit firmware images, proprietary blobs, private device audits or generated device dumps.
+
+### Build-volume refresh — 2026-10-15
+
+The root filesystem had filled during ROM work. The 151 FarfarOS-specific top-level entries formerly under `/tmp` and the 962 MiB Gradle cache are now preserved on `/mnt/data`; their former temporary paths are symlinks. After migration, `/` reports about 26 GiB free and `/mnt/data` about 60 GiB free. No files were deleted.
+
+`FarfarOS-v0.1/tools/build_farfaros_v0.1_system.sh` writes image staging/output and `TMPDIR` under `/mnt/data/FarfarRemote-Research-POC`, checks the volume is separate from `/`, and requires 5 GiB free. `tools/build_e2003_kernel_poc.sh` also requires its source/output tree and temp directory to be on that same data filesystem and checks free space before starting. The kernel compiler writes most artifacts inside its source tree, so keep the source checkout on `/mnt/data`. Both wrappers reject a missing/unmounted data volume instead of silently falling back to `/`.
+
+The freshly rebuilt experimental system image passed the same offline payload-readback and `e2fsck -fn` checks as earlier byte-identical builds. This refresh changes storage placement and guards only; it does not improve the exact-R7A boot image, Sony SIN packaging, or hardware boot evidence.

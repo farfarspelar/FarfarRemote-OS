@@ -18,6 +18,8 @@ EOF
 source_tree=$(realpath "$1")
 ndk_root=$(realpath "$2")
 python2=$(realpath "$3")
+data_root=$(realpath -m -- "${FARFAR_DATA_ROOT:-/mnt/data/FarfarRemote-Research-POC}")
+tmp_root=$(realpath -m -- "${FARFAR_TMPDIR:-"$data_root/tmp"}")
 expected_commit=2a84825e8268393267e454e35a00f80d48c58949
 expected_origin=https://gitlab.com/sobotkama/android_kernel_sony_e2003.git
 compiler="$ndk_root/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin"
@@ -26,6 +28,44 @@ compiler="$ndk_root/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/b
   echo "Not an E2003 kernel source tree: $source_tree" >&2
   exit 1
 }
+
+# Kernel outputs live inside the source tree; keep both them and tool temp off `/`.
+root_fs=$(stat -f -c '%d' /)
+source_fs=$(stat -f -c '%d' "$source_tree")
+[[ "$source_fs" != "$root_fs" ]] || {
+  echo "Kernel source/output tree is on the system filesystem; refusing to build: $source_tree" >&2
+  exit 1
+}
+probe=$data_root
+while [[ ! -e "$probe" ]]; do
+  parent=$(dirname -- "$probe")
+  [[ "$parent" != "$probe" ]] || { echo "Cannot find mounted data filesystem: $data_root" >&2; exit 1; }
+  probe=$parent
+done
+data_fs=$(stat -f -c '%d' "$probe")
+[[ "$source_fs" == "$data_fs" ]] || {
+  echo "Kernel source/output tree must be on FARFAR_DATA_ROOT filesystem: $source_tree" >&2
+  exit 1
+}
+tmp_probe=$tmp_root
+while [[ ! -e "$tmp_probe" ]]; do
+  parent=$(dirname -- "$tmp_probe")
+  [[ "$parent" != "$tmp_probe" ]] || { echo "Cannot find data filesystem for temp path: $tmp_root" >&2; exit 1; }
+  tmp_probe=$parent
+done
+tmp_fs=$(stat -f -c '%d' "$tmp_probe")
+[[ "$tmp_fs" == "$data_fs" ]] || {
+  echo "Kernel temporary path must be on FARFAR_DATA_ROOT filesystem: $tmp_root" >&2
+  exit 1
+}
+free_bytes=$(df -PB1 "$source_tree" | awk 'END {print $4}')
+(( free_bytes >= 5 * 1024 * 1024 * 1024 )) || {
+  echo "At least 5 GiB must be free for the kernel build; currently ${free_bytes:-unknown} bytes: $source_tree" >&2
+  exit 1
+}
+mkdir -p "$tmp_root"
+export TMPDIR="$tmp_root" TEMP="$tmp_root" TMP="$tmp_root"
+
 actual_commit=$(git -C "$source_tree" rev-parse HEAD)
 [[ "$actual_commit" == "$expected_commit" ]] || {
   echo "Refusing unpinned source commit: $actual_commit" >&2
@@ -49,13 +89,9 @@ python_version=$("$python2" --version 2>&1)
   echo "Expected Python 2.7, got: $python_version" >&2
   exit 1
 }
-available_kb=$(df -Pk "$source_tree" | awk 'NR == 2 {print $4}')
-[[ "$available_kb" =~ ^[0-9]+$ ]] && (( available_kb >= 3145728 )) || {
-  echo "At least 3 GiB free space is required at $source_tree" >&2
-  exit 1
-}
-
 echo "Building pinned callass kernel source at $actual_commit"
+echo "Build/output filesystem: $source_tree"
+echo "Temporary directory: $TMPDIR"
 echo "Python: $python_version"
 echo "Compiler: $compiler/arm-linux-androideabi-gcc"
 echo "This is an offline POC build and is not verified for flashing or booting."

@@ -50,6 +50,12 @@ The updated wrapper was used to build a separate output at `/mnt/data/FarfarRemo
 
 The build completed with payload readback and `e2fsck -fn` passing. It produced a 2,097,152,000-byte ext4 image with SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`, byte-identical to both prior reproducible outputs. This confirms the new storage path for this build and input set. It remains an offline partition-image POC: not a complete or flashable Sony ROM, and not hardware-booted. The output and all proprietary inputs remain outside Git.
 
+## Candidate system-only installation path — 2026-10-15
+
+The preserved Flashtool source was inspected at commit `7529dce9a1ffb81e365ba1d7e15f6773463ffd7a`. Its generic Fastboot utility constructs `fastboot flash system <image>`, which is a possible route for a raw ext4 system image. This is software-source evidence only; it does not prove that the E2003 S1 bootloader accepts the `system` alias or this payload. The Flashtool “Create SIN As” UI is restricted to SIN v1/YAFFS2 and cannot produce a valid Sony SIN v3 image for this ext4 system. No custom SIN was fabricated.
+
+A separate system-only proposal is prepared in [`FLASH_EXPERIMENT_PROPOSAL.md`](FLASH_EXPERIMENT_PROPOSAL.md), including the exact artifact/hash, target/capacity evidence, read-only preflight, failure modes, and current recovery limitations. No flash command was issued. The handset is not presently visible to ADB or Fastboot, the reported unlock state is not independently confirmed, no raw live R7A system backup exists, and exact-R7A restoration is unverified. Any write still requires fresh preflight and separate explicit approval for this exact artifact and partition.
+
 The image length also exactly matches the live handset's reported `system` partition capacity: `2,097,152,000` bytes (`2,048,000` 1-KiB blocks). This closes only the raw size-fit check. It does not establish an accepted Sony image container, safe write path, boot-chain compatibility, or successful hardware boot; see [HARDWARE_COMPATIBILITY.md](HARDWARE_COMPATIBILITY.md) and [partition layout](../PARTITION_LAYOUT.md).
 
 ## Separate boot-container experiment

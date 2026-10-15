@@ -26,6 +26,7 @@ See [BUILD.md](BUILD.md). Proprietary firmware, private ADB pulls, metadata, gen
 - [Experimental test plan](EXPERIMENTAL_TEST_PLAN.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
 - [Build report](BUILD_REPORT.md)
+- [System-only experiment proposal](FLASH_EXPERIMENT_PROPOSAL.md) — review document, not an authorization or flashing procedure.
 
 ## Status vocabulary
 
