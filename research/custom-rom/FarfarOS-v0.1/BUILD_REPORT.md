@@ -31,6 +31,17 @@ The checked-in build script was rerun from the same local input set and the publ
 
 The rebuild remains under `/tmp`; its firmware-derived image and checksum are not committed. It is not flashable or boot-tested. On the live device, ordinary ADB shell also failed the bounded read probe for both boot and fotakernel due to permissions; see [recovery notes](../RECOVERY_STRATEGY.md).
 
+## Reproducible rebuild check — 2026-10-15
+
+The builder now pins ext4 timestamps using `SOURCE_DATE_EPOCH` (default `1704067200`), `E2FSPROGS_FAKE_TIME`, and `E2FSCK_TIME`. Two independent full builds with the same R10A container/tree, captured E2003 R7A tree/metadata, v0.4.7 OS APK, and boot animation produced byte-identical images:
+
+| Output | Size | SHA-256 | Validation |
+|---|---:|---|---|
+| `FarfarOS-R7A-repro-1.ext4` | 2,097,152,000 bytes | `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d` | Payload readback and `e2fsck -fn` passed |
+| `FarfarOS-R7A-repro-2.ext4` | 2,097,152,000 bytes | `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d` | Payload readback and `e2fsck -fn` passed |
+
+Both outputs are stored outside the repository under `/mnt/data/FarfarRemote-Research-POC/`; no proprietary-derived image was added to Git. This proves byte-for-byte repeatability for the tested local inputs and e2fsprogs 1.47.0 host, not portability to every host. The result remains an ext4 `/system` POC only: it is not a complete Sony firmware package and has not been booted.
+
 ## Separate boot-container experiment
 
 A separate offline Android boot-image **container POC** exists at `/tmp/farfar-e2003-boot-poc-verify2.img` (8,445,952 bytes; SHA-256 `1d71c03b172d23b7830922153559df37966321bd28fbb9a28666fd81268543dc`). Static parsing confirms `ANDROID!`, 2,048-byte pages, the expected legacy E2003 address fields, and the MediaTek command line. Its kernel and ROOTFS payloads come from community-mirrored E2003 R3A/R10A `25.0.A.2.31` files; the Android boot header geometry comes from an unaudited historical E2003 R5A TWRP image. Although the kernel/ramdisk hashes cross-match between those two stock candidates, neither payload/header provenance is an authenticated live-R7A boot capture. It is not a Sony ELF, not R7A-matched, not combined with the system image, and not boot-tested. It must not be called a valid boot partition image or flashed. The static POC and its limitations are documented in [`repack_e2003_stock_boot_poc.py`](../tools/repack_e2003_stock_boot_poc.py) and [`RECOVERY_STRATEGY.md`](../RECOVERY_STRATEGY.md).

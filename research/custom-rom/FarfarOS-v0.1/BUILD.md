@@ -6,6 +6,8 @@ Linux Mint or a compatible Linux host, Python 3, `debugfs`, `e2fsck`, `file`, `k
 
 The current build uses the pinned R10A `system.ext4` only as a filesystem container, then applies captured R7A file contents and metadata. The builder checks the R10A input SHA-256 and the installed OS APK signer. It also validates the owner-supplied animation archive, writes the two payloads, reads them back, and runs `e2fsck -fn`.
 
+The builder pins e2fsprogs timestamps for repeatable output. By default it uses `SOURCE_DATE_EPOCH=1704067200` (2024-01-01 UTC); set `SOURCE_DATE_EPOCH` to another non-negative Unix timestamp to select a different build epoch. The value is passed to `debugfs` as `E2FSPROGS_FAKE_TIME` and to `e2fsck` as `E2FSCK_TIME` as well, because e2fsck 1.47.0 uses its own clock for superblock timestamps.
+
 ## Required local inputs
 
 Obtain these only from the already reviewed local research workspace / owner device; do not substitute another Xperia build:
@@ -37,6 +39,6 @@ The output is a raw ext4 `/system` partition image plus an adjacent SHA-256 file
 
 ## Rebuild repeatability and provenance
 
-The build can be repeated only when the exact private R7A file tree and metadata capture, the pinned R10A ext4/tree pair, APK, and animation are available. Their hashes are written to the build log; the system image hash is emitted and recorded in the private sidecar. The current ext4 output is **not byte-for-byte deterministic**: the filesystem superblock write timestamp changes between runs. The 2026-10-15 repeat build had the same ext4 UUID, geometry, feature set and free-space counts as the previous image, passed filesystem validation, and revalidated APK/animation readbacks, but its overall hash differed. Do not treat matching payload hashes or a clean filesystem check as proof of identical full-image metadata. Do not commit the proprietary inputs, live device dumps, or generated partition image.
+The build can be repeated only when the exact private R7A file tree and metadata capture, the pinned R10A ext4/tree pair, APK, and animation are available. Their hashes are written to the build log; the system image hash is emitted and recorded in the private sidecar. After timestamp pinning, two full builds from the same local inputs on 2026-10-15 produced byte-identical 2,097,152,000-byte output with SHA-256 `cba59c9bd76bf2f42c43f050e626c5928f0acb604ff9ce800273b56d2bcadb9d`. Both runs passed payload readback validation and `e2fsck -fn`. This demonstrates reproducibility for this host/toolchain/input set; repeat on the intended build host before treating it as portable. Do not commit the proprietary inputs, live device dumps, or generated partition image.
 
 The root build script invokes `research/custom-rom/tools/create_r7a_system_image_poc.py`; the optional final argument enables boot-animation integration. Omitting it retains the earlier APK-only system POC behavior.

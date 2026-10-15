@@ -37,6 +37,24 @@ def digest(path: Path) -> str:
     return h.hexdigest()
 
 
+def reproducible_environment() -> dict[str, str]:
+    """Pin e2fsprogs timestamps so the same inputs can produce stable images."""
+    raw_epoch = os.environ.get("SOURCE_DATE_EPOCH", "1704067200")
+    try:
+        epoch = int(raw_epoch, 10)
+    except ValueError as exc:
+        raise ValueError("SOURCE_DATE_EPOCH must be a non-negative Unix timestamp") from exc
+    if epoch < 0:
+        raise ValueError("SOURCE_DATE_EPOCH must be a non-negative Unix timestamp")
+    env = os.environ.copy()
+    env["SOURCE_DATE_EPOCH"] = str(epoch)
+    env["E2FSPROGS_FAKE_TIME"] = str(epoch)
+    # e2fsck 1.47.0 has its own clock override; it does not use the library's
+    # fake-time value for superblock check timestamps.
+    env["E2FSCK_TIME"] = str(epoch)
+    return env
+
+
 def mode_bits(text: str) -> int:
     bits = (0o400, 0o200, 0o100, 0o040, 0o020, 0o010, 0o004, 0o002, 0o001)
     value = 0
@@ -159,11 +177,12 @@ def validate_bootanimation(path: Path) -> None:
         raise ValueError(f"invalid bootanimation archive: {exc}") from exc
 
 
-def run_debugfs(image: Path, commands: list[str], work: Path) -> str:
+def run_debugfs(image: Path, commands: list[str], work: Path, env: dict[str, str]) -> str:
     command_file = work / "debugfs.commands"
     command_file.write_text("\n".join(commands) + "\n")
     proc = subprocess.run(["debugfs", "-w", "-f", str(command_file), str(image)],
-                          text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                          text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+                          env=env)
     output = proc.stdout + "\n" + proc.stderr
     errors = [line for line in output.splitlines()
               if any(token in line for token in ("File not found", "Command not found", "Usage:", "Could not", "No space left"))]
@@ -172,11 +191,12 @@ def run_debugfs(image: Path, commands: list[str], work: Path) -> str:
     return output
 
 
-def read_debugfs(image: Path, commands: list[str], work: Path) -> str:
+def read_debugfs(image: Path, commands: list[str], work: Path, env: dict[str, str]) -> str:
     command_file = work / "debugfs-read.commands"
     command_file.write_text("\n".join(commands) + "\n")
     proc = subprocess.run(["debugfs", "-f", str(command_file), str(image)],
-                          text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+                          text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
+                          env=env)
     if proc.returncode != 0:
         raise RuntimeError(f"read-only debugfs failed (exit {proc.returncode}): {proc.stderr.strip()}")
     return proc.stdout + "\n" + proc.stderr
@@ -190,6 +210,7 @@ def main() -> int:
     bootanimation = Path(sys.argv[7]) if len(sys.argv) == 8 else None
     aapt2 = os.environ.get("AAPT2_BIN", "")
     try:
+        build_env = reproducible_environment()
         ensure_tools(aapt2)
         if any(not path.exists() for path in (source, stock_root, live_root, metadata, apk)) or (bootanimation is not None and not bootanimation.is_file()):
             raise ValueError("One or more input paths do not exist")
@@ -265,7 +286,7 @@ def main() -> int:
                 source_checks.append(f"dump {path} {destination}")
                 old_dump[path] = destination
             if source_checks:
-                read_debugfs(source, source_checks, work)
+                read_debugfs(source, source_checks, work, build_env)
                 for path, extracted in old_dump.items():
                     if digest(extracted) != stock_files[path]["sha256"]:
                         raise ValueError(f"R10A extracted-tree file does not match source image: {path}")
@@ -320,7 +341,7 @@ def main() -> int:
                                  f"sif /media/bootanimation.zip gid {boot_entry['gid']}",
                                  f"sif /media/bootanimation.zip mode {0o100000 | int(boot_entry['mode']):07o}",
                                  f"ea_set /media/bootanimation.zip security.selinux {boot_entry['label']}"))
-            run_debugfs(temp_image, commands, work)
+            run_debugfs(temp_image, commands, work, build_env)
 
             # Verify changed/deleted file operations by readback before publishing output.
             verify: list[str] = []
@@ -335,7 +356,7 @@ def main() -> int:
             boot_readback = work / "bootanimation-readback.zip"
             if boot_stage is not None:
                 verify.append(f"dump /media/bootanimation.zip {boot_readback}")
-            run_debugfs(temp_image, verify, work)
+            run_debugfs(temp_image, verify, work, build_env)
             for path in expected:
                 if digest(expected[path]) != digest(Path(live_files[path]["host"])):
                     raise RuntimeError(f"Readback hash mismatch after update: {path}")
@@ -350,7 +371,8 @@ def main() -> int:
                     raise RuntimeError(f"Candidate-only path remains after removal: {path}")
 
             fsck = subprocess.run(["e2fsck", "-fn", str(temp_image)], text=True,
-                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  env=build_env)
             if fsck.returncode != 0:
                 raise RuntimeError(f"e2fsck failed with exit {fsck.returncode}: {fsck.stdout[-2000:]}")
             temp_image.replace(output)
