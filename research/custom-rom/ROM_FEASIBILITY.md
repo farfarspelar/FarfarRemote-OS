@@ -11,29 +11,33 @@
 
 ### Bootloader status correction — 2026-10-15
 
-The conditional first-boot estimate below assumed the owner's report that the
-bootloader was already unlocked. A later read-only check of this handset's
-Android Service Menu showed `Bootloader unlock allowed: Yes`, but not
-`Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` was also blank. The
-live E2003 must therefore be treated as **unlockable, not verified unlocked**.
-The former 70–75% estimate applies only conditionally after a successful
-unlock and assumes image acceptance; it is not the chance from the device's
-current measured state.
+The conditional first-boot estimate below originally assumed the owner's
+report that the bootloader was already unlocked. The subsequent Service Menu
+check instead showed only `Bootloader unlock allowed: Yes`; Fastboot's
+`getvar unlocked` was blank. The owner later authorized the official unlock,
+and Fastboot returned `OKAY` for that command. The phone rebooted, but ADB has
+not reconnected, so Service Menu confirmation of `Bootloader unlocked: Yes`
+is still pending. The former 70–75% estimate remains conditional on unlock
+success and image acceptance; it is not a verified end-to-end success rate.
 
 Sony's official documentation says unlocking performs a factory reset, does
 not itself grant root, and permanently removes DRM security keys that Sony
-says cannot be restored. Sony's current Open Devices target list does not
+says cannot be restored. The owner later authorized the exact-device unlock;
+Fastboot returned `OKAY` and the phone rebooted, but post-reset verification
+of `Bootloader unlocked: Yes` is still pending because ADB has not reconnected.
+Sony's current Open Devices target list does not
 include E2003. That is a limitation of the current public AOSP program, not
 proof that no historical Sony source archive ever existed. Sources: [Sony
 unlock procedure and consequences](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader/how-to-unlock-bootloader),
 [Sony supported Open Devices](https://opendevices.sony.net/supported-devices-and-functionality).
-No unlock operation was performed.
+No ROM image was flashed. The resulting bootloader state remains pending
+Service Menu verification after Android setup and USB debugging are restored.
 
 ### FarfarOS Experimental ROM v0.1 — offline system image built, 2026-10-15
 
 The first combined stock-derived image was built with the reproducible workflow in [`FarfarOS-v0.1/`](FarfarOS-v0.1/). It reconstructs the live R7A `/system` file state over the inspected, hash-pinned E2003 R10A ext4 container, adds the existing signed FarfarRemote OS 0.4.7 APK and integrates the owner-provided boot animation at `/system/media/bootanimation.zip`. The output is a **2,097,152,000-byte ext4 `/system` partition image** at `/tmp/FarfarOS-E2003-R7A-v0.1-system.ext4`, SHA-256 `98a7461bc9374c90016e82ce01702454b57f4c5a46795a99bfbcccd9a72e8651`. `e2fsck -fn` passed, and debugfs readback hashes matched the APK and animation inputs. Static inspection reports E2003 / Android 4.4.4 / API 19 / `25.0.A.2.31`; the APK manifest retains MAIN + HOME + DEFAULT. The image remains a local, proprietary-derived artifact and is not committed.
 
-**This is real build progress, not a complete or flashable ROM.** No Sony SIN/FTF wrapper or validated installer was created, no exact R7A boot image was built, and the image has not been boot-tested. No phone partition was written. Package removal is intentionally zero in v0.1; hardware dependencies are preserved. See [`FarfarOS-v0.1/BUILD_REPORT.md`](FarfarOS-v0.1/BUILD_REPORT.md) for the validation gates and limitations.
+**This is real build progress, not a complete or flashable ROM.** No Sony SIN/FTF wrapper or validated installer was created, no exact R7A boot image was built, and the image has not been boot-tested. No ROM partition image was flashed. Package removal is intentionally zero in v0.1; hardware dependencies are preserved. See [`FarfarOS-v0.1/BUILD_REPORT.md`](FarfarOS-v0.1/BUILD_REPORT.md) for the validation gates and limitations.
 
 ## Base-version recommendation
 

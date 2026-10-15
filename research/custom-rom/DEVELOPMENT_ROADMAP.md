@@ -4,6 +4,15 @@
 
 ## Continuation checkpoint — 2026-10-15
 
+**Later status addendum — 2026-10-15:** the owner explicitly authorized the
+bootloader unlock after Service Menu evidence showed only `Bootloader unlock
+allowed: Yes`. The guarded helper verified E2003 / `25.0.A.2.31` / R7A and
+one Fastboot target; Sony's `oem unlock` command returned `OKAY`, followed by
+an `OKAY` reboot. Post-reset, the phone enumerates as Android USB but ADB has
+not returned because USB debugging/host authorization may need to be restored.
+Service Menu confirmation of `Bootloader unlocked: Yes` remains pending. No
+ROM image has been flashed; system writing remains separately unauthorized.
+
 - **VERIFIED:** The owner chose to skip KingRoot. No KingRoot/KingoRoot APK has been downloaded or run. Root is not needed for the current offline `/system` image work.
 - **VERIFIED:** The attached handset is available over ADB in normal Android mode and reports E2003 / Android 4.4.4 API 19 / build `25.0.A.2.31` / CDA `1293-7358 R7A`. Ordinary ADB remains unprivileged; boot and FOTA partition reads are denied. No restart or device write was performed in this continuation.
 - **VERIFIED:** Existing local R7A system-image artifact and boot-container candidates remain on `/mnt/data/FarfarRemote-Research-POC/builds/FarfarOS-v0.1/`, outside Git. The system image has already passed offline payload/metadata comparison and `e2fsck -fn`; the boot containers remain unbooted and are not established as flashable.

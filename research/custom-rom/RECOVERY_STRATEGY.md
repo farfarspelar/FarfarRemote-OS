@@ -346,6 +346,17 @@ No unlock code was requested or used, and no unlock/flash command was sent.
 Temporary UI diagnostic output was removed and FarfarRemote was restored to
 the foreground.
 
+### Authorized unlock follow-up — 2026-10-15
+
+Later in the session, the owner explicitly authorized unlocking and provided
+the code through the helper's hidden local prompt. Exact E2003 / R7A identity
+and one Fastboot target were rechecked; the single Sony `oem unlock` command
+and subsequent `fastboot reboot` each returned `OKAY`. The code was not
+written to Git. After reboot the phone enumerated as an Android USB device,
+but no authorized ADB target was available. The Service Menu has not yet been
+rechecked, so actual unlocked state is still **PENDING VERIFICATION**. No ROM
+image was flashed; the exact-R7A restore path remains **BLOCKED**.
+
 **Readiness effect:** no recovery path was verified. Keep the first-boot estimate conditional and the safe end-to-end estimate below 50%; do not count the R10A/E2006 firmware leads, the binary-only recovery, or empty lock properties as rollback evidence. The next material gate still requires a supported-host Xperia Companion preflight that shows a repair offer for this exact handset, or another exact and traceable recovery/restore base.
 
 ### Additional firmware trust-chain/source search — 2026-10-14

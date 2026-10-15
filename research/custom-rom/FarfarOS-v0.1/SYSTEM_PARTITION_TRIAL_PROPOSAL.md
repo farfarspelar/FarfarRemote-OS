@@ -63,7 +63,8 @@ removed and FarfarRemote was restored to the foreground.
 
 The [Xperia bootloader checklist](https://docs.sailfishos.org/Support/Help_Articles/Managing_Sailfish_OS/Checklist_for_Sailfish_OS/#xperia-bootloader)
 describes `Bootloader unlock allowed: Yes` as the state where unlocking is
-still the next step. No unlock command or unlock-code workflow was run.
+still the next step. The owner later separately authorized the unlock; the
+result is recorded below.
 
 Sony's [official unlock guide](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader)
 says the unlock triggers a factory reset and that the DRM security keys cannot
@@ -95,22 +96,34 @@ fails during boot.
 ## Potential operation, for review only
 
 The proposed system write is currently blocked even before considering the
-missing recovery path: the bootloader's unlocked state is not verified. A
-future system-only trial would require (1) a separately authorized and
-successfully completed bootloader-unlock operation if the phone is still
-locked, (2) independent confirmation that it now reports `Bootloader
-unlocked: Yes`, and (3) separate explicit authorization for the exact system
-image hash and partition write. No unlock or flash command has been run. Do
-not substitute a boot, recovery, FOTA, sparse image, or other partition. A
-transfer/write interruption may leave Android unable to start.
+missing recovery path. Fastboot accepted the separately authorized unlock
+command, but the Service Menu has not yet confirmed `Bootloader unlocked:
+Yes`. A future system-only trial would still require (1) independent
+confirmation of the unlocked state, (2) a validated restoration path, and (3)
+separate explicit authorization for the exact system image hash and partition
+write. No ROM image has been flashed. Do not substitute a boot, recovery,
+FOTA, sparse image, or other partition. A transfer/write interruption may
+leave Android unable to start.
 
 ## Decision
 
 The image is sufficiently validated for a **reviewable system-only trial
-proposal**, but it is not ready to flash. Both the unlocked state and a
-validated restoration route are missing. Bootloader unlocking is a separate,
-potentially data-wiping operation and is not authorized by this proposal.
+proposal**, but it is not ready to flash. Post-unlock status confirmation and
+a validated restoration route are still missing. Bootloader unlocking was a
+separate, potentially data-wiping operation; it was authorized and executed
+separately.
 Even if those blockers are later resolved, the owner must separately
 authorize writing this exact SHA-256 to the `system` partition and accept the
 remaining risk. First-boot checks must use the stock boot chain and stop
 immediately on unexpected partition activity or device behavior.
+
+### Bootloader unlock status addendum — 2026-10-15
+
+The owner explicitly authorized the separate unlock operation. The guarded
+helper revalidated E2003 / `25.0.A.2.31` / `1293-7358 R7A` and one Fastboot
+target; Fastboot returned `OKAY` for the Sony unlock command. The phone was
+rebooted afterward and now enumerates as an Android USB device, but ADB has no
+authorized target. The unlocked state still needs verification in the Service
+Menu after Android setup and USB debugging/host authorization are restored.
+The system-image write described above remains **not authorized and not
+executed**.

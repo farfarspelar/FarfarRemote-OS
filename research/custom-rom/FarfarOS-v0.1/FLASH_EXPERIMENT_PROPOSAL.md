@@ -31,7 +31,7 @@ fastboot flash system \
 
 - **VERIFIED, historical read-only observations:** handset product E2003; bootloader string `1290-9780 S1_Boot_MT6732_TC9PRA_9`; Android build `25.0.A.2.31`; customization R7A; system alias mapped to `mmcblk0p19`; reported system capacity `2,097,152,000` bytes.
 - **REPORTED, superseded:** owner previously said the bootloader is unlocked.
-- **VERIFIED, read-only Service Menu:** `Bootloader unlock allowed: Yes`, but not `Bootloader unlocked: Yes`; Fastboot `getvar unlocked` returned no value. Actual unlocked state is not verified. `secure: yes` does not prove lock state. The phone has been returned to Android and ADB is online.
+- **VERIFIED, pre-unlock Service Menu:** `Bootloader unlock allowed: Yes`, but not `Bootloader unlocked: Yes`; Fastboot `getvar unlocked` returned no value. `secure: yes` does not prove lock state. The owner later authorized the unlock command; see the addendum below. Post-reset ADB is currently unavailable, and Service Menu confirmation is pending.
 - **Interpretation of `secure`:** AOSP Fastboot protocol documentation defines `secure` as whether the bootloader requires signed images for install/boot; it is not, by itself, a locked/unlocked state field. Therefore `secure: yes` is recorded but is not used to infer the current lock state. See the [AOSP Fastboot protocol](https://android.googlesource.com/platform/system/core/+/09fe163be2a3f59dfcc34d473b898e777c0f4514/fastboot/README.md).
 - **UNKNOWN:** whether this S1 bootloader accepts the `system` Fastboot partition alias and raw ext4 payload. Flashtool's public source has a generic `fastboot flash system <image>` operation, but does not establish E2003 bootloader acceptance. See the pinned [Flashtool implementation](https://github.com/Androxyde/Flashtool/blob/7529dce9a1ffb81e365ba1d7e15f6773463ffd7a/Flashtool/src/main/java/org/flashtool/jna/adb/FastbootUtility.java).
 - **UNKNOWN:** whether first boot will complete with the stock R7A boot/FOTA and this reconstructed system. No test of this system image has occurred on hardware.
@@ -150,3 +150,12 @@ The read-only helper [`../tools/preflight_e2003_system_write.sh`](../tools/prefl
 ## Authorization boundary
 
 No write command has been issued under this proposal. Running the candidate `fastboot flash system` command requires a separate explicit approval naming this exact image, SHA-256, and the `system` partition after the read-only preflight is available. Broad approval to continue ROM research is not treated as approval for this particular partition write.
+
+## Bootloader unlock addendum — 2026-10-15
+
+The separate bootloader unlock was explicitly authorized and completed as a
+command attempt. Fastboot returned `OKAY` for one `oem unlock` command, then
+`fastboot reboot` returned `OKAY`. The phone enumerates as Android USB, but no
+authorized ADB device has appeared yet; verification of `Bootloader unlocked:
+Yes` remains pending. This does not alter the authorization boundary above:
+the proposed `system` partition write has not been authorized or executed.

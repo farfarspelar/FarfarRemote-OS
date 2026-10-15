@@ -2,16 +2,17 @@
 
 ## Bootloader status addendum — 2026-10-15
 
-The Service Menu on the exact E2003 later showed `Bootloader unlock allowed:
-Yes`, but not `Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` remains
-blank. Thus previous build-report statements that merely say the owner-reported
-unlocked status was unconfirmed are superseded: current read-only evidence
-verifies eligibility to unlock, not that unlocking has occurred. The offline
-system-image build results below are unaffected; no image was flashed and no
-partition was written. A flash trial remains blocked pending separately
-authorized unlock if needed and a validated restore path. Sony's official
-unlock guide states unlocking factory-resets user data, does not grant root,
-and prevents restoration of DRM keys: [Sony Open Devices — unlock bootloader](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader).
+The Service Menu initially showed `Bootloader unlock allowed: Yes`, but not
+`Bootloader unlocked: Yes`; Fastboot's `getvar unlocked` was blank. After
+explicit owner authorization, the guarded helper revalidated the exact E2003 /
+`25.0.A.2.31` / `1293-7358 R7A` identity, sent one Sony `oem unlock` command,
+and received `OKAY`. `fastboot reboot` also returned `OKAY`. The phone now
+enumerates as an Android USB device, but no authorized ADB target is available
+after the reset. Actual unlocked status is **pending Service Menu
+verification** after setup and USB debugging are restored. No ROM or system
+image was flashed. Sony's official guide states unlocking factory-resets user
+data, does not grant root, and prevents restoration of DRM keys: [Sony Open
+Devices — unlock bootloader](https://opendevices.sony.net/aosp-on-xperia-open-devices/get-started/unlock-bootloader).
 
 ## Follow-up artifact audit — 2026-10-15
 
