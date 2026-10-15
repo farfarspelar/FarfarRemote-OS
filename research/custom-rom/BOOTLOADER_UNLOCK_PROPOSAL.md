@@ -18,6 +18,19 @@ It does not authorize a ROM/system write.
   or booted by this handset. A validated exact-R7A restoration path is still
   missing.
 
+## Fresh preflight after owner authorization — 2026-10-15
+
+The owner explicitly authorized the E2003 bootloader unlock, factory reset,
+and irreversible DRM-key loss. The connected Android device was rechecked
+read-only and reported model/device `E2003`, fingerprint
+`Sony/E2003/E2003:4.4.4/25.0.A.2.31/4Pf_Nw:user/release-keys`, CDA `1293-7358`
+revision `R7A`, Android 4.4.4/API 19. ADB rebooted it to Fastboot; exactly one
+nonempty Fastboot target was present and read-only queries again reported
+product `E2003`, bootloader `1290-9780 S1_Boot_MT6732_TC9PRA_9`, blank
+`unlocked`, and `secure: yes`. It was returned to Android, and ADB reconfirmed
+the same identity. No unlock code was available to the host, and no unlock or
+partition-write command was issued.
+
 ## What the unlock operation would do
 
 Sony's official procedure requires an unlock code and uses the device's
@@ -58,6 +71,17 @@ fastboot oem unlock 0x<OWNER-SUPPLIED-UNLOCK-CODE>
 
 This template is documentation only. No code has been requested, received,
 stored, or executed. No unlock or partition-write command has been sent.
+
+The repository helper
+[`tools/unlock_e2003_bootloader.sh`](tools/unlock_e2003_bootloader.sh) is
+prepared for the authorized operation. It reads the owner's code without
+echo, validates the exact Android and Fastboot identities, requires exactly
+one Fastboot target, and asks for the full consequence-specific authorization
+phrase. It enters Fastboot with ADB, performs read-only Fastboot identity
+queries, and issues no partition-write command other than Sony's `oem unlock`.
+It contains no key and does not flash any image. The owner must obtain the unlock code directly from
+Sony and run the helper in a local terminal; do not send the IMEI or code in
+chat or commit it to the repository.
 
 ## Decision required before execution
 
