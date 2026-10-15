@@ -40,10 +40,12 @@ fastboot flash system \
 ## Backup and recovery position
 
 - A complete raw backup of the live R7A `system` partition is **not available**. A matching file tree/metadata capture exists, and the R10A container plus generated ext4 images are retained, but these are not byte-for-byte backups of the live partition.
+- A separate offline R7A stock-file-content reconstruction now exists at `/tmp/FarfarOS-E2003-R7A-stock-tree-reconstruction-v0.1.ext4` (2,097,152,000 bytes; SHA-256 `9942db8cdc048ff7ba9522160c1bf8aba3dcb6e6ce5e1c910f444bbed53880dd`). It removes the injected system APK, restores the captured R7A boot animation byte-for-byte, and passes `e2fsck -fn`. It is not a raw partition backup, a signed Sony package, or a device-tested recovery image; details are in [`RESTORE_RECONSTRUCTION.md`](RESTORE_RECONSTRUCTION.md).
 - Exact R7A stock firmware restoration has **not** been verified.
 - Sony S1 service/Flashmode transport was observed previously, but no exact R7A repair package or successful restore procedure was verified.
 - A historical E2003 TWRP image passed static checks but was built/reported for R5A and has not been boot-tested on this R7A handset.
 - Therefore recovery from a failed system-only experiment is **not guaranteed**. A soft brick/boot loop may require a service repair route that is currently unverified.
+- **Host-side limitation:** the `/mnt/data` ext4 volume's `jbd2/mmcblk0p1` journal thread is in long-running uninterruptible sleep, and a write attempt there stalled. The validated fallback currently resides on `/tmp` on the separate SSD. Treat the stalled `/mnt/data` output as incomplete and unusable unless it later passes independent checks. See [`RESTORE_RECONSTRUCTION.md`](RESTORE_RECONSTRUCTION.md).
 
 ## Required read-only preflight before considering authorization
 
