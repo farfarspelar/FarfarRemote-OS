@@ -78,6 +78,24 @@ exact R7A hardware configuration. The kernel version string is `3.10.48`,
 while the live kernel reports `3.10.48+`; source/config identity and hardware
 driver behavior remain unverified.
 
+## Physical-device connection restored — 2026-10-15
+
+After the owner started the handset normally, read-only ADB again verified
+E2003 / Android 4.4.4 API 19 / build `25.0.A.2.31` / CDA `1293-7358 R7A`.
+Fastboot is not connected; the phone is in Android. `/proc/version` reports
+Linux `3.10.48+`, and all four CPU cores were online in this snapshot. `wlan0`
+is bound to `mt-wifi`, the live input devices expose the expected 540×960 touch
+coordinates and physical keys, and `/proc/modules` is empty. These are fresh
+stock-runtime references, not experimental-ROM results.
+
+An ordinary ADB-shell `id` remains UID 2000; `ro.secure=1`, `ro.debuggable=0`,
+and common `su` locations are absent. A guarded read of at most four bytes from
+each `boot` and `fotakernel` block path was denied by Android permissions; no
+partition bytes were saved. This confirms that the missing exact boot payload
+cannot be recovered through the current normal ADB session. The private
+read-only capture remains outside Git. No reboot, setting change, root attempt,
+or device write was performed during this checkpoint.
+
 To support offline experimentation without those specific automatic actions,
 `tools/make_e2003_boot_candidate_nonformatting.py` now creates a separate
 candidate from the pinned kernel container. The output

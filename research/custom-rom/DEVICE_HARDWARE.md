@@ -26,7 +26,7 @@ Read-only prerequisite snapshot refreshed 2026-10-15; see the dated note below. 
 | Display | 4.7-inch TFT, 540×960, capacitive multi-touch | **VERIFIED**, Sony white paper |
 | Kernel | Linux 3.10.48+, GCC 4.8, Sony build dated 2015-09-08 | **VERIFIED**, live `/proc/version` |
 | Board / product device | `ro.product.board=callass`; product device `E2003` | **VERIFIED**, live read-only properties. A public kernel source mirror includes `callass` and MT6752 configuration, but matching its final config/source to live R7A remains **UNKNOWN**; see [BUILD_ENVIRONMENT.md](BUILD_ENVIRONMENT.md). |
-| CPU core ID | `/proc/cpuinfo`: ARM implementer `0x41`, part `0xd03`; Arm identifies part `0xd03` as Cortex-A53. Sony specifies a quad-core SoC. | Live ID **VERIFIED**; interpretation **VERIFIED** by [Arm's Cortex-A53 technical reference manual](https://documentation-service.arm.com/static/6040c321ee937942ba301626). Device runs a 32-bit ARMv7 kernel/userspace despite the core family's ARMv8 capability. At the latest capture `/sys/devices/system/cpu` reported `possible=0-3`, `present=0-3`, `online=0`, `offline=1-3`, while `/proc/cpuinfo` exposed only processor 0; this is a time-specific runtime state, not a claim the hardware has one core. |
+| CPU core ID | `/proc/cpuinfo`: ARM implementer `0x41`, part `0xd03`; Arm identifies part `0xd03` as Cortex-A53. Sony specifies a quad-core SoC. | Live ID **VERIFIED**; interpretation **VERIFIED** by [Arm's Cortex-A53 technical reference manual](https://documentation-service.arm.com/static/6040c321ee937942ba301626). Device runs a 32-bit ARMv7 kernel/userspace despite the core family's ARMv8 capability. One earlier snapshot found only CPU0 online; the fresh power-up capture later found CPUs 0–3 online. Treat CPU online state as dynamic, not a hardware/core-count difference. |
 | Bootloader | Read-only Fastboot identified product `E2003`, version `1290-9780 S1_Boot_MT6732_TC9PRA_9`, `secure: yes`; `getvar unlocked` was blank and both `oem device-info` and `flashing get_unlock_ability` returned unknown command. | Product/version **VERIFIED** in Fastboot on 2026-10-14. Owner reports unlocked; lock state and unlock eligibility remain **REPORTED/UNKNOWN**, because this legacy interface did not expose either value. `secure: yes` alone is not interpreted as locked/unlocked. |
 | Recovery | Partition table has `fotakernel` but no partition labelled `recovery`; both `boot` and `fotakernel` are 32,768 1-KiB blocks. | **VERIFIED** names/sizes; which recovery path firmware uses and whether an image can be booted temporarily are **UNKNOWN** |
 | Graphics stack | Live `/system/lib/hw` contains `gralloc.mt6752.so` and `hwcomposer.mt6752.so`; `/system/lib/egl/libGLES_mali.so` is about 18.7 MB | **VERIFIED** file presence/size. Source revision, interface compatibility and redistribution rights are **UNKNOWN**; file size is not RAM use. |
@@ -44,6 +44,31 @@ The guarded `tools/collect_e2003_prerequisites.sh` script was run against exactl
 - Partition labels and sizes remained consistent with prior observations: `boot` p10 and `fotakernel` p9, each 32 MiB; `system` p19; `userdata` p21. Only `/proc/partitions` and by-name symlink metadata were read, not partition contents.
 
 This refresh does not change ROM readiness. It provides another current identity/runtime check and confirms that any kernel replacement must preserve the MTK cpufreq/hotplug behavior unless a controlled test demonstrates a safe alternative.
+
+### Power-up resume check — 2026-10-15
+
+After the owner started and unlocked the phone, ADB again saw exactly one
+authorized target. Read-only properties reconfirmed E2003, board `callass`,
+Android 4.4.4/API 19, build `25.0.A.2.31`, and CDA `1293-7358 R7A`. The phone is
+in normal Android mode; no Fastboot target is present. The stock OS and
+FarfarRemote state were not changed.
+
+The fresh runtime snapshot differs from the earlier one: CPUs 0–3 were all
+online, with CPU0 governor `interactive`, driver `mt-cpufreq`, and a sampled
+frequency of 1.495 GHz. `MemTotal` was 918,424 kB. `/proc/modules` returned no
+entries; `wlan0` is attached to the MediaTek platform driver `mt-wifi`. The
+touch input `mtk-tpd` reports direct-touch coordinates from 0–540 × 0–960, and
+`mtk-kpd` exposes power, home, back, menu, volume, call and camera keys. These
+are stock-runtime observations, not measurements of the experimental kernel.
+
+The guarded probe attempted to read at most four bytes from each of `boot`
+(p10) and `fotakernel` (p9), sending data to `/dev/null`; both returned
+`Permission denied`. The shell identity is UID 2000 (`shell`), `ro.secure=1`,
+`ro.debuggable=0`, and the common `/system/bin/su`, `/system/xbin/su`, and
+`/sbin/su` paths are absent. This does not rule out every possible root method,
+but no live root capability or boot-image read path is currently available.
+The private diagnostic capture is stored outside Git; it includes no device
+serial or Wi-Fi credentials.
 
 ### Fresh connectivity dependency inspection — 2026-10-14
 
@@ -81,7 +106,7 @@ The candidate ramdisk's `init.mt6752.rc` and `/proc/version` naming align with t
 
 ## Additional read-only prerequisite capture — 2026-10-14
 
-The latest normal-Android ADB capture confirms `ro.product.board=callass`, `ro.hardware=mt6752`, `ro.mediatek.platform=MT6752`, `ro.bootloader=s1`, Linux `3.10.48+` built with GCC 4.8 on 2015-09-08, and CPU part `0xd03` (Cortex-A53). The runtime kernel is 32-bit ARMv7 with NEON/VFP; preserve an ARM 32-bit kernel/userspace toolchain unless source evidence proves otherwise. Sony specifies quad-core hardware, and sysfs lists CPUs 0–3 as possible/present. At this snapshot only CPU0 was online and CPUs1–3 were offline; the reason/state transition behavior is **UNKNOWN** and should be rechecked under load and after a cold boot before drawing power/performance conclusions.
+The 2026-10-14 normal-Android ADB capture confirmed `ro.product.board=callass`, `ro.hardware=mt6752`, `ro.mediatek.platform=MT6752`, `ro.bootloader=s1`, Linux `3.10.48+` built with GCC 4.8 on 2015-09-08, and CPU part `0xd03` (Cortex-A53). The runtime kernel is 32-bit ARMv7 with NEON/VFP; preserve an ARM 32-bit kernel/userspace toolchain unless source evidence proves otherwise. Sony specifies quad-core hardware, and sysfs lists CPUs 0–3 as possible/present. That capture found only CPU0 online; a later power-up check on 2026-10-15 found all four CPUs online. The reason and transition behavior remain **UNKNOWN**; do not draw power/performance conclusions from either instantaneous state.
 
 `/proc/cmdline` access is denied to ADB shell, `/proc/config.gz` is absent, and `/proc/device-tree` plus `/sys/firmware/devicetree/base` are absent. `/system/lib/modules` is present but empty; the live Wi-Fi interface `wlan0` is attached to platform device `180f0000.WIFI` with driver name `mt-wifi`. This suggests the Wi-Fi path is built into the running kernel or otherwise supplied outside that directory; exact implementation is **UNKNOWN** without kernel source/config. No module was loaded, changed or removed.
 
