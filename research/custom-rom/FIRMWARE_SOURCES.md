@@ -6,6 +6,10 @@ Live device: E2003, Android 4.4.4/API 19, build `25.0.A.2.31`, Sony customizatio
 
 ## Sources and confidence
 
+### Sony source-catalog recheck — 2026-10-15
+
+A fresh read-only review of Sony's public [`kernel-copyleft` repository](https://github.com/sonyxperiadev/kernel-copyleft) and its advertised branch refs found no `25.0.A.2.31`, E2003, or `callass` branch label. The repository is a Sony-owned source location, but its current public refs do not provide the required E2003/MTK release source. This is a catalog result only: it does not prove that a historical archive or an unlisted commit is unavailable. The locally compiled `sobotkama/android_kernel_sony_e2003` tree therefore remains an unauthenticated community source candidate, not a Sony-verified match for the installed R7A kernel.
+
 ### Follow-up exact-CDA search — 2026-10-15
 
 A further exact-string search for `1293-7358`, `1293-7358 R7A`, and
