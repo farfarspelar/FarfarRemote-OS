@@ -63,6 +63,9 @@ def main() -> int:
     source = source.resolve(strict=True)
     animation = animation.resolve(strict=True)
     output = output.resolve(strict=False)
+    checksum = output.with_suffix(output.suffix + ".sha256")
+    created_output = False
+    created_checksum = False
     try:
         if output.exists():
             raise ValueError(f"refusing to overwrite output: {output}")
@@ -88,6 +91,7 @@ def main() -> int:
             work = Path(tmp)
             staged_animation = work / "bootanimation.zip"
             shutil.copyfile(animation, staged_animation)
+            created_output = True
             shutil.copyfile(source, output)
             debugfs(output, [
                 "rm /app/FarfarRemote.apk",
@@ -113,7 +117,7 @@ def main() -> int:
             run(["e2fsck", "-fn", str(output)])
 
         image_hash = sha256(output)
-        checksum = output.with_suffix(output.suffix + ".sha256")
+        created_checksum = True
         checksum.write_text(f"{image_hash}  {output.name}\n")
         print(f"output={output}")
         print(f"size={output.stat().st_size}")
@@ -123,9 +127,10 @@ def main() -> int:
         print("classification=R7A STOCK-FILE-CONTENT SYSTEM RECONSTRUCTION; NOT BYTE-EXACT BACKUP; NOT SONY-SIGNED; NOT FLASH-VALIDATED")
         return 0
     except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
-        if output.exists():
+        if created_output and output.exists():
             output.unlink()
-        output.with_suffix(output.suffix + ".sha256").unlink(missing_ok=True)
+        if created_checksum:
+            checksum.unlink(missing_ok=True)
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
