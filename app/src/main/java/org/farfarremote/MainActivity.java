@@ -38,6 +38,7 @@ import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -62,7 +63,10 @@ import android.net.nsd.NsdServiceInfo;
 import java.util.Locale;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,36 +80,47 @@ public final class MainActivity extends Activity {
     private static final String BROWSER_LOCATION_PATH = "kodi_browser_location_path";
     private static final String BROWSER_LOCATION_TITLE = "kodi_browser_location_title";
     private static final String BROWSER_LOCATION_SOURCES = "kodi_browser_location_sources";
+    private static final String BROWSER_PLAYLIST_PREF = "kodi_browser_playlist_v1";
+    // Retain the existing preference key so the user's opt-in survives an APK update.
+    private static final String AUTO_ONLINE_METADATA_PREF = "auto_kodi_metadata_scan_v1";
+    private static final String ONLINE_METADATA_CACHE_PREF = "online_media_metadata_cache_v1";
     private static final int BG = Color.rgb(7, 15, 27), PANEL = Color.rgb(14, 28, 45), TEXT = Color.rgb(235, 243, 252), MUTED = Color.rgb(154, 177, 202), CYAN = Color.rgb(35, 170, 255), GREEN = Color.rgb(52, 222, 157), RED = Color.rgb(255, 112, 116);
     private static final String COFFEE_URL = "https://buymeacoffee.com/farfarspelar";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ExecutorService commands = Executors.newSingleThreadExecutor();
+    private final ExecutorService metadataRequests = Executors.newSingleThreadExecutor();
+    private final Map<String, OnlineMetadataClient.Result> onlineMetadata = new HashMap<>();
+    private final Set<String> metadataLookupAttempted = new HashSet<>();
     private SharedPreferences prefs;
     private FrameLayout screen;
     private ScrollView settingsScroll;
     private View dpadView;
+    private View nowPlayingGestureView;
     private TextView settingsKodiStatus;
     private int previousSoftInputMode;
     private boolean settingsImeModeSet;
     private boolean inSettings, inBrowser, busy, draggingSeek, destroyed, activityStarted;
+    private volatile boolean inMediaInfo, infoFromBrowser;
     private boolean swipeTracking, swipeHandled, swipeBlocked;
+    private boolean swipeOnNowPlaying;
     private float swipeStartX, swipeStartY;
     private boolean startupShown;
     private boolean screenIsOn = true;
     private boolean screenReceiverRegistered;
     private int consecutivePollFailures;
     private long lastBatteryInteractionMs;
-    private boolean kodiShutdownRequested;
+    private boolean kodiPowerActionInProgress;
     private boolean connected;
     private volatile int activePlayerId = -1;
     private volatile String activeMediaFile = "";
     private String lastPreferenceAppliedFile = "";
+    private String metadataLookupInFlightKey = "";
     private String browserPath = "", browserTitle = "Kodi folders";
     private final ArrayDeque<String> browserHistory = new ArrayDeque<>();
     private JSONArray browserItems = new JSONArray();
-    private boolean browserIsSources, browserLoading;
+    private boolean browserIsSources, browserLoading, showingBrowserPlaylist;
     private LinearLayout browserList;
     private TextView browserPathView;
     private int browserRequestId;
@@ -179,7 +194,10 @@ public final class MainActivity extends Activity {
     }
 
     private TextView status, hostLabel, titleText, episodeText, elapsedText, durationText, stateText, audioValue, subsValue, connectionNote, settingsFeedback, volumeValue;
-    private ImageView poster;
+    private ImageView poster, infoPoster;
+    private TextView infoTitle, infoSubtitle, infoState, infoMetadata, infoPlot, infoSource, infoAudio, infoSubtitles;
+    private TextView infoImdbButton, infoAniListButton;
+    private KodiClient.PlayerState currentPlayerState;
     private SeekBar progress;
 
     @Override public void onCreate(Bundle state) {
@@ -225,6 +243,8 @@ public final class MainActivity extends Activity {
         if (action == MotionEvent.ACTION_DOWN) {
             swipeTracking = true;
             swipeHandled = false;
+            swipeOnNowPlaying = !inSettings && !inBrowser && pointInside(nowPlayingGestureView, event.getRawX(), event.getRawY())
+                    && !pointInside(progress, event.getRawX(), event.getRawY());
             View focused = getCurrentFocus();
             boolean editingText = inSettings && focused instanceof EditText
                     && pointInside(focused, event.getRawX(), event.getRawY());
@@ -238,7 +258,12 @@ public final class MainActivity extends Activity {
                 MotionEvent cancel = MotionEvent.obtain(event); cancel.setAction(MotionEvent.ACTION_CANCEL);
                 super.dispatchTouchEvent(cancel); cancel.recycle();
                 swipeHandled = true; swipeTracking = false;
-                if (inSettings) {
+                if (inMediaInfo) {
+                    if (dx > 0) closeMediaInfo();
+                    else if (infoFromBrowser) closeKodiBrowser(); else openKodiBrowser();
+                } else if (swipeOnNowPlaying) {
+                    showMediaInfo(false);
+                } else if (inSettings) {
                     if (dx > 0) closeSettings();
                 } else if (inBrowser) {
                     if (dx < 0) closeKodiBrowser(); else browserBack();
@@ -260,7 +285,7 @@ public final class MainActivity extends Activity {
     }
 
     private void buildScreen() {
-        inSettings = false; inBrowser = false; dpadView = null;
+        inSettings = false; inBrowser = false; inMediaInfo = false; infoFromBrowser = false; dpadView = null; nowPlayingGestureView = null;
         updateSettingsBackCallback();
         if (settingsImeModeSet) { getWindow().setSoftInputMode(previousSoftInputMode); settingsImeModeSet = false; }
         settingsScroll = null; settingsKodiStatus = null;
@@ -364,7 +389,7 @@ public final class MainActivity extends Activity {
     private void addNowPlaying(LinearLayout root, boolean landscape) {
         LinearLayout card = column(); card.setPadding(dp(10), dp(8), dp(10), dp(8)); card.setBackground(panel());
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2); cardLp.topMargin = dp(4); cardLp.bottomMargin = dp(5); root.addView(card, cardLp);
-        LinearLayout upper = row(card); upper.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout upper = row(card); upper.setGravity(Gravity.CENTER_VERTICAL); nowPlayingGestureView = upper;
         poster = new ImageView(this); poster.setScaleType(ImageView.ScaleType.CENTER_CROP); poster.setBackground(round(Color.rgb(22, 39, 56), dp(9))); poster.setImageResource(R.drawable.placeholder_art);
         LinearLayout.LayoutParams posterLp = new LinearLayout.LayoutParams(landscape ? dp(82) : dp(62), landscape ? dp(88) : dp(68)); posterLp.rightMargin = dp(10); upper.addView(poster, posterLp);
         LinearLayout info = column(); upper.addView(info, new LinearLayout.LayoutParams(0, -2, 1));
@@ -372,6 +397,8 @@ public final class MainActivity extends Activity {
         titleText = text("Nothing playing", landscape ? 17 : 15, TEXT, true); titleText.setMaxLines(1); titleText.setEllipsize(android.text.TextUtils.TruncateAt.END); info.addView(titleText);
         episodeText = text("Kodi is ready when you are", 11, MUTED, false); episodeText.setMaxLines(1); episodeText.setEllipsize(android.text.TextUtils.TruncateAt.END); info.addView(episodeText);
         stateText = text("IDLE", 10, MUTED, true); info.addView(stateText);
+        TextView details = text("Media details  ›", 10, CYAN, true); details.setGravity(Gravity.RIGHT | Gravity.CENTER_VERTICAL);
+        details.setContentDescription("Open information for the currently playing media"); details.setOnClickListener(v -> showMediaInfo(false)); info.addView(details);
         LinearLayout timeRow = row(card); timeRow.setGravity(Gravity.CENTER_VERTICAL);
         elapsedText = text("0:00", 10, MUTED, false); durationText = text("0:00", 10, MUTED, false);
         timeRow.addView(elapsedText);
@@ -446,8 +473,8 @@ public final class MainActivity extends Activity {
 
     private void addPowerControl(LinearLayout parent, LinearLayout.LayoutParams layout, int iconHeightDp) {
         LinearLayout box = column(); box.setGravity(Gravity.CENTER); box.setFocusable(true);
-        box.setContentDescription("Power off Kodi device");
-        box.setOnClickListener(v -> { haptic(); confirmKodiShutdown(); });
+        box.setContentDescription("Kodi power options");
+        box.setOnClickListener(v -> { haptic(); showKodiPowerOptions(); });
         box.addView(new PowerIconView(this), new LinearLayout.LayoutParams(-1, dp(iconHeightDp)));
         TextView caption = text("Power Off", 9, MUTED, false); caption.setGravity(Gravity.CENTER); caption.setMaxLines(1); box.addView(caption);
         parent.addView(box, layout);
@@ -587,7 +614,7 @@ public final class MainActivity extends Activity {
                 }).show();
     }
 
-    private String pathLeaf(String path) {
+    private static String pathLeaf(String path) {
         if (path == null || path.isEmpty()) return "Kodi folder";
         String clean = path.endsWith("/") && path.length() > 1 ? path.substring(0, path.length() - 1) : path;
         int slash = Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\'));
@@ -623,7 +650,7 @@ public final class MainActivity extends Activity {
 
     private void openKodiBrowser() {
         inSettings = false; inBrowser = true; browserHistory.clear(); browserPath = "";
-        browserTitle = "Kodi folders"; browserItems = new JSONArray(); browserIsSources = false; browserLoading = true;
+        browserTitle = "Kodi folders"; browserItems = new JSONArray(); browserIsSources = false; browserLoading = true; showingBrowserPlaylist = false;
         handler.removeCallbacks(poll); updateSettingsBackCallback(); renderKodiBrowser();
         final int request = ++browserRequestId;
         userRequestExecutor().execute(() -> {
@@ -716,6 +743,7 @@ public final class MainActivity extends Activity {
 
     private void renderKodiBrowser() {
         if (!inBrowser || screen == null) return;
+        if (showingBrowserPlaylist) { renderBrowserPlaylist(); return; }
         screen.removeAllViews();
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
         LinearLayout root = column(); root.setPadding(dp(14), dp(10), dp(14), dp(16)); scroll.addView(root);
@@ -725,11 +753,13 @@ public final class MainActivity extends Activity {
         LinearLayout heading = column(); heading.addView(text("Kodi Library", 19, TEXT, true));
         browserPathView = text(browserTitle, 10, MUTED, false); browserPathView.setSingleLine(true); browserPathView.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE); heading.addView(browserPathView);
         header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView details = text("ⓘ", 23, CYAN, true); details.setGravity(Gravity.CENTER); details.setContentDescription("Now Playing information");
+        details.setOnClickListener(v -> showMediaInfo(true)); header.addView(details, new LinearLayout.LayoutParams(dp(42), dp(48)));
         TextView close = text("×", 29, CYAN, true); close.setGravity(Gravity.CENTER); close.setContentDescription("Return to remote"); close.setOnClickListener(v -> closeKodiBrowser());
         header.addView(close, new LinearLayout.LayoutParams(dp(42), dp(48)));
         LinearLayout controls = row(root); controls.setGravity(Gravity.CENTER);
         addBrowserAction(controls, "Video sources", this::showBrowserSources);
-        addBrowserAction(controls, "Settings", () -> { closeKodiBrowser(); showSettings(); });
+        addBrowserAction(controls, "Playlist · " + readBrowserPlaylist().length(), () -> { showingBrowserPlaylist = true; renderKodiBrowser(); });
         if (browserLoading) {
             ProgressBar spinner = new ProgressBar(this); spinner.setIndeterminate(true);
             LinearLayout loading = new LinearLayout(this); loading.setGravity(Gravity.CENTER); loading.addView(spinner);
@@ -743,8 +773,8 @@ public final class MainActivity extends Activity {
                 TextView empty = text(browserIsSources ? "Kodi did not report any video sources." : "This folder is empty.", 13, MUTED, false);
                 empty.setGravity(Gravity.CENTER); browserList.addView(empty, new LinearLayout.LayoutParams(-1, dp(90)));
             }
-            for (int i = 0; i < browserItems.length(); i++) {
-                JSONObject item = browserItems.optJSONObject(i); if (item == null) continue;
+            for (JSONObject item : sortedBrowserItems(browserItems, browserIsSources)) {
+                if (item == null) continue;
                 final String path = item.optString("file", ""); if (path.isEmpty()) continue;
                 final boolean directory = browserIsSources || "directory".equalsIgnoreCase(item.optString("filetype", ""));
                 String labelValue = item.optString("title", ""); if (labelValue.isEmpty()) labelValue = item.optString("label", "");
@@ -753,22 +783,240 @@ public final class MainActivity extends Activity {
                 LinearLayout entry = row(browserList); entry.setGravity(Gravity.CENTER_VERTICAL); entry.setPadding(dp(12), 0, dp(10), 0); entry.setBackground(round(PANEL, dp(10)));
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(54)); lp.bottomMargin = dp(5); entry.setLayoutParams(lp);
                 TextView marker = text(directory ? "▸" : "▶", 17, directory ? CYAN : GREEN, true); marker.setGravity(Gravity.CENTER); entry.addView(marker, new LinearLayout.LayoutParams(dp(32), -1));
-                TextView name = text(label, 13, TEXT, true); name.setSingleLine(true); name.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE); entry.addView(name, new LinearLayout.LayoutParams(0, -1, 1));
+                addScrollableTitle(entry, label, 13, TEXT, true, new LinearLayout.LayoutParams(0, -1, 1));
                 TextView action = text(directory ? "OPEN" : "PLAY", 9, MUTED, true); entry.addView(action);
                 entry.setFocusable(true); entry.setContentDescription((directory ? "Open folder " : "Play ") + label);
                 entry.setOnClickListener(v -> { haptic(); if (directory) loadBrowserDirectory(path, label, true); else playBrowserItem(path, label); });
+                if (!directory) {
+                    TextView queue = text("＋", 20, CYAN, true); queue.setGravity(Gravity.CENTER); queue.setContentDescription("Add " + label + " to FarfarRemote playlist");
+                    queue.setFocusable(true); queue.setOnClickListener(v -> addToBrowserPlaylist(path, label));
+                    entry.addView(queue, new LinearLayout.LayoutParams(dp(40), -1));
+                }
             }
         }
         screen.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
     }
 
-    private void addBrowserAction(LinearLayout row, String title, Runnable click) {
+    /** Kodi's file listing order is server/skin dependent. Sort folders first, then
+     * episode numbers numerically so 2, 02 and 002 occupy the same position. */
+    private static ArrayList<JSONObject> sortedBrowserItems(JSONArray source, boolean sources) {
+        ArrayList<JSONObject> items = new ArrayList<>();
+        if (source != null) for (int i = 0; i < source.length(); i++) {
+            JSONObject item = source.optJSONObject(i);
+            if (item != null) items.add(item);
+        }
+        Collections.sort(items, (a, b) -> {
+            boolean aDir = sources || "directory".equalsIgnoreCase(a.optString("filetype", ""));
+            boolean bDir = sources || "directory".equalsIgnoreCase(b.optString("filetype", ""));
+            if (aDir != bDir) return aDir ? -1 : 1;
+            EpisodeOrder ea = episodeOrder(a), eb = episodeOrder(b);
+            if (ea.known != eb.known) return ea.known ? -1 : 1;
+            if (ea.known) {
+                int season = Integer.compare(ea.season, eb.season);
+                if (season != 0) return season;
+                int episode = Integer.compare(ea.episode, eb.episode);
+                if (episode != 0) return episode;
+            }
+            return naturalCompare(displayName(a), displayName(b));
+        });
+        return items;
+    }
+
+    private static final class EpisodeOrder {
+        final boolean known; final int season; final int episode;
+        EpisodeOrder(boolean known, int season, int episode) { this.known = known; this.season = season; this.episode = episode; }
+    }
+
+    private static EpisodeOrder episodeOrder(JSONObject item) {
+        int episode = item.optInt("episode", 0), season = item.optInt("season", 0);
+        if (episode > 0) return new EpisodeOrder(true, Math.max(0, season), episode);
+        String name = item.optString("title", "") + " " + item.optString("label", "") + " "
+                + pathLeaf(item.optString("file", ""));
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)(?:s(\\d{1,3})[ ._-]*e|\\b(\\d{1,3})x)(\\d{1,4})\\b").matcher(name);
+        if (matcher.find()) {
+            int s = parseNumber(matcher.group(1) != null ? matcher.group(1) : matcher.group(2));
+            return new EpisodeOrder(true, s, parseNumber(matcher.group(3)));
+        }
+        matcher = java.util.regex.Pattern.compile("(?i)\\b(?:episode|ep|e)[ ._-]*(\\d{1,4})\\b").matcher(name);
+        if (matcher.find()) return new EpisodeOrder(true, 0, parseNumber(matcher.group(1)));
+        // Anime and other season folders commonly use a plain numeric suffix such as
+        // "Series - 002.mkv". Prefer the last standalone number in the item name.
+        matcher = java.util.regex.Pattern.compile("(?:^|[ ._-])(\\d{1,4})(?=$|[ ._\\-\\[(])").matcher(name);
+        int last = -1;
+        while (matcher.find()) {
+            int candidate = parseNumber(matcher.group(1));
+            // A plain year in a movie title is not a useful episode number.
+            if (candidate < 1900 || candidate > 2099) last = candidate;
+        }
+        return last >= 0 ? new EpisodeOrder(true, 0, last) : new EpisodeOrder(false, 0, 0);
+    }
+
+    private static int parseNumber(String value) {
+        try { return Integer.parseInt(value); } catch (Exception ignored) { return 0; }
+    }
+
+    private static String displayName(JSONObject item) {
+        String name = item.optString("title", "");
+        if (name.isEmpty()) name = item.optString("label", "");
+        if (name.isEmpty()) name = pathLeaf(item.optString("file", ""));
+        return name;
+    }
+
+    private static int naturalCompare(String left, String right) {
+        int i = 0, j = 0;
+        while (i < left.length() && j < right.length()) {
+            char a = left.charAt(i), b = right.charAt(j);
+            if (Character.isDigit(a) && Character.isDigit(b)) {
+                int ai = i, bj = j;
+                while (ai < left.length() && left.charAt(ai) == '0') ai++;
+                while (bj < right.length() && right.charAt(bj) == '0') bj++;
+                int ae = ai, be = bj;
+                while (ae < left.length() && Character.isDigit(left.charAt(ae))) ae++;
+                while (be < right.length() && Character.isDigit(right.charAt(be))) be++;
+                int length = Integer.compare(ae - ai, be - bj);
+                if (length != 0) return length;
+                int number = left.regionMatches(ai, right, bj, ae - ai) ? 0
+                        : left.substring(ai, ae).compareToIgnoreCase(right.substring(bj, be));
+                if (number != 0) return number;
+                i = ae; j = be;
+            } else {
+                int order = Character.compare(Character.toLowerCase(a), Character.toLowerCase(b));
+                if (order != 0) return order;
+                i++; j++;
+            }
+        }
+        return Integer.compare(left.length() - i, right.length() - j);
+    }
+
+    private TextView addBrowserAction(LinearLayout row, String title, Runnable click) {
         TextView button = text(title, 11, CYAN, true); button.setGravity(Gravity.CENTER); button.setBackground(round(PANEL, dp(10)));
-        button.setOnClickListener(v -> click.run()); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(38), 1); lp.setMargins(dp(3), dp(4), dp(3), dp(4)); row.addView(button, lp);
+        button.setOnClickListener(v -> click.run()); LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(38), 1); lp.setMargins(dp(3), dp(4), dp(3), dp(4)); row.addView(button, lp); return button;
+    }
+
+    /** Lets long media names be inspected with a horizontal finger swipe without
+     * changing the row's existing tap action or the surrounding vertical list. */
+    private void addScrollableTitle(LinearLayout parent, String title, int size, int color, boolean bold, LinearLayout.LayoutParams params) {
+        HorizontalScrollView horizontal = new HorizontalScrollView(this);
+        horizontal.setHorizontalScrollBarEnabled(false);
+        horizontal.setFillViewport(false);
+        horizontal.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        horizontal.setContentDescription(title);
+        horizontal.setOnClickListener(v -> parent.performClick());
+        TextView name = text(title, size, color, bold);
+        name.setSingleLine(true);
+        name.setEllipsize(null);
+        name.setGravity(Gravity.CENTER_VERTICAL);
+        horizontal.addView(name, new FrameLayout.LayoutParams(-2, -1, Gravity.CENTER_VERTICAL));
+        parent.addView(horizontal, params);
+    }
+
+    private JSONArray readBrowserPlaylist() {
+        try { return new JSONArray(prefs.getString(BROWSER_PLAYLIST_PREF, "[]")); }
+        catch (Exception ignored) { return new JSONArray(); }
+    }
+
+    private void saveBrowserPlaylist(JSONArray items) {
+        prefs.edit().putString(BROWSER_PLAYLIST_PREF, items.toString()).apply();
+    }
+
+    private void addToBrowserPlaylist(String path, String label) {
+        JSONArray queue = readBrowserPlaylist();
+        try { queue.put(new JSONObject().put("file", path).put("label", label)); saveBrowserPlaylist(queue); }
+        catch (Exception ignored) { toast("Could not add this file to the playlist."); return; }
+        toast("Added to playlist: " + label);
+        renderKodiBrowser();
+    }
+
+    private void renderBrowserPlaylist() {
+        screen.removeAllViews();
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout root = column(); root.setPadding(dp(14), dp(10), dp(14), dp(16)); scroll.addView(root);
+        LinearLayout header = row(root); header.setGravity(Gravity.CENTER_VERTICAL); header.setPadding(dp(8), dp(3), dp(8), dp(3)); header.setBackground(panel());
+        TextView back = text("‹", 32, CYAN, true); back.setGravity(Gravity.CENTER); back.setContentDescription("Back to Kodi library");
+        back.setOnClickListener(v -> { showingBrowserPlaylist = false; renderKodiBrowser(); }); header.addView(back, new LinearLayout.LayoutParams(dp(46), dp(48)));
+        LinearLayout heading = column(); heading.addView(text("Playlist", 19, TEXT, true));
+        heading.addView(text("Saved on this remote · tap arrows to reorder", 10, MUTED, false));
+        header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView close = text("×", 29, CYAN, true); close.setGravity(Gravity.CENTER); close.setContentDescription("Return to remote"); close.setOnClickListener(v -> closeKodiBrowser());
+        header.addView(close, new LinearLayout.LayoutParams(dp(42), dp(48)));
+        LinearLayout actions = row(root); actions.setGravity(Gravity.CENTER);
+        addBrowserAction(actions, "Back to library", () -> { showingBrowserPlaylist = false; renderKodiBrowser(); });
+        TextView play = addBrowserAction(actions, "Play playlist", this::playBrowserPlaylist);
+        JSONArray queue = readBrowserPlaylist(); play.setEnabled(queue.length() > 0); play.setAlpha(queue.length() > 0 ? 1f : 0.45f);
+        addBrowserAction(actions, "Clear", () -> { saveBrowserPlaylist(new JSONArray()); renderKodiBrowser(); toast("Playlist cleared."); });
+        if (queue.length() == 0) {
+            TextView empty = text("Your playlist is empty. Open a folder and tap ＋ beside a file to add it.", 13, MUTED, false);
+            empty.setGravity(Gravity.CENTER); empty.setPadding(dp(20), dp(20), dp(20), dp(20)); root.addView(empty, new LinearLayout.LayoutParams(-1, dp(100)));
+        } else {
+            for (int i = 0; i < queue.length(); i++) {
+                JSONObject item = queue.optJSONObject(i); if (item == null) continue;
+                final int position = i; final String path = item.optString("file", "");
+                String label = item.optString("label", ""); if (label.isEmpty()) label = pathLeaf(path); final String displayLabel = label;
+                LinearLayout entry = row(root); entry.setGravity(Gravity.CENTER_VERTICAL); entry.setPadding(dp(10), 0, dp(4), 0); entry.setBackground(round(PANEL, dp(10)));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(54)); lp.bottomMargin = dp(5); entry.setLayoutParams(lp);
+                TextView number = text(String.valueOf(i + 1), 12, CYAN, true); number.setGravity(Gravity.CENTER); entry.addView(number, new LinearLayout.LayoutParams(dp(28), -1));
+                addScrollableTitle(entry, displayLabel, 12, TEXT, true, new LinearLayout.LayoutParams(0, -1, 1));
+                addPlaylistRowAction(entry, "↑", "Move " + displayLabel + " up", () -> moveBrowserPlaylistItem(position, -1), position > 0);
+                addPlaylistRowAction(entry, "↓", "Move " + displayLabel + " down", () -> moveBrowserPlaylistItem(position, 1), position < queue.length() - 1);
+                addPlaylistRowAction(entry, "×", "Remove " + displayLabel, () -> removeBrowserPlaylistItem(position), true);
+            }
+        }
+        screen.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void addPlaylistRowAction(LinearLayout row, String symbol, String description, Runnable action, boolean enabled) {
+        TextView button = text(symbol, 19, enabled ? CYAN : MUTED, true); button.setGravity(Gravity.CENTER); button.setContentDescription(description); button.setEnabled(enabled);
+        button.setOnClickListener(v -> action.run()); row.addView(button, new LinearLayout.LayoutParams(dp(34), -1));
+    }
+
+    private void moveBrowserPlaylistItem(int position, int delta) {
+        JSONArray old = readBrowserPlaylist(); int target = position + delta;
+        if (position < 0 || target < 0 || position >= old.length() || target >= old.length()) return;
+        JSONArray updated = new JSONArray();
+        for (int i = 0; i < old.length(); i++) {
+            int source = i == position ? target : i == target ? position : i;
+            updated.put(old.opt(source));
+        }
+        saveBrowserPlaylist(updated); renderKodiBrowser();
+    }
+
+    private void removeBrowserPlaylistItem(int position) {
+        JSONArray old = readBrowserPlaylist(), updated = new JSONArray();
+        for (int i = 0; i < old.length(); i++) if (i != position) updated.put(old.opt(i));
+        saveBrowserPlaylist(updated); renderKodiBrowser();
+    }
+
+    private void playBrowserPlaylist() {
+        JSONArray queue = readBrowserPlaylist();
+        if (queue.length() == 0) return;
+        ArrayList<JSONObject> items = new ArrayList<>();
+        for (int i = 0; i < queue.length(); i++) { JSONObject item = queue.optJSONObject(i); if (item != null && !item.optString("file", "").isEmpty()) items.add(item); }
+        if (items.isEmpty()) { toast("The playlist has no playable files."); return; }
+        startVideoPlaylist(items, 0, "Playlist");
+    }
+
+    private void startVideoPlaylist(ArrayList<JSONObject> items, int position, String label) {
+        userRequestExecutor().execute(() -> {
+            Exception failure = null;
+            try {
+                JSONArray kodiItems = new JSONArray();
+                for (JSONObject item : items) kodiItems.put(new JSONObject().put("file", item.optString("file", "")));
+                KodiClient c = client();
+                c.call("Playlist.Clear", new JSONObject().put("playlistid", 1));
+                c.call("Playlist.Add", new JSONObject().put("playlistid", 1).put("item", kodiItems));
+                c.call("Player.Open", new JSONObject().put("item", new JSONObject().put("playlistid", 1).put("position", position)));
+            } catch (Exception e) { failure = e; }
+            final Exception error = failure;
+            handler.post(() -> {
+                if (error != null) { toast("Could not start " + label.toLowerCase(Locale.US) + ": " + safeMessage(error)); return; }
+                connected = true; closeKodiBrowser(); toast("Playing " + label + " · " + items.size() + " items");
+            });
+        });
     }
 
     private void loadBrowserDirectory(String path, String title, boolean pushCurrent) {
         if (!inBrowser) return;
+        showingBrowserPlaylist = false;
         if (pushCurrent) browserHistory.push(browserPath);
         browserPath = path; browserTitle = title; browserIsSources = false; browserLoading = true; browserItems = new JSONArray();
         renderKodiBrowser(); final int request = ++browserRequestId;
@@ -790,6 +1038,7 @@ public final class MainActivity extends Activity {
 
     private void showBrowserSources() {
         if (!inBrowser) return;
+        showingBrowserPlaylist = false;
         browserPath = ""; browserTitle = "Video sources"; browserIsSources = true; browserLoading = true; browserItems = new JSONArray();
         renderKodiBrowser(); final int request = ++browserRequestId;
         userRequestExecutor().execute(() -> {
@@ -811,6 +1060,7 @@ public final class MainActivity extends Activity {
     private void showBrowserError(String message) { browserLoading = false; browserItems = new JSONArray(); renderKodiBrowser(); toast("Could not read the current Kodi folder: " + (message == null ? "Kodi did not provide a folder." : message)); }
 
     private void browserBack() {
+        if (showingBrowserPlaylist) { showingBrowserPlaylist = false; renderKodiBrowser(); return; }
         if (!browserHistory.isEmpty()) {
             String previous = browserHistory.pop();
             if (previous.isEmpty()) showBrowserSources(); else loadBrowserDirectory(previous, pathLeaf(previous), false);
@@ -848,8 +1098,164 @@ public final class MainActivity extends Activity {
 
     private void closeKodiBrowser() {
         if (!inBrowser) return;
-        ++browserRequestId; inBrowser = false; browserList = null; browserPathView = null;
+        ++browserRequestId; inBrowser = false; showingBrowserPlaylist = false; browserList = null; browserPathView = null;
+        inMediaInfo = false; infoFromBrowser = false;
         updateSettingsBackCallback(); buildScreen(); schedulePoll(0);
+    }
+
+    private void showMediaInfo(boolean fromBrowser) {
+        if (inSettings) return;
+        infoFromBrowser = fromBrowser && inBrowser;
+        inMediaInfo = true;
+        updateSettingsBackCallback();
+        renderMediaInfo();
+        if (activityStarted) schedulePoll(0);
+    }
+
+    private void closeMediaInfo() {
+        if (!inMediaInfo) return;
+        inMediaInfo = false;
+        infoPoster = null; infoTitle = null; infoSubtitle = null; infoState = null; infoMetadata = null;
+        infoPlot = null; infoSource = null; infoAudio = null; infoSubtitles = null; infoImdbButton = null; infoAniListButton = null;
+        if (infoFromBrowser && inBrowser) renderKodiBrowser();
+        else { inBrowser = false; infoFromBrowser = false; buildScreen(); }
+        updateSettingsBackCallback();
+        if (activityStarted) schedulePoll(0);
+    }
+
+    private void renderMediaInfo() {
+        if (!inMediaInfo || screen == null) return;
+        screen.removeAllViews();
+        ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout root = column(); root.setPadding(dp(16), dp(14), dp(16), dp(18)); scroll.addView(root);
+        LinearLayout header = row(root); header.setGravity(Gravity.CENTER_VERTICAL); header.setPadding(dp(8), dp(3), dp(8), dp(3)); header.setBackground(panel());
+        TextView back = text("‹", 32, CYAN, true); back.setGravity(Gravity.CENTER); back.setContentDescription("Back to previous page"); back.setOnClickListener(v -> closeMediaInfo());
+        header.addView(back, new LinearLayout.LayoutParams(dp(44), dp(48)));
+        LinearLayout heading = column(); heading.addView(text("Media Information", 19, TEXT, true));
+        heading.addView(text(infoFromBrowser ? "Kodi Library · Now Playing" : "Now Playing", 10, MUTED, false));
+        header.addView(heading, new LinearLayout.LayoutParams(0, -2, 1));
+        TextView close = text("×", 29, CYAN, true); close.setGravity(Gravity.CENTER); close.setContentDescription("Close media information"); close.setOnClickListener(v -> closeMediaInfo());
+        header.addView(close, new LinearLayout.LayoutParams(dp(40), dp(48)));
+
+        LinearLayout card = new LinearLayout(this); card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.TOP); card.setPadding(dp(12), dp(12), dp(12), dp(12)); card.setBackground(panel());
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2); cardLp.topMargin = dp(10); root.addView(card, cardLp);
+        infoPoster = new ImageView(this); infoPoster.setScaleType(ImageView.ScaleType.CENTER_CROP); infoPoster.setBackground(round(Color.rgb(22, 39, 56), dp(9)));
+        infoPoster.setImageResource(R.drawable.placeholder_art); card.addView(infoPoster, new LinearLayout.LayoutParams(dp(104), dp(146)));
+        LinearLayout summary = column(); summary.setPadding(dp(12), 0, 0, 0); card.addView(summary, new LinearLayout.LayoutParams(0, -2, 1));
+        infoTitle = text("Nothing playing", 19, TEXT, true); infoTitle.setMaxLines(3); infoTitle.setEllipsize(android.text.TextUtils.TruncateAt.END); summary.addView(infoTitle);
+        infoSubtitle = text("Kodi is ready when you are", 13, MUTED, false); infoSubtitle.setPadding(0, dp(4), 0, dp(4)); summary.addView(infoSubtitle);
+        infoState = text("IDLE", 11, CYAN, true); summary.addView(infoState);
+        infoMetadata = text("", 12, TEXT, false); infoMetadata.setPadding(0, dp(8), 0, 0); summary.addView(infoMetadata);
+
+        LinearLayout plotCard = column(); plotCard.setPadding(dp(13), dp(10), dp(13), dp(12)); plotCard.setBackground(panel());
+        LinearLayout.LayoutParams plotLp = new LinearLayout.LayoutParams(-1, -2); plotLp.topMargin = dp(8); root.addView(plotCard, plotLp);
+        plotCard.addView(text("ABOUT THIS TITLE", 10, CYAN, true));
+        infoPlot = text("Allow automatic metadata in Settings to look up an English description.", 13, TEXT, false); infoPlot.setGravity(Gravity.TOP); infoPlot.setPadding(0, dp(6), 0, 0); plotCard.addView(infoPlot);
+        infoSource = text("", 10, CYAN, false); infoSource.setPadding(0, dp(6), 0, 0); infoSource.setVisibility(View.GONE); plotCard.addView(infoSource);
+        infoAudio = text("Audio: —", 12, MUTED, false); infoAudio.setPadding(0, dp(8), 0, 0); plotCard.addView(infoAudio);
+        infoSubtitles = text("Subtitles: Off", 12, MUTED, false); plotCard.addView(infoSubtitles);
+
+        LinearLayout actions = row(root); actions.setGravity(Gravity.CENTER);
+        infoImdbButton = addBrowserAction(actions, "IMDb", () -> openMediaLookup(false));
+        infoAniListButton = addBrowserAction(actions, "AniList", () -> openMediaLookup(true));
+        infoAniListButton.setVisibility(View.GONE);
+        addBrowserAction(actions, "Kodi Library", () -> {
+            if (!inBrowser) { inMediaInfo = false; infoFromBrowser = false; openKodiBrowser(); }
+            else closeMediaInfo();
+        });
+        updateMediaInfo();
+        screen.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
+    }
+
+    private void updateMediaInfo() {
+        if (!inMediaInfo || infoTitle == null) return;
+        KodiClient.PlayerState p = currentPlayerState;
+        if (infoImdbButton != null) infoImdbButton.setVisibility(p != null ? View.VISIBLE : View.GONE);
+        if (infoAniListButton != null) infoAniListButton.setVisibility(p != null
+                && ((p.genres != null && p.genres.toLowerCase(Locale.US).contains("anime")) || "episode".equalsIgnoreCase(p.mediaType))
+                ? View.VISIBLE : View.GONE);
+        if (p == null) {
+            infoTitle.setText("Nothing playing"); infoSubtitle.setText(connected ? "Kodi is connected, but no media is active." : "No active Kodi connection.");
+            infoState.setText(connected ? "READY" : "KODI OFFLINE"); infoState.setTextColor(connected ? GREEN : RED);
+            infoMetadata.setText(connected ? "Start a movie, episode, or music track to see its Kodi metadata here." : "The remote remains available. Check the Kodi connection in Settings.");
+            infoPlot.setText("No media information is available while playback is idle.");
+            if (infoSource != null) infoSource.setVisibility(View.GONE);
+            infoAudio.setText("Audio: —"); infoSubtitles.setText("Subtitles: Off"); infoPoster.setImageResource(R.drawable.placeholder_art); return;
+        }
+        infoTitle.setText(p.title);
+        infoSubtitle.setText(p.subtitle.isEmpty() ? labelMediaType(p.mediaType) : p.subtitle);
+        infoState.setText(p.speed == 0 ? "PAUSED" : p.speed < 0 ? "REWINDING" : "PLAYING · " + p.elapsed + " / " + p.duration);
+        infoState.setTextColor(p.speed == 0 ? CYAN : GREEN);
+        ArrayList<String> facts = new ArrayList<>();
+        if (!p.mediaType.isEmpty()) facts.add(labelMediaType(p.mediaType));
+        if (!p.year.isEmpty() && !"0".equals(p.year)) facts.add(p.year);
+        if (!p.genres.isEmpty()) facts.add(p.genres);
+        if (!p.director.isEmpty()) facts.add("Director: " + p.director);
+        if (!p.studio.isEmpty()) facts.add("Studio: " + p.studio);
+        if (!p.contentRating.isEmpty()) facts.add("Rated " + p.contentRating);
+        if (!p.rating.isEmpty() && !"0.0".equals(p.rating) && !"0".equals(p.rating)) facts.add("Kodi rating: " + p.rating);
+        if (!p.tagline.isEmpty()) facts.add("“" + p.tagline + "”");
+        infoMetadata.setText(facts.isEmpty() ? (p.file.isEmpty() ? "Kodi metadata is limited for this item." : "File: " + p.file) : joinLines(facts));
+        String plot = !p.plot.isEmpty() ? p.plot : p.plotOutline;
+        OnlineMetadataClient.Result external = onlineMetadataFor(p);
+        if (!plot.isEmpty()) {
+            infoPlot.setText(plot);
+            if (infoSource != null) infoSource.setVisibility(View.GONE);
+        } else if (external != null) {
+            infoPlot.setText(external.description);
+            if (infoSource != null) {
+                infoSource.setText("Source: " + external.source + " · open source page");
+                infoSource.setVisibility(View.VISIBLE);
+                infoSource.setOnClickListener(v -> openMetadataSource(external.url));
+            }
+        } else {
+            if (infoSource != null) infoSource.setVisibility(View.GONE);
+            String key = metadataKey(p);
+            if (!key.isEmpty() && key.equals(metadataLookupInFlightKey)) infoPlot.setText("Searching AniList and English reference sources…");
+            else if (prefs != null && prefs.getBoolean(AUTO_ONLINE_METADATA_PREF, false)) infoPlot.setText("No English description was found. The online sources may have no match or may be temporarily unavailable.");
+            else infoPlot.setText("Allow automatic metadata in Settings to look up an English description.");
+        }
+        JSONObject audio = p.currentAudio >= 0 && p.currentAudio < p.audioStreams.length() ? p.audioStreams.optJSONObject(p.currentAudio) : null;
+        JSONObject sub = p.currentSubtitle >= 0 && p.currentSubtitle < p.subtitleStreams.length() ? p.subtitleStreams.optJSONObject(p.currentSubtitle) : null;
+        infoAudio.setText("Audio: " + (audio == null ? "—" : KodiClient.streamLabel(audio, p.currentAudio, "Audio")));
+        infoSubtitles.setText("Subtitles: " + (!p.subtitleEnabled || sub == null ? "Off" : KodiClient.streamLabel(sub, p.currentSubtitle, "Subtitle")));
+        if (artwork != null && !artwork.isRecycled()) infoPoster.setImageBitmap(artwork); else infoPoster.setImageResource(R.drawable.placeholder_art);
+    }
+
+    private String labelMediaType(String type) {
+        if (type == null || type.isEmpty()) return "Media";
+        if ("episode".equalsIgnoreCase(type)) return "TV episode";
+        if ("movie".equalsIgnoreCase(type)) return "Movie";
+        if ("musicvideo".equalsIgnoreCase(type)) return "Music video";
+        if ("song".equalsIgnoreCase(type)) return "Music";
+        return type.substring(0, 1).toUpperCase(Locale.US) + type.substring(1);
+    }
+
+    private String joinLines(ArrayList<String> values) {
+        StringBuilder result = new StringBuilder();
+        for (String value : values) { if (result.length() > 0) result.append('\n'); result.append(value); }
+        return result.toString();
+    }
+
+    private void openMediaLookup(boolean anime) {
+        KodiClient.PlayerState p = currentPlayerState;
+        if (p == null) { toast("Play a title first to look up its details."); return; }
+        String query = "episode".equalsIgnoreCase(p.mediaType) && p.seriesTitle != null && !p.seriesTitle.isEmpty() ? p.seriesTitle : p.title;
+        if (query == null || query.trim().isEmpty() || "Now Playing".equals(query)) query = p.file;
+        String address;
+        if (anime) address = "https://anilist.co/search/anime?search=" + Uri.encode(query);
+        else if (p.imdbId != null && p.imdbId.matches("tt[0-9]+")) address = "https://www.imdb.com/title/" + p.imdbId + "/";
+        else address = "https://www.imdb.com/find/?q=" + Uri.encode(query);
+        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(address))); }
+        catch (ActivityNotFoundException e) {
+            try {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard == null) throw new IllegalStateException("Clipboard unavailable");
+                clipboard.setPrimaryClip(ClipData.newPlainText("Media information", address));
+                toast("No browser is installed. The search link was copied.");
+            } catch (Exception ignored) { toast("No browser is installed to open the media search."); }
+        }
     }
 
     private void addImageOnlyControl(LinearLayout parent, int res, String label, Runnable action) {
@@ -896,6 +1302,13 @@ public final class MainActivity extends Activity {
         actionButton(actions, R.drawable.settings_ic_save, "Save", true, () -> saveConnection(host, port, username, password));
         LinearLayout discoverRow = row(connection); discoverRow.setGravity(Gravity.CENTER);
         discoverRow.addView(makeActionButton(R.drawable.settings_ic_wifi, "Find My Kodi", false, () -> findKodi(host, port, username, password)), new LinearLayout.LayoutParams(-1, dp(46)));
+        settingsSwitch(connection, "Auto-scrape English descriptions", prefs.getBoolean(AUTO_ONLINE_METADATA_PREF, false),
+                "When Kodi has no synopsis, search AniList and English reference sources automatically. No source setup or API key is needed. Title searches are sent only while this is enabled.",
+                (button, checked) -> {
+                    prefs.edit().putBoolean(AUTO_ONLINE_METADATA_PREF, checked).apply();
+                    if (checked && currentPlayerState != null) requestOnlineMetadata(currentPlayerState);
+                    updateMediaInfo();
+                });
         LinearLayout wifiRow = row(connection); wifiRow.setGravity(Gravity.CENTER);
         wifiRow.addView(makeActionButton(R.drawable.settings_ic_wifi, "Wi-Fi Settings", false, this::openWifiSettings), new LinearLayout.LayoutParams(dp(220), dp(48)));
         settingsFeedback = text(connected ? "Kodi connected" : "Kodi offline · settings are available", 12, connected ? GREEN : MUTED, false);
@@ -929,6 +1342,7 @@ public final class MainActivity extends Activity {
         String appVersion = "Unknown"; try { PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0); appVersion = info.versionName; } catch (Exception ignored) { }
         system.addView(infoRow("FarfarRemote", appVersion)); system.addView(infoRow("Android", androidVersion)); system.addView(infoRow("Device", model));
         LinearLayout kodiInfo = infoRow("Kodi", connected ? "Connected" : "Offline"); settingsKodiStatus = (TextView) kodiInfo.getChildAt(1); settingsKodiStatus.setTextColor(connected ? GREEN : RED); system.addView(kodiInfo);
+        if (isDedicatedOs()) addPhoneAlertSettings(system);
 
         LinearLayout coffee = new LinearLayout(this); coffee.setGravity(Gravity.CENTER); coffee.setPadding(0, dp(8), 0, dp(6)); root.addView(coffee, new LinearLayout.LayoutParams(-1, -2));
         LinearLayout coffeeButton = new LinearLayout(this); coffeeButton.setGravity(Gravity.CENTER); coffeeButton.setOrientation(LinearLayout.HORIZONTAL); coffeeButton.setPadding(dp(13), 0, dp(13), 0); coffeeButton.setBackgroundResource(R.drawable.settings_button_coffee); coffeeButton.setContentDescription("Buy Me a Coffee — opens external website");
@@ -944,13 +1358,13 @@ public final class MainActivity extends Activity {
         TextView profileHint = text("Reduce background Kodi checks while keeping direct controls responsive.", 10, MUTED, false);
         profileHint.setPadding(dp(5), dp(2), dp(5), dp(5)); battery.addView(profileHint);
         RadioGroup modes = batteryChoices(battery, new String[]{"Normal", "Balanced", "Max Saving"},
-                new String[]{"normal", "balanced", "maximum"}, "os_battery_mode", "normal");
+                new String[]{"normal", "balanced", "maximum"}, "os_battery_mode", "balanced");
         modes.setContentDescription("Battery mode profile");
         TextView modeHint = text("Normal: current refresh rate. Balanced: playback every 5 seconds. Maximum: playback every 10 seconds. Recent input always refreshes promptly.", 10, MUTED, false);
         modeHint.setPadding(dp(5), dp(4), dp(5), dp(5)); battery.addView(modeHint);
         battery.addView(text("Kodi idle refresh (Balanced / Maximum)", 11, TEXT, true));
         RadioGroup idle = batteryChoices(battery, new String[]{"2 sec", "5 sec", "10 sec"},
-                new String[]{"2", "5", "10"}, "os_battery_idle_seconds", "5");
+                new String[]{"2", "5", "10"}, "os_battery_idle_seconds", "10");
         idle.setContentDescription("Kodi idle refresh interval");
         settingsSwitch(battery, "Reduced Brightness", prefs.getBoolean("os_battery_dim", false),
                 "Use 25% window brightness while FarfarRemote OS is visible", (button, checked) -> {
@@ -958,6 +1372,38 @@ public final class MainActivity extends Activity {
                 });
         TextView screenHint = text("Screen off suspends Kodi polling. Android's normal screen timeout is used unless Keep Screen Awake is enabled above.", 10, MUTED, false);
         screenHint.setPadding(dp(5), dp(2), dp(5), dp(2)); battery.addView(screenHint);
+    }
+
+    private void addPhoneAlertSettings(LinearLayout parent) {
+        boolean enabled = phoneAlertAccessEnabled();
+        TextView hint = text("Hide the Android ‘No SIM card’ notification while keeping telephony services intact.", 10, MUTED, false);
+        hint.setPadding(dp(4), dp(6), dp(4), dp(4)); parent.addView(hint);
+        parent.addView(makeActionButton(R.drawable.settings_ic_info,
+                enabled ? "Manage phone alert filter" : "Enable phone alert filter", !enabled,
+                this::openPhoneAlertSettings), new LinearLayout.LayoutParams(-1, dp(44)));
+        if (enabled) {
+            TextView enabledHint = text("The OS edition will dismiss only the no-SIM alert. This does not disable calls, Wi-Fi, or Android telephony.", 10, GREEN, false);
+            enabledHint.setPadding(dp(4), dp(4), dp(4), dp(2)); parent.addView(enabledHint);
+        }
+    }
+
+    private boolean phoneAlertAccessEnabled() {
+        try {
+            String enabled = android.provider.Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+            String component = new android.content.ComponentName(getPackageName(), "org.farfarremote.NoSimNotificationListener").flattenToString();
+            return enabled != null && enabled.contains(component);
+        } catch (Exception ignored) { return false; }
+    }
+
+    private void openPhoneAlertSettings() {
+        try {
+            Intent settings = android.os.Build.VERSION.SDK_INT >= 22
+                    ? new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
+                    : new Intent(android.provider.Settings.ACTION_SETTINGS);
+            startActivity(settings);
+            if (android.os.Build.VERSION.SDK_INT < 22) toast("In Android Settings, open Security → Notification access and enable FarfarRemote.");
+        }
+        catch (Exception e) { toast("Notification access settings are unavailable on this Android version."); }
     }
 
     private RadioGroup batteryChoices(LinearLayout parent, String[] labels, String[] values, String key, String fallback) {
@@ -1037,9 +1483,9 @@ public final class MainActivity extends Activity {
 
     private void updateSettingsBackCallback() {
         if (android.os.Build.VERSION.SDK_INT < 33 || getResources().getBoolean(R.bool.dedicated_os)) return;
-        if ((inSettings || inBrowser) && settingsBackCallback == null) {
+        if ((inSettings || inBrowser || inMediaInfo) && settingsBackCallback == null) {
             settingsBackCallback = Api33BackHandler.register(this, this::closeOverlay);
-        } else if (!inSettings && !inBrowser && settingsBackCallback != null) {
+        } else if (!inSettings && !inBrowser && !inMediaInfo && settingsBackCallback != null) {
             Api33BackHandler.unregister(this, settingsBackCallback);
             settingsBackCallback = null;
         }
@@ -1047,6 +1493,7 @@ public final class MainActivity extends Activity {
 
     private void closeOverlay() {
         if (inSettings) closeSettings();
+        else if (inMediaInfo) closeMediaInfo();
         else if (inBrowser) closeKodiBrowser();
     }
 
@@ -1439,31 +1886,44 @@ public final class MainActivity extends Activity {
     private void back() { action(c -> c.call("Input.Back", new JSONObject())); }
     private void playPause() { action(c -> { if (activePlayerId < 0) return c.call("Input.ExecuteAction", new JSONObject().put("action", "playpause")); return c.call("Player.PlayPause", new JSONObject().put("playerid", activePlayerId)); }); }
     private void stop() { action(c -> { if (activePlayerId < 0) throw new KodiClient.KodiException("Ingen aktiv Kodi-spelare."); return c.call("Player.Stop", new JSONObject().put("playerid", activePlayerId)); }); }
-    private void confirmKodiShutdown() {
-        if (kodiShutdownRequested) { toast("Kodi shutdown has already been requested."); return; }
+    private void showKodiPowerOptions() {
+        if (kodiPowerActionInProgress) { toast("A Kodi power request is already being sent."); return; }
         new AlertDialog.Builder(this)
-                .setTitle("Power off Kodi?")
-                .setMessage("This will close Kodi and shut down the Kodi device. The Android remote will stay on.")
+                .setTitle("Kodi power")
+                .setItems(new String[]{"Sleep (Suspend)", "Power Off"}, (dialog, which) -> {
+                    if (which == 0) confirmKodiPowerAction("System.Suspend", "Sleep", "This asks Kodi to suspend the Kodi device. Resume depends on the device's operating system and hardware.");
+                    else confirmKodiPowerAction("System.Shutdown", "Power Off", "This will close Kodi and shut down the Kodi device. The Android remote will stay on.");
+                })
                 .setNegativeButton("Cancel", null)
-                .setPositiveButton("Power Off", (dialog, which) -> powerOffKodi())
                 .show();
     }
 
-    private void powerOffKodi() {
-        if (kodiShutdownRequested) return;
-        kodiShutdownRequested = true;
+    private void confirmKodiPowerAction(String method, String actionLabel, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(actionLabel + " Kodi device?")
+                .setMessage(message)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(actionLabel, (dialog, which) -> requestKodiPowerAction(method, actionLabel))
+                .show();
+    }
+
+    private void requestKodiPowerAction(String method, String actionLabel) {
+        if (kodiPowerActionInProgress) return;
+        kodiPowerActionInProgress = true;
         userRequestExecutor().execute(() -> {
             try {
-                client().call("System.Shutdown", new JSONObject());
+                client().call(method, new JSONObject());
                 handler.post(() -> {
+                    kodiPowerActionInProgress = false;
                     connected = false; activePlayerId = -1; updateHeader(); resetPlayer();
-                    setStatus("OFFLINE · Kodi is shutting down");
-                    toast("Shutdown command sent to the Kodi device.");
+                    boolean suspending = "System.Suspend".equals(method);
+                    setStatus(suspending ? "OFFLINE · Kodi device is suspending" : "OFFLINE · Kodi is shutting down");
+                    toast((suspending ? "Suspend" : "Shutdown") + " command sent to the Kodi device.");
                 });
             } catch (Exception e) {
                 handler.post(() -> {
-                    kodiShutdownRequested = false;
-                    toast("Could not power off Kodi: " + (e.getMessage() == null ? "Kodi did not accept the shutdown request." : e.getMessage()));
+                    kodiPowerActionInProgress = false;
+                    toast("Could not " + actionLabel.toLowerCase(java.util.Locale.US) + " Kodi device: " + (e.getMessage() == null ? "Kodi did not accept the request." : e.getMessage()));
                 });
             }
         });
@@ -1503,22 +1963,22 @@ public final class MainActivity extends Activity {
     private final Runnable poll = new Runnable() {
         @Override public void run() {
             if (destroyed || !activityStarted) return;
-            if (inBrowser || (isDedicatedOs() && (!screenIsOn || inSettings))) return;
+            if ((inBrowser && !inMediaInfo) || (isDedicatedOs() && (!screenIsOn || inSettings))) return;
             if (busy) { if (!isDedicatedOs()) schedulePoll(3000); return; }
             if (!isDedicatedOs() && (inSettings || (!prefs.getBoolean("auto_reconnect", true) && !connected))) { schedulePoll(3000); return; }
             if (isDedicatedOs() && !prefs.getBoolean("auto_reconnect", true) && !connected) return;
             busy = true;
             final long startedAt = android.os.SystemClock.elapsedRealtime();
-            if (isDedicatedOs()) android.util.Log.d("FarfarRemoteBattery", "poll_start mode=" + prefs.getString("os_battery_mode", "normal"));
+            if (isDedicatedOs()) android.util.Log.d("FarfarRemoteBattery", "poll_start mode=" + prefs.getString("os_battery_mode", "balanced"));
             io.execute(() -> {
                 KodiClient.Snapshot snapshot = null; String error = null;
-                try { snapshot = client().snapshot(); } catch (Exception e) { error = e.getMessage(); android.util.Log.w("FarfarRemote", "Kodi poll failed: " + e.getMessage()); }
+                try { snapshot = client().snapshot(inMediaInfo || prefs.getBoolean(AUTO_ONLINE_METADATA_PREF, false)); } catch (Exception e) { error = e.getMessage(); android.util.Log.w("FarfarRemote", "Kodi poll failed: " + e.getMessage()); }
                 final KodiClient.Snapshot result = snapshot; final String message = error;
                 if (isDedicatedOs()) android.util.Log.d("FarfarRemoteBattery", "poll_end duration_ms=" + (android.os.SystemClock.elapsedRealtime() - startedAt) + " connected=" + (result != null) + " player=" + (result != null && result.player != null));
                 handler.post(() -> {
                     busy = false;
                     if (!activityStarted || (isDedicatedOs() && !screenIsOn)) return;
-                    if (!inSettings && !inBrowser) {
+                    if (!inSettings && (!inBrowser || inMediaInfo)) {
                         if (result != null) { consecutivePollFailures = 0; applySnapshot(result); }
                         else {
                             consecutivePollFailures++;
@@ -1539,12 +1999,12 @@ public final class MainActivity extends Activity {
 
     private long osPollDelayMs(KodiClient.Snapshot result) {
         if (!connected) return prefs.getBoolean("auto_reconnect", true) ? reconnectDelayMs() : -1;
-        String profile = prefs.getString("os_battery_mode", "normal");
+        String profile = prefs.getString("os_battery_mode", "balanced");
         if ("normal".equals(profile)) return 2800;
         if (android.os.SystemClock.elapsedRealtime() - lastBatteryInteractionMs < 12000) return 2800;
         boolean playing = result != null ? result.player != null : activePlayerId >= 0;
         if (playing) return "maximum".equals(profile) ? 10000 : 5000;
-        String seconds = prefs.getString("os_battery_idle_seconds", "5");
+        String seconds = prefs.getString("os_battery_idle_seconds", "10");
         if ("2".equals(seconds)) return 2000;
         if ("10".equals(seconds)) return 10000;
         return 5000;
@@ -1552,7 +2012,7 @@ public final class MainActivity extends Activity {
 
     private void schedulePoll(long delayMs) {
         handler.removeCallbacks(poll);
-        if (activityStarted && !destroyed && !inBrowser && (!isDedicatedOs() || (screenIsOn && !inSettings))) handler.postDelayed(poll, Math.max(0, delayMs));
+        if (activityStarted && !destroyed && (!inBrowser || inMediaInfo) && (!isDedicatedOs() || (screenIsOn && !inSettings))) handler.postDelayed(poll, Math.max(0, delayMs));
     }
 
     private void applySnapshot(KodiClient.Snapshot s) {
@@ -1560,9 +2020,11 @@ public final class MainActivity extends Activity {
         updateHeader();
         if (status != null) { status.setText(s.error != null ? "CONNECTED · PLAYER STATUS LIMITED" : "CONNECTED · " + s.volume + "%" + (s.muted ? " · MUTED" : "")); status.setTextColor(GREEN); }
         KodiClient.PlayerState p = s.player;
-        if (p == null) { activePlayerId = -1; resetPlayer(); return; }
+        if (p == null) { currentPlayerState = null; activePlayerId = -1; resetPlayer(); return; }
+        currentPlayerState = p;
         activePlayerId = p.id;
         activeMediaFile = p.file == null ? "" : p.file;
+        requestOnlineMetadata(p);
         if (!activeMediaFile.isEmpty() && !activeMediaFile.equals(lastPreferenceAppliedFile)) applyFolderTrackPreferences(p);
         if (titleText != null) titleText.setText(p.title);
         if (episodeText != null) episodeText.setText(p.subtitle.isEmpty() ? "Kodi playback" : p.subtitle);
@@ -1574,10 +2036,84 @@ public final class MainActivity extends Activity {
         JSONObject sub = p.currentSubtitle >= 0 && p.currentSubtitle < p.subtitleStreams.length() ? p.subtitleStreams.optJSONObject(p.currentSubtitle) : null;
         if (audioValue != null) audioValue.setText("Audio: " + (a == null ? "—" : KodiClient.streamLabel(a, p.currentAudio, "Audio")));
         if (subsValue != null) subsValue.setText("Subtitles: " + (!p.subtitleEnabled || sub == null ? "Off" : KodiClient.streamLabel(sub, p.currentSubtitle, "Subtitle")));
+        updateMediaInfo();
         if (!p.thumbnail.equals(currentArtwork)) loadArtwork(p.thumbnail);
     }
 
+    private void requestOnlineMetadata(KodiClient.PlayerState player) {
+        if (prefs == null || !prefs.getBoolean(AUTO_ONLINE_METADATA_PREF, false) || player == null) return;
+        if (!player.plot.isEmpty() || !player.plotOutline.isEmpty()) return; // Kodi remains the first source.
+        if ("song".equalsIgnoreCase(player.mediaType) || "musicvideo".equalsIgnoreCase(player.mediaType)) return;
+        String query = metadataQuery(player);
+        String key = metadataKey(player);
+        if (query.isEmpty() || key.isEmpty() || onlineMetadata.containsKey(key) || metadataLookupAttempted.contains(key)) return;
+        OnlineMetadataClient.Result saved = readOnlineMetadata(key);
+        if (saved != null) { onlineMetadata.put(key, saved); if (inMediaInfo) updateMediaInfo(); return; }
+        metadataLookupAttempted.add(key);
+        metadataLookupInFlightKey = key;
+        if (inMediaInfo) updateMediaInfo();
+        boolean animeFirst = "episode".equalsIgnoreCase(player.mediaType)
+                || (player.genres != null && player.genres.toLowerCase(Locale.US).contains("anime"));
+        String mediaType = player.mediaType == null ? "" : player.mediaType;
+        metadataRequests.execute(() -> {
+            OnlineMetadataClient.Result result = OnlineMetadataClient.lookup(query, animeFirst, mediaType);
+            if (destroyed) return;
+            handler.post(() -> {
+                if (key.equals(metadataLookupInFlightKey)) metadataLookupInFlightKey = "";
+                if (result != null) { onlineMetadata.put(key, result); saveOnlineMetadata(key, result); }
+                if (inMediaInfo) updateMediaInfo();
+            });
+        });
+    }
+
+    private String metadataQuery(KodiClient.PlayerState player) {
+        String query = "episode".equalsIgnoreCase(player.mediaType) && player.seriesTitle != null && !player.seriesTitle.trim().isEmpty()
+                ? player.seriesTitle : player.title;
+        if (query == null || query.trim().isEmpty() || "Now Playing".equalsIgnoreCase(query)) query = pathLeaf(player.file);
+        query = query.replaceAll("(?i)\\.(mkv|mp4|avi|mov|m4v|wmv|webm|ts|m2ts)$", "")
+                .replaceAll("\\[[^]]*(1080|720|2160|x264|x265|hevc|avc)[^]]*]", " ")
+                .replaceAll("(?i)\\b(1080p|720p|2160p|480p|x264|x265|hevc|avc)\\b", " ")
+                .replaceAll("\\s+", " ").trim();
+        return query.length() > 100 ? query.substring(0, 100).trim() : query;
+    }
+
+    private String metadataKey(KodiClient.PlayerState player) {
+        String query = metadataQuery(player);
+        return query.isEmpty() ? "" : (player.mediaType == null ? "video" : player.mediaType.toLowerCase(Locale.US)) + ":" + query.toLowerCase(Locale.US);
+    }
+
+    private OnlineMetadataClient.Result onlineMetadataFor(KodiClient.PlayerState player) {
+        String key = metadataKey(player);
+        OnlineMetadataClient.Result value = onlineMetadata.get(key);
+        return value != null ? value : readOnlineMetadata(key);
+    }
+
+    private OnlineMetadataClient.Result readOnlineMetadata(String key) {
+        if (prefs == null || key == null || key.isEmpty()) return null;
+        try { return OnlineMetadataClient.Result.fromJson(new JSONObject(prefs.getString(ONLINE_METADATA_CACHE_PREF + ":" + key, "{}"))); }
+        catch (Exception ignored) { return null; }
+    }
+
+    private void saveOnlineMetadata(String key, OnlineMetadataClient.Result result) {
+        if (prefs == null || key == null || result == null) return;
+        Set<String> keys = new HashSet<>(prefs.getStringSet(ONLINE_METADATA_CACHE_PREF + "_keys", new HashSet<>()));
+        keys.add(key);
+        while (keys.size() > 40) {
+            java.util.Iterator<String> iterator = keys.iterator(); if (!iterator.hasNext()) break;
+            prefs.edit().remove(ONLINE_METADATA_CACHE_PREF + ":" + iterator.next()).apply(); iterator.remove();
+        }
+        prefs.edit().putString(ONLINE_METADATA_CACHE_PREF + ":" + key, result.toJson().toString())
+                .putStringSet(ONLINE_METADATA_CACHE_PREF + "_keys", keys).apply();
+    }
+
+    private void openMetadataSource(String address) {
+        if (address == null || !address.startsWith("https://")) return;
+        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(address))); }
+        catch (ActivityNotFoundException e) { toast("No browser is installed to open the metadata source."); }
+    }
+
     private void resetPlayer() {
+        currentPlayerState = null;
         activeMediaFile = ""; lastPreferenceAppliedFile = "";
         if (titleText != null) titleText.setText("Nothing playing"); if (episodeText != null) episodeText.setText("Kodi is ready when you are");
         if (stateText != null) { stateText.setText("IDLE"); stateText.setTextColor(MUTED); }
@@ -1585,11 +2121,12 @@ public final class MainActivity extends Activity {
         if (audioValue != null) audioValue.setText("Audio: —"); if (subsValue != null) subsValue.setText("Subtitles: Off");
         if (progress != null) { progress.setProgress(0); progress.setEnabled(false); }
         if (poster != null) poster.setImageResource(R.drawable.placeholder_art);
+        updateMediaInfo();
     }
 
     private void loadArtwork(String thumbnail) {
         currentArtwork = thumbnail;
-        if (thumbnail == null || thumbnail.isEmpty()) { if (poster != null) poster.setImageResource(R.drawable.placeholder_art); return; }
+        if (thumbnail == null || thumbnail.isEmpty()) { if (poster != null) poster.setImageResource(R.drawable.placeholder_art); if (infoPoster != null) infoPoster.setImageResource(R.drawable.placeholder_art); return; }
         final String path = KodiClient.imageUrl(prefs.getString("host", ""), prefs.getString("port", "8080"), thumbnail);
         io.execute(() -> {
             Bitmap bitmap = null; HttpURLConnection c = null;
@@ -1604,7 +2141,7 @@ public final class MainActivity extends Activity {
                 bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
             } catch (Exception ignored) { } finally { if (c != null) c.disconnect(); }
             final Bitmap result = bitmap;
-            handler.post(() -> { if (!destroyed && poster != null && thumbnail.equals(currentArtwork)) { if (result != null) { if (artwork != null && !artwork.isRecycled()) artwork.recycle(); artwork = result; poster.setImageBitmap(result); } else poster.setImageResource(R.drawable.placeholder_art); } });
+            handler.post(() -> { if (!destroyed && poster != null && thumbnail.equals(currentArtwork)) { if (result != null) { if (artwork != null && !artwork.isRecycled()) artwork.recycle(); artwork = result; poster.setImageBitmap(result); if (infoPoster != null) infoPoster.setImageBitmap(result); } else { poster.setImageResource(R.drawable.placeholder_art); if (infoPoster != null) infoPoster.setImageResource(R.drawable.placeholder_art); } } });
         });
     }
 
@@ -1612,6 +2149,7 @@ public final class MainActivity extends Activity {
         if (status != null && connected) { status.setText("CONNECTED"); status.setTextColor(GREEN); }
         else if (status != null) { status.setText("OFFLINE · Settings"); status.setTextColor(RED); }
         if (settingsKodiStatus != null) { settingsKodiStatus.setText(connected ? "Connected" : "Offline"); settingsKodiStatus.setTextColor(connected ? GREEN : RED); }
+        if (inMediaInfo && currentPlayerState == null) updateMediaInfo();
     }
 
     private void setStatus(String value) {
@@ -1630,7 +2168,8 @@ public final class MainActivity extends Activity {
 
     @Override public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if (inBrowser) renderKodiBrowser();
+        if (inMediaInfo) renderMediaInfo();
+        else if (inBrowser) renderKodiBrowser();
         else if (!inSettings) buildScreen();
         else if (settingsScroll != null) { settingsScroll.setBackgroundResource(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE ? R.drawable.settings_bg_landscape : R.drawable.settings_bg_portrait); settingsScroll.requestLayout(); }
     }
@@ -1643,7 +2182,7 @@ public final class MainActivity extends Activity {
             case KeyEvent.KEYCODE_DPAD_LEFT: action(c -> c.call("Input.Left", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_RIGHT: action(c -> c.call("Input.Right", new JSONObject())); return true;
             case KeyEvent.KEYCODE_DPAD_CENTER: case KeyEvent.KEYCODE_ENTER: action(c -> c.call("Input.Select", new JSONObject())); return true;
-            case KeyEvent.KEYCODE_BACK: if (inSettings || inBrowser) { closeOverlay(); return true; } if (!getResources().getBoolean(R.bool.dedicated_os)) return super.onKeyDown(keyCode, event); back(); return true;
+            case KeyEvent.KEYCODE_BACK: if (inSettings || inBrowser || inMediaInfo) { closeOverlay(); return true; } if (!getResources().getBoolean(R.bool.dedicated_os)) return super.onKeyDown(keyCode, event); back(); return true;
             case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: playPause(); return true;
             case KeyEvent.KEYCODE_MEDIA_STOP: stop(); return true;
             case KeyEvent.KEYCODE_MEDIA_NEXT: goTo("next"); return true;
@@ -1666,7 +2205,7 @@ public final class MainActivity extends Activity {
             catch (Exception e) { android.util.Log.w("FarfarRemoteBattery", "Could not register screen-state receiver", e); }
         }
         handler.removeCallbacks(poll);
-        if (!inBrowser && (!isDedicatedOs() || (screenIsOn && !inSettings))) handler.post(poll);
+        if ((!inBrowser || inMediaInfo) && (!isDedicatedOs() || (screenIsOn && !inSettings))) handler.post(poll);
     }
     @Override protected void onStop() {
         activityStarted = false; handler.removeCallbacks(poll); stopKodiDiscovery(true);
@@ -1674,5 +2213,5 @@ public final class MainActivity extends Activity {
         if (settingsBackCallback != null) { Api33BackHandler.unregister(this, settingsBackCallback); settingsBackCallback = null; }
         super.onStop();
     }
-    @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); commands.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
+    @Override protected void onDestroy() { stopKodiDiscovery(true); destroyed = true; handler.removeCallbacksAndMessages(null); io.shutdownNow(); commands.shutdownNow(); metadataRequests.shutdownNow(); if (artwork != null && !artwork.isRecycled()) artwork.recycle(); super.onDestroy(); }
 }

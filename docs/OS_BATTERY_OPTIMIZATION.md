@@ -41,7 +41,7 @@ The OS flavor now has opt-in Battery Mode controls:
 
 Preferences use new `os_battery_*` keys. Existing Kodi, orientation, keep-awake, and reconnect preference keys are not changed. App flavor code paths retain their existing poll cadence and UI.
 
-The initial profile is **Normal** to avoid changing existing OS behavior on upgrade. Battery settings do not write Android system settings. Custom screen timeouts are not stored by the app; adjust the system timeout in Android Display Settings if needed.
+The original profile was **Normal** to avoid changing existing OS behavior on upgrade. Starting with 0.4.9, clean OS installs default to **Balanced** with a **10-second idle refresh**. Saved user preferences are retained and are not overwritten by an APK update. Battery settings do not write Android system settings. Custom screen timeouts are not stored by the app; adjust the system timeout in Android Display Settings if needed.
 
 ## Measurement procedure
 

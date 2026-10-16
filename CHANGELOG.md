@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased — automatic English media descriptions
+
+- Long file and episode titles in Kodi Library and the FarfarRemote playlist can now be swiped horizontally to read the full name; tapping the title still performs the row's existing action.
+- Added a Kodi power menu with confirmed Sleep (Kodi `System.Suspend`) and Power Off actions. Power Off still sends the existing `System.Shutdown` request; sleep support depends on the Kodi host OS and hardware.
+- Added an optional Now Playing information page to both App and OS flavors. Swipe horizontally over the Now Playing title area or use the information control in Kodi Library.
+- Displays Kodi-provided artwork, plot, genres, year, media type, studio/director, rating, playback state, and active audio/subtitle tracks when available.
+- Removed the Library Autoplay toggle and automatic folder-queue behavior; the manual playlist remains available.
+- Replaced the Kodi-folder-scan opt-in with `Auto-scrape English descriptions`. It works for both App and OS, needs no provider account, API key, Kodi source setup, or scraper configuration, and is off by default.
+- When enabled and Kodi has no synopsis, FarfarRemote automatically tries AniList for anime, English Wikipedia for film/TV summaries, and Wikidata for concise catalog descriptions. It matches titles conservatively, displays a source link, caches up to 40 results locally, and does not scan whole folders or libraries.
+- IMDb remains a manual lookup link; automated IMDb scraping is excluded because IMDb prohibits website extraction and restricts its non-commercial datasets. TMDB is not bundled because it requires project-owned credentials and attribution.
+- Retained Kodi as the first metadata source and the existing extended Kodi fields request. Playback and remote-control calls remain independent of optional online lookups.
+
+## 0.4.9 — OS idle polling defaults
+
+- FarfarRemote OS now defaults to Balanced polling with a 10-second Kodi-idle interval on clean installs. Recent user input still triggers a prompt refresh, playback polling remains at 5 seconds, and screen-off suspends polling.
+- Existing saved battery, connection, orientation, and display preferences are not overwritten. FarfarRemote App behavior is unchanged.
+- Increased the versionCode to 17 so the update remains newer than the Xperia's preloaded system app across reboot.
+
+## 0.4.8 — Library autoplay, playlists, and OS phone alert filter
+
+- Raised the OS APK versionCode above the Xperia's preloaded system APK so Android keeps the update after reboot.
+- Replaced the Kodi library's Settings shortcut with a persisted Autoplay toggle; Settings remains available through the existing swipe gesture.
+- Added a local persistent playlist with add, reorder, remove, clear, and play controls. Autoplay builds a Kodi video queue from the selected file through the remaining files in the current folder, preserving Kodi's displayed order.
+- Added an optional OS-flavor notification listener that can dismiss the stock Android no-SIM alert without disabling telephony packages or services. It requires the owner to grant Android Notification Access.
+
 ## 0.4.7 — Stable release
 
 - Added swipe navigation from the remote to Kodi's video folders and Settings, with swipe-back behavior from both views.

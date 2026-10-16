@@ -46,8 +46,12 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 ## Features
 
 - D-pad and OK, Back, Kodi Home, play/pause, stop, previous/next, rewind/fast-forward, volume and mute.
-- Confirmed Power Off control for the Kodi device. It asks Kodi to close and shut down its host; it does not power off the Android remote.
+- Kodi power menu with confirmed Sleep (Suspend) and Power Off actions. Sleep support depends on the Kodi host; neither action powers off the Android remote.
 - Kodi Now Playing information, artwork, playback progress, and seek controls.
+- Experimental media information page with Kodi-provided metadata when available and an opt-in automatic English description lookup for movies and anime. When enabled, FarfarRemote tries AniList for anime, then English Wikipedia and Wikidata as broad fallbacks, and shows the source and a link to it. Results are cached locally for up to 40 titles.
+- Automatic lookup is off by default. Turn on `Auto-scrape English descriptions` in Settings; no provider account, API key, Kodi video-source setup, or scraper configuration is needed. While enabled, media titles are sent to AniList, English Wikipedia, and/or Wikidata only when Kodi has no plot. The app looks up the currently playing item, not entire folders or libraries.
+- IMDb remains available as a manual title link. FarfarRemote does not scrape IMDb: IMDb prohibits automated website extraction and restricts use of its downloadable datasets. TMDB is not included because it requires a project-owned API credential and attribution; credentials must not be embedded in a public APK.
+- Online summaries are best-effort. Exact title matching is used to reduce false matches; obscure, renamed, or poorly catalogued files may have no result. Kodi metadata remains the preferred source.
 - Audio and subtitle stream selection on the remote, including subtitle Off when Kodi provides it.
 - Swipe left on the remote screen to open Settings; swipe right to browse Kodi video sources and folders, then start a selected item from the phone.
 - Audio or subtitle choices can be remembered explicitly per media folder using Kodi's reported language/name metadata. Rules can be forgotten and do not rely on stream indexes.
@@ -58,7 +62,7 @@ The screenshots show the App edition on a Sony Xperia E4g E2003 (Android 4.4/API
 - Manual host, port, username, and password entry remains available when discovery is unavailable.
 - Optional external support link: <https://buymeacoffee.com/farfarspelar>.
 
-The Power Off control sends Kodi's `System.Shutdown` JSON-RPC request after confirmation. Shutdown depends on the operating system and permissions of the device running Kodi. See the [Kodi JSON-RPC System.Shutdown method](https://kodi.wiki/view/JSON-RPC_API/v8#System.Shutdown).
+The Kodi power control offers **Sleep (Suspend)** and **Power Off**, each with a confirmation step. Sleep sends Kodi's `System.Suspend` request and depends on the operating system, hardware, and power configuration of the Kodi device. Power Off continues to send `System.Shutdown`. See Kodi's [JSON-RPC system methods](https://kodi.wiki/view/JSON-RPC_API/v13.11#System).
 
 The owner reports that all current features have been tested and work in both the App and OS editions. The OS edition and active-stream folder browser have been physically checked on the Xperia E2003; the owner has also reported FarfarRemote App running on a Samsung Android 13 phone. These are owner-reported device checks, separate from automated source-contract checks.
 
@@ -84,6 +88,14 @@ Find My Kodi additionally needs Kodi Zeroconf service announcements and multicas
 - **FarfarRemote OS — Android 4.4+ (API 19+)** — [Download the dedicated-device launcher](https://github.com/farfarspelar/FarfarRemote-OS/releases/download/v0.4.7/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk). For older or dedicated devices such as the Xperia E4g E2003. Target API 28 and includes the HOME launcher intent.
 
 See the [v0.4.7 release notes and SHA-256 checksums](https://github.com/farfarspelar/FarfarRemote-OS/releases/tag/v0.4.7) or browse [all GitHub Releases](https://github.com/farfarspelar/FarfarRemote-OS/releases). Install the App APK as a normal app and open it from the app drawer. For an existing FarfarRemote OS installation, update with the OS APK only; do not uninstall the app or clear its data. Android may ask you to allow APK installation from your browser or file manager.
+
+### Development build — `feature/now-playing-info-page`
+
+These branch builds include the experimental metadata page and opt-in English descriptions, Kodi Sleep/Suspend, and horizontal title scrolling in Library and Playlist. They are signed with the existing project debug certificate and have not completed full physical-device regression testing.
+
+- [FarfarRemote App v0.4.9 development APK](dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.9-dev.apk) — regular app, no HOME launcher role.
+- [FarfarRemote OS v0.4.9 development APK](dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.9-dev.apk) — dedicated HOME launcher for Android devices.
+- [Development APK SHA-256 checksums](dist/SHA256SUMS-0.4.9-dev.txt).
 
 ## Build from source
 

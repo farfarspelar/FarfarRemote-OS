@@ -28,6 +28,18 @@ final class KodiClient {
         String file = "";
         String elapsed = "0:00";
         String duration = "0:00";
+        String mediaType = "";
+        String seriesTitle = "";
+        String plot = "";
+        String plotOutline = "";
+        String genres = "";
+        String year = "";
+        String director = "";
+        String studio = "";
+        String rating = "";
+        String contentRating = "";
+        String imdbId = "";
+        String tagline = "";
         double percentage;
         int speed;
         boolean canSeek;
@@ -130,7 +142,15 @@ final class KodiClient {
 
     JSONObject ping() throws KodiException { return call("JSONRPC.Ping", new JSONObject()); }
 
-    Snapshot snapshot() throws KodiException {
+    String scanVideoLibrary(String directory) throws KodiException {
+        JSONObject params = json("directory", directory, "showdialogs", false);
+        Object result = callRaw("VideoLibrary.Scan", params);
+        return result instanceof String ? (String) result : "OK";
+    }
+
+    Snapshot snapshot() throws KodiException { return snapshot(false); }
+
+    Snapshot snapshot(boolean includeExtendedMediaDetails) throws KodiException {
         Snapshot state = new Snapshot();
         // A successful, widely supported one-property read is the connectivity signal.
         JSONObject app = call("Application.GetProperties", json("properties", new JSONArray().put("name")));
@@ -170,15 +190,38 @@ final class KodiClient {
                     new JSONArray().put("title").put("showtitle").put("episode").put("season").put("thumbnail").put("artist").put("album").put("file")));
         } catch (KodiException e) { state.error = e.getMessage(); android.util.Log.w("FarfarRemote", "Now Playing metadata unavailable: " + e.getMessage()); }
         JSONObject item = itemResponse.optJSONObject("item"); if (item == null) item = new JSONObject();
+        // Keep the established Now Playing request intact for older Kodi JSON-RPC versions.
+        // Extended scraped metadata is optional and must never make playback controls fail.
+        if (includeExtendedMediaDetails) {
+            try {
+                JSONObject details = call("Player.GetItem", json("playerid", p.id, "properties",
+                        new JSONArray().put("type").put("plot").put("plotoutline").put("genre").put("year")
+                                .put("director").put("studio").put("rating").put("mpaa").put("imdbnumber").put("tagline")));
+                JSONObject extended = details.optJSONObject("item");
+                if (extended != null) item = mergeItems(item, extended);
+            } catch (KodiException e) { android.util.Log.d("FarfarRemote", "Extended media details unavailable: " + e.getMessage()); }
+        }
         String title = item.optString("title", "");
         if (title.length() == 0) title = item.optString("label", "");
         if (title.length() == 0) title = item.optString("showtitle", "");
         p.title = title.length() == 0 ? "Now Playing" : title;
         String show = item.optString("showtitle", "");
+        p.seriesTitle = show;
         int episode = item.optInt("episode", 0), season = item.optInt("season", 0);
         p.subtitle = !show.isEmpty() && episode > 0 ? show + " · S" + twoDigits(season) + " E" + twoDigits(episode) : item.optString("artist", item.optString("album", ""));
         p.thumbnail = item.optString("thumbnail", "");
         p.file = item.optString("file", "");
+        p.mediaType = item.optString("type", "");
+        p.plot = item.optString("plot", ""); p.plotOutline = item.optString("plotoutline", "");
+        p.genres = jsonList(item.opt("genre")); p.year = item.has("year") ? String.valueOf(item.optInt("year")) : "";
+        p.director = jsonList(item.opt("director")); p.studio = jsonList(item.opt("studio"));
+        p.rating = item.has("rating") ? String.valueOf(item.optDouble("rating", 0)) : "";
+        p.contentRating = item.optString("mpaa", ""); p.tagline = item.optString("tagline", "");
+        p.imdbId = item.optString("imdbnumber", "");
+        if (p.imdbId.isEmpty()) {
+            JSONObject ids = item.optJSONObject("uniqueid");
+            if (ids != null) p.imdbId = ids.optString("imdb", "");
+        }
         p.elapsed = formatTime(props.optJSONObject("time")); p.duration = formatTime(props.optJSONObject("totaltime"));
         p.percentage = Math.max(0, Math.min(100, props.optDouble("percentage", 0))); p.speed = props.optInt("speed", 1); p.canSeek = props.optBoolean("canseek", false);
         state.player = p;
@@ -202,6 +245,29 @@ final class KodiClient {
 
     JSONObject getSources(String media) throws KodiException {
         return call("Files.GetSources", json("media", media));
+    }
+
+    private static JSONObject mergeItems(JSONObject base, JSONObject extra) {
+        JSONObject merged = new JSONObject();
+        try {
+            JSONArray names = base.names();
+            if (names != null) for (int i = 0; i < names.length(); i++) { String key = names.optString(i); merged.put(key, base.opt(key)); }
+            names = extra.names();
+            if (names != null) for (int i = 0; i < names.length(); i++) { String key = names.optString(i); merged.put(key, extra.opt(key)); }
+        } catch (Exception ignored) { return extra; }
+        return merged;
+    }
+
+    private static String jsonList(Object value) {
+        if (value instanceof JSONArray) {
+            JSONArray array = (JSONArray) value; StringBuilder out = new StringBuilder();
+            for (int i = 0; i < array.length(); i++) {
+                String item = array.optString(i, ""); if (item.isEmpty()) continue;
+                if (out.length() > 0) out.append(", "); out.append(item);
+            }
+            return out.toString();
+        }
+        return value == null || value == JSONObject.NULL ? "" : String.valueOf(value);
     }
 
     String currentPlayingDirectory() throws KodiException {

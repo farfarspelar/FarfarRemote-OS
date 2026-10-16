@@ -1,4 +1,52 @@
-# FarfarOS v0.1 — First Boot Hardware Test (video review)
+# FarfarRemote Test Report
+
+## Unreleased — automatic English metadata sources
+
+- **Implemented:** Kodi Library and playlist title fields now use an API 19-compatible horizontal scroller, allowing long names to be read with a sideways swipe. A tap on the title forwards to the row's pre-existing action. Physical touch behavior has not yet been verified.
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleAppDebug assembleOsDebug` builds both variants with the new Kodi power menu.
+- **Implemented, not runtime-tested:** The main-screen Kodi power control now offers confirmed Sleep (Kodi `System.Suspend`) and Power Off (`System.Shutdown`) actions. Request failures leave the existing connection state intact and show an error. Successful requests update the UI to an offline/suspending or offline/shutting-down status. Actual suspend/resume support depends on the Kodi host and needs testing on the MeLE computer.
+- Added the shared `Auto-scrape English descriptions` opt-in. Kodi remains the preferred metadata source; when Kodi has no plot, the App/OS editions query AniList for anime, then English Wikipedia and Wikidata as fallbacks. Users do not configure providers or supply API keys.
+- Provider calls run on a dedicated background executor, are attempted once per title during a process session, use HTTPS with bounded timeouts/response size, and cache up to 40 results in private app preferences. The media page identifies and links each returned source. IMDb remains a user-opened link; no IMDb scraping was added.
+- The previous Kodi `VideoLibrary.Scan` behavior was removed from this switch so no Kodi video-source, scraper, or `UpdateData` permission setup is needed. The same stored opt-in preference key is reused to preserve upgrade preference state.
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleAppDebug assembleOsDebug` built both variants; `git diff --check` passed. Existing JDK 21 / Java 8 and deprecated API warnings remain.
+- **PASS (APK output):** App `app/build/outputs/apk/app/debug/app-app-debug.apk` (SHA-256 `ef63ec901252e4f7f1cdd41a54974aa6f05eeffc21112ee3e5c9ee006352bbba`); OS `app/build/outputs/apk/os/debug/app-os-debug.apk` (SHA-256 `ed2571d23362544efa5746aa5204f409d127d696d68fbccdae58b1198aa8793a`). Both remain v0.4.9/versionCode 17, min API 19; App target API 36 and OS target API 28.
+- **PASS (physical E2003 OS update):** The OS APK installed in place with preferences retained; the pulled `/data/app` APK hash matches the built OS artifact. Existing screen showed active Kodi playback afterward. App APK install was not completed in this attempt because Android's Google Play verifier consent remained open; the existing App package was not removed or cleared.
+- The auto-scrape setting was left OFF, so no playback titles were sent to external metadata providers during installation.
+- **NOT YET DEVICE-VERIFIED:** No live movie/anime lookup was exercised against AniList, Wikipedia, or Wikidata. Android 4.4 TLS/provider compatibility and modern Android runtime behavior still require manual checks. The contract test was updated but not run in this change.
+
+## Historical 0.4.9 checkpoint — initial Kodi scan prototype (superseded)
+
+### Historical initial iteration — Kodi library scan prototype (superseded by online providers)
+
+- Removed the Kodi Library Autoplay control and automatic queueing of the current folder. Existing manually curated playlist controls and persisted playlist data are unchanged.
+- The media information page now explains that Kodi scraper details such as plot are unavailable until a file has a matching Kodi library entry. Basic playback information remains based on the active player response.
+- Added an off-by-default Auto-fetch Kodi metadata switch to the shared Kodi Connection Settings in App and OS. When enabled, the app requests Kodi's `VideoLibrary.Scan` for a supported video's parent folder once per folder, suppresses Kodi's scan dialog, and asks Kodi to use its configured source scraper. Kodi's remote account needs `UpdateData` permission. Kodi remains responsible for the scan; FarfarRemote sends no metadata request to a third party.
+- **PASS (contract/build):** `python3 tools/test_media_info_contract.py`, `assembleAppDebug`, `assembleOsDebug`, and `git diff --check` passed. The build still reports existing JDK 21 / Java 8 source-target and deprecated API warnings.
+- **PASS (physical E2003 install):** Installed both APKs with `adb install -r`, without uninstall or app-data clearing. Package Manager reports OS `org.farfarremote` and App `org.farfarremote.app`, both v0.4.9/versionCode 17. The installed APK SHA-256 values match the built artifacts: OS `a26939aa9ac8d01a1dbe531767b5bb3e039202cf930ec6747222bd8c3f8e2690`; App `86ca48e0e5a434282b3d3acb85f6ed9450a24005f9932c3b50c31dc5f0fa5f41`.
+- **PASS (physical Settings/HOME):** The Auto-fetch switch appeared OFF in Settings on both OS and App. After update, the OS was selected as **Always** in the HOME chooser and pressing HOME returned to `org.farfarremote/.MainActivity`. App launched as its own activity. No `FATAL EXCEPTION` was observed in the Settings checks.
+- Google Play showed its device-security scanning consent during ADB installation. **Decline** was selected; Google scanning was not enabled, and installation then completed.
+- **NOT YET DEVICE-VERIFIED:** Auto-fetch was left OFF to avoid changing Kodi's library without the owner choosing to start a scan. The installed phone was connected to Kodi, but the actual scan, Kodi `UpdateData` permission response, scraper result, and metadata refresh still need a deliberate test with the setting ON and a folder configured as a Kodi video source. Playlist playback was not re-tested in this session.
+
+## 0.4.9 — OS idle polling default checkpoint
+
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleAppDebug assembleOsDebug` built both variants. Existing JDK 21 / Java 8 source-target and deprecated API warnings remain.
+- **PASS (APK metadata):** Both APKs use versionCode 17 / versionName 0.4.9 and min API 19. OS remains `org.farfarremote` / target API 28; App remains `org.farfarremote.app` / target API 36. Only OS battery-profile fallback defaults changed; App runtime behavior is unchanged.
+- **PASS (physical E2003 install and reboot):** `adb install -r` updated OS in place to 0.4.9, without uninstall or data clear. After a full reboot, Package Manager still reports versionCode 17 at `/data/app/org.farfarremote-2.apk`, ahead of the factory image's versionCode-15 package. The HOME chooser appeared after the APK update; FarfarRemote was selected as Always again. A reboot after this reselection has not yet been performed.
+- **PASS (OS settings UI):** On the physical device, Battery Mode remained selected as Balanced with 10-second Kodi-idle refresh after the APK update and reboot. Screen-off polling suspension and command responsiveness are implemented, but Kodi was offline during this check, so network/command behavior was not runtime-tested.
+- **Observed; no package edits:** Read-only audit found 279 installed packages, automatic account sync off, Wi-Fi scan-always off, no active GPS listener (passive listeners only), and active Google/Sony background services. No packages were disabled or removed. ADB shell is not root; the exact firmware had already rejected `pm disable-user` with SecurityException. Device logs are ignored under `reports/device_audit/` and are not included in Git.
+- **NOT MEASURED:** USB was connected during the session, so battery endurance cannot be measured. No matched CPU, PSS, or cold-boot before/after comparison has been performed; no resource or battery improvement is claimed.
+
+## 0.4.8 — Library autoplay, playlist, OS phone alert filter, and Xperia update persistence
+
+- **IMPLEMENTED; BUILD PASSED, behavior not tested:** Added a persisted, default-off Autoplay toggle to Kodi Library, a FarfarRemote-local playlist with add/reorder/remove/clear/play actions, and OS-flavor-only handling for the explicit `com.android.phone` “No SIM” notification. Manual access to Kodi and Android Settings remains available.
+- **PASS (build):** `ANDROID_HOME=/tmp/farfar-sdk ANDROID_SDK_ROOT=/tmp/farfar-sdk ./gradlew assembleOsDebug` built the OS variant. The first attempt without SDK environment variables failed before compilation; the existing SDK is preserved at `/tmp/farfar-sdk`.
+- **PASS (Xperia update persistence):** The preloaded E2003 system APK is versionCode 15 / versionName 0.4.7. An initial versionCode-15 data update disappeared after reboot and Android fell back to `/system/app/FarfarRemote.apk`. The OS build was advanced to versionCode 16 / versionName 0.4.8, installed with `adb install -r` without uninstalling or clearing app data, and survived two subsequent full reboots. After reboot, `pm path org.farfarremote` resolves to `/data/app/org.farfarremote-1.apk` and Package Manager reports versionCode 16. FarfarRemote was reselected as the default HOME app and that preference also survived the second reboot. This device check verifies update and HOME-selection persistence only; it does not verify each new feature's runtime behavior.
+- **PASS (manifest/identity):** OS remains `org.farfarremote`, min API 19, target API 28, with HOME and the OS-only notification listener. App identity and manifest were not changed by this fix; the App APK was not rebuilt in this persistence check.
+- **APK output:** OS `app/build/outputs/apk/os/debug/app-os-debug.apk` (SHA-256 `9f37a24eee24b7c21c64cc3aba7a8753fd5da3c27776af6fc9afdc70eae1f42d`).
+- **NOT YET DEVICE-TESTED:** Kodi playlist method compatibility, autoplay progression, saved audio/subtitle selection between queued files, and actual no-SIM notification dismissal still require runtime verification. Android Notification Access is currently not granted (`enabled_notification_listeners` is `null`), so the alert filter is not active until enabled by the user in Android Settings.
+- **SAFETY:** No phone packages, telephony services, system image, or device partitions were changed. The OS notification listener requires user-granted Notification Access; it only matches the no-SIM message. The separate “Emergency calls only” System UI label is not hidden by this change.
+
+## FarfarOS v0.1 — First Boot Hardware Test (video review)
 
 **Source:** owner-recorded `20261015_201516.mp4`, reviewed from outside the Git
 working tree. The 62.28-second H.264 clip is 1280×720. SHA-256:
@@ -391,3 +439,40 @@ Not re-tested: Wi-Fi loss/reconnect, Kodi-offline errors, no-browser fallback, h
 - `dist/FarfarRemote-App-v0.4.0.apk` — ordinary app, `org.farfarremote.app`.
 - `dist/FarfarRemote-OS-v0.4.0.apk` — HOME launcher, `org.farfarremote`.
 - SHA-256 values are in `dist/SHA256SUMS-0.4.0.txt`.
+# Experimental Now Playing media information page
+
+**Branch:** `feature/now-playing-info-page`
+
+**Baseline commit:** `8005c4a` (`docs: add live E2003 battery gauge snapshot`)
+
+**Scope:** additive shared App/OS UI and optional Kodi metadata; no package identity, target SDK, or existing saved preference key changes.
+
+## Automated verification
+
+- **PASS:** `assembleAppDebug` and `assembleOsDebug` compile the shared feature for both distribution flavors.
+- **PASS:** APK metadata inspection reports App `org.farfarremote.app` (minSdk 19, targetSdk 36) and OS `org.farfarremote` (minSdk 19, targetSdk 28). Both remain v0.4.9/versionCode 17; package IDs and SDK strategy were not changed.
+- **PASS:** `python3 tools/test_media_info_contract.py` checks that extended metadata is requested only while the information page is visible, the original Now Playing request remains, optional Kodi fields fail independently, and IMDb/AniList/UI fallbacks are wired.
+- **PASS:** `git diff --check`.
+- Gradle emits the existing Java 8 source/target deprecation warnings under JDK 21; both builds complete successfully.
+
+## Physical E2003 verification — Now Playing offline handling
+
+- **PASS:** Updated the OS APK in place with `adb install -r`; installed the App APK alongside it. No package uninstall, app-data clear, or preference migration was performed. The OS preference-file SHA-256 remained `9422ade281ff42d951e0953896d89929630f1f722d7b4ffba6ae7aa8ca36e5e8` after installation and after reboot.
+- **PASS:** Reopened the Now Playing information page from the swipe gesture with Kodi offline in both OS (`org.farfarremote`) and App (`org.farfarremote.app`). At 540×960 both displayed the neutral “Nothing playing” state and “No active Kodi connection” message. The page remained usable and the remote remained available.
+- **PASS:** No `FATAL EXCEPTION` appeared in logcat during either offline swipe check.
+- **PASS:** The HOME chooser was resolved back to FarfarRemote OS as **Always** after package update; the App remains a separate package and does not declare or take over HOME.
+- **PASS (reboot persistence):** Rebooted the Xperia after installation. Android completed boot and returned directly to the FarfarRemote OS HOME activity. Package Manager still reports OS v0.4.9/versionCode 17 from `/data/app` (ahead of factory versionCode 15); App v0.4.9/versionCode 17 also remains installed separately.
+- The original crash was a duplicate-parent `IllegalStateException` while attaching the Now Playing card. The card is now attached once. Offline copy was also corrected so it no longer says Kodi is connected when disconnected; optional external metadata links are hidden without active media.
+- Kodi-online Now Playing metadata, artwork, Audio/Subtitles while the information page is open, and swipe behavior during playback still require a follow-up test with Kodi available. Movie/episode/anime scraper metadata and Android 13 runtime behavior were not exercised in this session.
+- The historical `tools/test_v03_contract.py` stops at its frozen assertion that KodiClient must be byte-for-byte unchanged; this feature intentionally adds optional metadata while preserving the original request and making the new request opt-in. `tools/test_os_battery_contract.py` also stops on old versionCode 15 expectations. These frozen checks are stale for the current working tree and are not evidence of a regression in this feature; the focused feature contract and both builds passed.
+- Final generated debug APKs: `app/build/outputs/apk/app/debug/app-app-debug.apk` (SHA-256 `690c3ee98789af0226f925d21085477840092c38994f784e1542cd684aec9ded`) and `app/build/outputs/apk/os/debug/app-os-debug.apk` (SHA-256 `c519cddd9e81751692eb8e3de4d842a8deb372b27fabea447becc3fd8cc5339e`).
+
+## Remaining manual test plan
+
+1. On the Xperia, verify the new Settings label and preserve the existing opt-in value. The OS APK was installed as an in-place update, but the online lookup has not been exercised with Kodi media yet.
+2. On Samsung Android 13, install the App APK and verify launch/navigation from the app drawer without changing HOME behavior.
+3. Enable `Auto-scrape English descriptions`, play a movie with no Kodi synopsis, and check the English Wikipedia result/link or Wikidata short description fallback.
+4. Play an anime episode and verify AniList is tried first, the series title is used for successive episodes, an English description is shown, and its source link opens.
+5. Test ambiguous/unmatched titles, offline provider access, provider timeouts, cached results, setting OFF, and ensure Kodi controls remain responsive during lookups.
+6. Verify Kodi-provided plot remains preferred and that files with existing Kodi descriptions do not trigger online lookup.
+7. Confirm audio/subtitle selection, seek, play/pause, orientation, remote reconnection, and App/OS navigation remain functional while the information page is open.
