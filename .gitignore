@@ -13,50 +13,8 @@ __pycache__/
 FarfarRemote_Asset_Pack/assets/
 FarfarRemote_v0.2_Complete_Assets.zip
 
-# The current deliverable is versioned explicitly; ignore intermediate packages.
-dist/*
-!dist/FarfarRemote-0.2.0-api19-debug.apk
-!dist/FarfarRemote-0.3.0-api19-debug.apk
-!dist/FarfarRemote-App-v0.4.0.apk
-!dist/FarfarRemote-OS-v0.4.0.apk
-!dist/SHA256SUMS-0.4.0.txt
-!dist/FarfarRemote-App-v0.4.1-rc1.apk
-!dist/FarfarRemote-OS-v0.4.1-rc1.apk
-!dist/SHA256SUMS-0.4.1-rc1.txt
-
 # Use the extracted asset directory as the canonical source; ZIP is a duplicate.
 FarfarRemote_Settings_Assets_v0.3.zip
 
-!dist/FarfarRemote-App-v0.4.1-rc1.apk.sha256
-!dist/FarfarRemote-OS-v0.4.1-rc1.apk.sha256
-
-!dist/FarfarRemote-App-v0.4.2-rc1.apk
-!dist/FarfarRemote-OS-v0.4.2-rc1.apk
-!dist/FarfarRemote-App-v0.4.2-rc1.apk.sha256
-!dist/FarfarRemote-OS-v0.4.2-rc1.apk.sha256
-!dist/SHA256SUMS-0.4.2-rc1.txt
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.3-rc1.apk
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.3-rc1.apk
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.3-rc1.apk.sha256
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.3-rc1.apk.sha256
-!dist/SHA256SUMS-0.4.3-rc1.txt
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.4-rc1.apk.sha256
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.4-rc1.apk.sha256
-!dist/SHA256SUMS-0.4.4-rc1.txt
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.5-rc1.apk
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.5-rc1.apk
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.5-rc1.apk.sha256
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.5-rc1.apk.sha256
-!dist/SHA256SUMS-0.4.5-rc1.txt
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.7.apk
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.7.apk.sha256
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.7.apk.sha256
-!dist/SHA256SUMS-0.4.7.txt
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.9-dev.apk
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.9-dev.apk
-!dist/FarfarRemote-App-Android4.4plus-API19plus-v0.4.9-dev.apk.sha256
-!dist/FarfarRemote-OS-Android4.4plus-API19plus-v0.4.9-dev.apk.sha256
-!dist/SHA256SUMS-0.4.9-dev.txt
+# APKs and checksums are build outputs; published binaries belong on GitHub Releases.
+dist/
