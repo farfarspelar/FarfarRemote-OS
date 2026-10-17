@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — automatic English media descriptions
+## 0.4.9 — Media information, English descriptions, and OS idle polling
 
 - Long file and episode titles in Kodi Library and the FarfarRemote playlist can now be swiped horizontally to read the full name; tapping the title still performs the row's existing action.
 - Added a Kodi power menu with confirmed Sleep (Kodi `System.Suspend`) and Power Off actions. Power Off still sends the existing `System.Shutdown` request; sleep support depends on the Kodi host OS and hardware.
@@ -11,8 +11,6 @@
 - When enabled and Kodi has no synopsis, FarfarRemote automatically tries AniList for anime, English Wikipedia for film/TV summaries, and Wikidata for concise catalog descriptions. It matches titles conservatively, displays a source link, caches up to 40 results locally, and does not scan whole folders or libraries.
 - IMDb remains a manual lookup link; automated IMDb scraping is excluded because IMDb prohibits website extraction and restricts its non-commercial datasets. TMDB is not bundled because it requires project-owned credentials and attribution.
 - Retained Kodi as the first metadata source and the existing extended Kodi fields request. Playback and remote-control calls remain independent of optional online lookups.
-
-## 0.4.9 — OS idle polling defaults
 
 - FarfarRemote OS now defaults to Balanced polling with a 10-second Kodi-idle interval on clean installs. Recent user input still triggers a prompt refresh, playback polling remains at 5 seconds, and screen-off suspends polling.
 - Existing saved battery, connection, orientation, and display preferences are not overwritten. FarfarRemote App behavior is unchanged.
