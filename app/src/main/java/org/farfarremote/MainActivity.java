@@ -717,6 +717,13 @@ public final class MainActivity extends Activity {
             handler.post(() -> {
                 if (!inBrowser || request != browserRequestId || destroyed) return;
                 if (currentFailure != null) { showBrowserError(currentFailure.getMessage()); return; }
+                JSONArray listedItems = currentListing == null ? null
+                        : currentListing.optJSONArray(currentFolderOpened ? "files" : "sources");
+                if (currentFolderOpened && !hasBrowsableItems(listedItems)) {
+                    toast("That Kodi folder is empty. Showing video sources instead.");
+                    showBrowserSources();
+                    return;
+                }
                 browserLoading = false;
                 browserIsSources = !currentFolderOpened;
                 browserPath = currentFolderOpened ? currentPath : "";
@@ -1028,12 +1035,36 @@ public final class MainActivity extends Activity {
                 if (!inBrowser || request != browserRequestId || destroyed) return;
                 browserLoading = false;
                 if (error != null) { renderKodiBrowser(); toast("Could not open Kodi folder: " + safeMessage(error)); return; }
-                browserItems = response == null ? new JSONArray() : response.optJSONArray("files");
-                if (browserItems == null) browserItems = new JSONArray();
+                JSONArray items = response == null ? null : response.optJSONArray("files");
+                if (!hasBrowsableItems(items)) {
+                    returnFromEmptyBrowserFolder();
+                    return;
+                }
+                browserItems = items;
                 rememberBrowserLocation();
                 renderKodiBrowser();
             });
         });
+    }
+
+    private boolean hasBrowsableItems(JSONArray items) {
+        if (items == null) return false;
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject item = items.optJSONObject(i);
+            if (item != null && !item.optString("file", "").trim().isEmpty()) return true;
+        }
+        return false;
+    }
+
+    private void returnFromEmptyBrowserFolder() {
+        toast("That Kodi folder is empty. Returning to its parent.");
+        if (!browserHistory.isEmpty()) {
+            String previous = browserHistory.pop();
+            if (previous.isEmpty()) showBrowserSources();
+            else loadBrowserDirectory(previous, pathLeaf(previous), false);
+        } else {
+            showBrowserSources();
+        }
     }
 
     private void showBrowserSources() {
